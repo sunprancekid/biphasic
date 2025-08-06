@@ -71,6 +71,9 @@ done
 
 ## SCRIPT
 # loop through each step size
+for n in ${N_LIST[@]}; do
+    echo $n
+done
 # generate paths
 # determine parameters
 # geeration simulation
