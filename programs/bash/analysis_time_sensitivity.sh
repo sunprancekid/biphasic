@@ -147,11 +147,15 @@ for n in ${N_LIST[@]}; do
         mkdir -p $SUBDIR
     fi
 
-    # determine simulation parameters based on ..
+    # determine simulation parameters based on input
+    # set the max step size according to period and number of steps
+    # set the simulation length according to period and number of cycles
+
+    # generate simulation files
+    # save parameters to csv
 
 
 done
-# geeration simulation
-# save parameters
+
 # submit simulation to slurm
 # add analysis options
