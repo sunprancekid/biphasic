@@ -11,6 +11,12 @@ set -e
 ## PARAMETERS
 # filename
 FILENAME="generate_time_sensitivity"
+# boolean that determines if the febio model file has been assigned
+declare -i BOOL_FEB_FILE=0
+# boolean that determines if the path was specified
+declare -i BOOL_SIM_PATH=0
+
+
 
 
 ## FUNCTIONS
@@ -28,9 +34,15 @@ help () {
 
     ## SCRIPT
     # display useage
-    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: submit febio jobs to MPIKG compute cluster via slurm.\n"
+    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: generate simulation that adjust the size of the numerical time step in order to determine the effect of time step analysis on the hystersis calculations.\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
+    echo -e "\n ## SCRIPT PARAEMETERS ## \n"
+    echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use as a default."
+    echo -e " -p  << ARG >>\t| MANDATORY: specify the path to copy model file."
+    echo -e " -m  << ARG >>\t| MANDATORY: specify max simulation step size."
+    echo -e " -l  << ARG >>\t| OPTIONAL:  specify simulation length (default is .. )."
+    echo -e " -n  << ARG >>\t| OPTIONAL:  specify starting step size (default is 1 / 100 of max step)."
 
     # exit with exit code
     exit $exitcode
@@ -39,10 +51,16 @@ help () {
 
 ## OPTIONS
 # parse options
-while getopts "h" option; do
+while getopts "hf:p:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
+        f) # specify the febio file
+            declare -i BOOL_FEB_FILE=1
+            FEB_FILE=${OPTARG} ;;
+        p) # specify path to save simulation
+            declare -i BOOL_SIM_PATH=1
+            SIM_PATH=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
@@ -55,4 +73,8 @@ done
 
 
 ## SCRIPT
-# none
+# given a step size or the number of steps
+# assign the total number of interations
+# assign the starting step size
+# assign the minimum and maximum step size
+# assign the loadcurve
