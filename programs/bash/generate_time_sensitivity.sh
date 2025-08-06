@@ -11,12 +11,16 @@ set -e
 ## PARAMETERS
 # filename
 FILENAME="generate_time_sensitivity"
+## FLAG PROTOCOL
+# execute script verbosely
+declare -i BOOL_VERBOSE=0
+## MADNATORY SCRIPT PARAMETERS
 # boolean that determines if the febio model file has been assigned
 declare -i BOOL_FEB_FILE=0
 # boolean that determines if the path was specified
 declare -i BOOL_SIM_PATH=0
-
-
+## OPTIONAL SCRIPT PARAMETERS
+# none
 
 
 ## FUNCTIONS
@@ -37,6 +41,7 @@ help () {
     echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: generate simulation that adjust the size of the numerical time step in order to determine the effect of time step analysis on the hystersis calculations.\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
+    echo -e " -v\t\t| execute script verbosely."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use as a default."
     echo -e " -p  << ARG >>\t| MANDATORY: specify the path to copy model file."
@@ -55,6 +60,8 @@ while getopts "hf:p:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
+        v) # execute script verbosely
+            declare -i BOOL_VERBOSE=1 ;;
         f) # specify the febio file
             declare -i BOOL_FEB_FILE=1
             FEB_FILE=${OPTARG} ;;
