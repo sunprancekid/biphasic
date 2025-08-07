@@ -87,7 +87,7 @@ def extract_febio_out (d = None, f = None, s = None):
 				# get the data
 				l = f_io.readline().strip()
 				# data.append(l)
-				temp = l.split(",")
+				temp = l.split(" ")
 				data.append("")
 				# remove the first line
 				for i in range(1, len(temp)):
@@ -105,6 +105,10 @@ def extract_febio_out (d = None, f = None, s = None):
 		for i in range(len(time)):
 			s_io.writelines("{},{},{}\n".format(i,time[i],data[i]))
 
+# calculate material displacement
+def calculate_displacement (f = None, s = None, z = False, y = False, x = False):
+	pass
+
 ## ARGUMENTS
 # first argument: path to file
 f = sys.argv[1]
@@ -115,7 +119,11 @@ s = sys.argv[2]
 # call parse method
 extract_febio_out(f = f, s = s)
 # calculate displacement
+calculate_displacement (f = f, s = s, z = True, y = False, x = False)
 # calculate velocity
 # calculate force
+calculate_force(f = f, s = s)
 # calculate work - F(x)dx
+calculate_work(f = f, s = s, fdx = True)
 # calculate work - F(t)v(t)dt
+calculate_work(f = f, s = s, fvdt = True)
