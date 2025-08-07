@@ -17,7 +17,7 @@ FILENAME="analysis_time_sensitivity"
 # n refers to the number numerical steps in one period
 N_LIST=( 10 20 40 60 80 120 160 200 240 280 320 )
 # header used to store parameters
-PARM_HEADER=""
+PARM_HEADER="n,period,time_step,cycles"
 ## FLAG PROTOCOL
 # boolean determining if the script should be execute verbosely
 declare -i BOOL_VERBOSE=0
@@ -56,7 +56,7 @@ help () {
     echo -e " -h\t\t| display options, exit 0."
     echo -e " -v\t\t| execute script verbosely."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
-    echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use."
+    echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use, presumed to be stored in 'models/'."
     echo -e " -p  << ARG >>\t| MANDATORY: specify the path to generate directory hirearchy 'time_sensitivity'."
     echo -e " -j  << ARG >>\t| OPTIONAL: rename the job (default is ${JOB})."
     echo -e " -c  << ARG >>\t| OPTIONAL: specify cycle period as float (default is ${PERIOD})."
@@ -79,10 +79,14 @@ check () {
 
 
     ## SCRIPT
-    # check that the model file exists
+    # check that the model file was specified and exists
     if [ $BOOL_FEB_FILE -eq 0 ]; then
         # feb file must be specified
         echo -e "\nERROR :: ${FILENAME} :: must specify '.feb' file.\n"
+        help $NONZEROEXITCODE
+    elif [ ! -f models/${FEB_FILE} ]; then
+        # the feb file does not exist
+        echo -e "\nERROR :: ${FILENAME} :: the file 'models/${FEB_FILE}' cannot be found.\n"
         help $NONZEROEXITCODE
     fi
     # the feb file exists
@@ -103,6 +107,46 @@ check () {
 
 }
 
+## TODO :: add to math module
+# divide two numbers, return the results
+div () {
+
+    ## PARAMETERS
+    # none
+
+
+    ## ARGUMENTS
+    # first argument: numerator
+    local num=$1
+    # second argument: denomenator
+    local denom=$2
+
+
+    ## SCRIPT
+    # divide two numbers, return the result
+    echo "${num}/${denom}" | bc -l
+
+}
+
+## TODO :: add to math module
+# multiply two numbers by each other, return the result
+mul () {
+
+    ## PARAMETERS
+    # none
+
+
+    ## ARGUMENTS
+    # first argument: first number
+    local num1=$1
+    # second argument: second number
+    local num2=$2
+
+
+    ## SCRIPT
+    # multiply the two numbers by each other
+    echo "${num1}*${num2}" | bc -l
+}
 
 ## OPTIONS
 # parse options
@@ -137,9 +181,12 @@ done
 # check that all of the correct parameters exist
 check
 
+# start parameter file
+PARM_FILE="${SIM_PATH}/${JOB}/${JOB}.csv"
+echo $PARM_HEADER > ${PARM_FILE}
 # loop through each step size
 for n in ${N_LIST[@]}; do
-    echo $n
+
     # generate path
     SUBDIR="${SIM_PATH}/${JOB}/n_${n}"
     if [ ! -d $SUBDIR ]; then
@@ -147,12 +194,18 @@ for n in ${N_LIST[@]}; do
         mkdir -p $SUBDIR
     fi
 
+    cp -v models/$FEB_FILE $SUBDIR
     # determine simulation parameters based on input
     # set the max step size according to period and number of steps
+    TIMESTEP=$(div $PERIOD $n)
     # set the simulation length according to period and number of cycles
-
+    LENGTH=$(mul $PERIOD $N_CYCLES)
+    # copy the feb file to the sub directory
+    ./programs/bash/generate_time_sensitivity.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH
     # generate simulation files
     # save parameters to csv
+
+    echo "${n},${PERIOD},${TIMESTEP},${N_CYCLES}" #>> ${PARM_FILE}
 
 
 done
