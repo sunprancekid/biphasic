@@ -113,7 +113,7 @@ s = sys.argv[2]
 
 ## SCRIPT / MAIN
 # call parse method
-extrat_febio_out(f = f, s = s)
+extract_febio_out(f = f, s = s)
 # calculate displacement
 # calculate velocity
 # calculate force
