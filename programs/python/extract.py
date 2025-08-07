@@ -1,9 +1,9 @@
 
 ## Matthew A. Dorsey
-## @sunprancekid
+## @mad-mpikg
 ## matthew.dorsey@mpikg.mpg.de
-## Max Planck Institut for Colloids and Interfacial Sciences
-## the purpose of this program is to io surrounding with febio programs
+## Max Planck Institute for Colloids and Interfacial Sciences
+## the purpose of this program is to handle io surrounding with febio programs
 
 ## PACKAGES
 # from python / conda
@@ -16,10 +16,12 @@ import numpy as np
 ## PARAMETERS
 # nonzero exit code for faulty method execution
 nonzero_exitcode = 120
+# default name for saving files
+default_savefile = "febio4.out.csv"
 
 ## METHODS
-# parse custom output from febio simulations
-def extract_febio_out (d = None, f = None, s = None):
+# from d (directory), f (file), and s (save file), return the directory and file name
+def parse_io (d = None, f = None, s = None):
 
 	## check that the correct information was passed to the method
 	# check that a file name was specified
@@ -49,6 +51,17 @@ def extract_febio_out (d = None, f = None, s = None):
 		# the directory and the file were supplied seperately by the user but the path does not exist
 		print(" ERROR :: parse_febio_out :: path {}{} does not exist.".format(d, f))
 		exit(nonzero_exitcode)
+
+	return d, f, s
+
+# parse custom output from febio simulations, save to file
+def extract_febio_out (d = None, f = None, s = None):
+
+	## check that the correct information was passed to the method
+	d, f, s = parse_io (d, f, s)
+	# if the save file is still none, give a name
+	if s == None:
+		s = default_savefile
 
 	## open file, parse information
 	with open(d + f, 'r') as f_io:
@@ -91,8 +104,8 @@ def extract_febio_out (d = None, f = None, s = None):
 				data.append("")
 				# remove the first line
 				for i in range(1, len(temp)):
-					data[-1] += "{},".format(temp[i])
-				print("{},{},{}".format(n,time[-1],data[-1]))
+					data[-1] += ",{}".format(temp[i])
+				print("{},{}{}".format(n,time[-1],data[-1]))
 				n += 1
 
 	## write io to formatted file within same directory
@@ -103,27 +116,64 @@ def extract_febio_out (d = None, f = None, s = None):
 	with open(d + s, 'w') as s_io:
 		s_io.writelines("n,t,{}\n".format(header))
 		for i in range(len(time)):
-			s_io.writelines("{},{},{}\n".format(i,time[i],data[i]))
+			s_io.writelines("{},{}{}\n".format(i,time[i],data[i]))
 
 # calculate material displacement
-def calculate_displacement (f = None, s = None, z = False, y = False, x = False):
+def calculate_displacement (d = None, f = None, s = None, z = False, y = False, x = False):
+
+	## parse the load file, save file
+	d, f, s = parse_io(d, f, s)
+	# if the save file is not specified, use the default
+	if s == None:
+		s = default_savefile
+
+	## open the file, check the header
+	df = pd.read_csv(d + s)
+	z = z and 'Fz' in df.columns
+	y = y and 'Fy' in df.columns
+	x = x and 'Fx' in df.columns
+	if not z and not y and not x:
+		## error
+		print("ERROR :: calculate_displacement :: not information has been specified to exctract displacement from '{}'".format(d + s))
+		exit(nonzero_exitcode)
+
+	# for each line, calculate the displacement
+	disp = []
+	for index, r in df.iterrows():
+		temp = 0.
+		if z: temp += math.pow(r['Fz'],2)
+		if y: temp += math.pow(r['Fy'],2)
+		if x: temp += math.pow(r['Fx'],2)
+		disp.append(math.sqrt(temp))
+
+	# add the new column to the file and save
+	df['F_mag'] = disp
+	df.to_csv(d + s, index = False)
+
+
+# calculate force magnitude
+def calculate_force	(d = None, f = None, s = None):
+	pass
+
+# calculate hysteresis from force and displacement
+def calculate_work (d = None, f = None, s = None, fdx = False, fvdt = False):
 	pass
 
 ## ARGUMENTS
-# first argument: path to file
-f = sys.argv[1]
-# second argument: save name
-s = sys.argv[2]
+# first argument: path to directory that contains the file
+d = sys.argv[1]
+# second argument: file that contains output from simulation
+f = sys.argv[2]
 
 ## SCRIPT / MAIN
 # call parse method
-extract_febio_out(f = f, s = s)
+extract_febio_out(d = d, f = f)
 # calculate displacement
-calculate_displacement (f = f, s = s, z = True, y = False, x = False)
+calculate_displacement (d = d, f = default_savefile, z = True, y = False, x = False)
 # calculate velocity
 # calculate force
-calculate_force(f = f, s = s)
+calculate_force(f = f, s = default_savefile)
 # calculate work - F(x)dx
-calculate_work(f = f, s = s, fdx = True)
+calculate_work(f = f, s = default_savefile, fdx = True)
 # calculate work - F(t)v(t)dt
-calculate_work(f = f, s = s, fvdt = True)
+calculate_work(f = f, s = default_savefile, fvdt = True)
