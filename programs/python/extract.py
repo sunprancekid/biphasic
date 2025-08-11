@@ -95,7 +95,7 @@ def extract_febio_out (d = None, f = None, s = None):
 					header = l[2]
 					header = header.replace(";", ",")
 					has_header = True
-					print("n,t,{}".format(header))
+					# print("n,t,{}".format(header))
 
 				# get the data
 				l = f_io.readline().strip()
@@ -105,7 +105,7 @@ def extract_febio_out (d = None, f = None, s = None):
 				# remove the first line
 				for i in range(1, len(temp)):
 					data[-1] += ",{}".format(temp[i])
-				print("{},{}{}".format(n,time[-1],data[-1]))
+				# print("{},{}{}".format(n,time[-1],data[-1]))
 				n += 1
 
 	## write io to formatted file within same directory
@@ -119,7 +119,7 @@ def extract_febio_out (d = None, f = None, s = None):
 			s_io.writelines("{},{}{}\n".format(i,time[i],data[i]))
 
 # calculate material displacement
-def calculate_displacement (d = None, f = None, s = None, z = False, y = False, x = False):
+def calculate_force (d = None, f = None, s = None, z = False, y = False, x = False):
 
 	## parse the load file, save file
 	d, f, s = parse_io(d, f, s)
@@ -128,35 +128,71 @@ def calculate_displacement (d = None, f = None, s = None, z = False, y = False, 
 		s = default_savefile
 
 	## open the file, check the header
-	df = pd.read_csv(d + s)
+	df = pd.read_csv(d + f)
 	z = z and 'Fz' in df.columns
 	y = y and 'Fy' in df.columns
 	x = x and 'Fx' in df.columns
 	if not z and not y and not x:
 		## error
-		print("ERROR :: calculate_displacement :: not information has been specified to exctract displacement from '{}'".format(d + s))
-		exit(nonzero_exitcode)
+		print("ERROR :: calculate_force :: not enough information has been specified to exctract displacement from '{}'".format(d + s))
+		return None, None, None
 
 	# for each line, calculate the displacement
-	disp = []
+	force_mag = []
 	for index, r in df.iterrows():
 		temp = 0.
 		if z: temp += math.pow(r['Fz'],2)
 		if y: temp += math.pow(r['Fy'],2)
 		if x: temp += math.pow(r['Fx'],2)
-		disp.append(math.sqrt(temp))
+		force_mag.append(math.sqrt(temp))
 
 	# add the new column to the file and save
-	df['F_mag'] = disp
+	df['F_mag'] = force_mag
 	df.to_csv(d + s, index = False)
 
 
 # calculate force magnitude
-def calculate_force	(d = None, f = None, s = None):
-	pass
+def calculate_displacement	(d = None, f = None, s = None, x = False, y = False, z = False):
+
+	## parse the load, save file
+	d, f, s = parse_io (d, f, s)
+	# if the save file is not specified, use the default
+	if s == None:
+		s = default_savefile
+
+	## open the file, check the header
+	df = pd.read_csv(d + f)
+	z = z and 'z' in df.columns
+	y = y and 'y' in df.columns
+	x = x and 'x' in df.columns
+	if not z and not y and not x:
+		## error
+		print("ERROR :: calculate_displacement :: not enough information has been specified to extract displacement from '{}'".format(d + f))
+		return None, None, None
+	elif sum([z, y, x]) > 1:
+		## error
+		print("ERROR :: calculate_displacement :: algorithm not implemented for more than one dimension.")
+		print("TODO  :: calculate_displacement :: write displacement algorithm for multiple dimensions.")
+		return None, None, None
+
+	# for each line, determine the distance traveled from the first line
+	disp = []
+	for i, r in df.iterrows():
+		temp = 0.
+		if z: temp += r['z']
+		if y: temp += r['y']
+		if x: temp += r['x']
+		if i == 0: disp.append(temp)
+		else: disp.append(temp - disp[0])
+		## NOTE :: this algorthim may need refinement for more than two dimensions and the definition for displacement might be highly user dependent
+		## TODO :: replace displacement calculation with path integral
+
+	# add new column and save file
+	df['disp'] = disp
+	df.to_csv(d + s, index = False)
 
 # calculate hysteresis from force and displacement
-def calculate_work (d = None, f = None, s = None, fdx = False, fvdt = False):
+def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_col = None, t_col = None):
 	pass
 
 ## ARGUMENTS
@@ -168,11 +204,12 @@ f = sys.argv[2]
 ## SCRIPT / MAIN
 # call parse method
 extract_febio_out(d = d, f = f)
-# calculate displacement
-calculate_displacement (d = d, f = default_savefile, z = True, y = False, x = False)
 # calculate velocity
-# calculate force
-calculate_force(f = f, s = default_savefile)
+# TODO :: calculate velocity magnitude
+# calculate displacement
+calculate_displacement (d = d, f = default_savefile, z = True)
+# calculate force magnitude
+calculate_force (d = d, f = default_savefile, z = True, y = True, x = True)
 # calculate work - F(x)dx
 calculate_work(f = f, s = default_savefile, fdx = True)
 # calculate work - F(t)v(t)dt
