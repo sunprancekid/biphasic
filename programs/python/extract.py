@@ -150,7 +150,6 @@ def calculate_force (d = None, f = None, s = None, z = False, y = False, x = Fal
 	df['F_mag'] = force_mag
 	df.to_csv(d + s, index = False)
 
-
 # calculate force magnitude
 def calculate_displacement	(d = None, f = None, s = None, x = False, y = False, z = False):
 

@@ -29,7 +29,7 @@ declare -i BOOL_FEB_FILE=0
 # boolean determining if the
 ## OPTIONAL FLAG PARAMETERS
 # job name
-JOB="ts"
+JOB="time_sensitivity"
 # default cycle period for simulation
 PERIOD="2."
 # default number of cycles
