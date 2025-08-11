@@ -193,7 +193,49 @@ def calculate_displacement	(d = None, f = None, s = None, x = False, y = False, 
 
 # calculate hysteresis from force and displacement
 def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_col = None, t_col = None):
-	pass
+
+	## parse the load, save file
+	d, f, s = parse_io (d, f, s)
+	# if the save file is not specified, use the default
+	if s == None:
+		s = default_savefile
+
+	## open the file, check the headers
+	df = pd.read_csv(d + f)
+	has_f = f_col in df.header
+	has_v = v_col in df.header
+	has_x = x_col in df.header
+	has_t = t_col in df.header
+	calc_fxdx = has_f and has_x # to calculate work from force, both force and position must be specified
+	calc_fvdt = has_f and has_v and has_t # to calculate work from force and velocity, force, velocity, and time must be specified
+	if not calc_fvdt and not calc_fxdx:
+		# not enough informaiton was specified to calculate work
+		print("ERROR :: calculate_work :: not enough information was specified in order to calculate work from '{}'".format(d + f))
+		return
+
+	## calculate work
+	if calc_fvdt:
+		dw = [0.] # first line corresponds to no work being done
+		for i, r1 in df.iterrows():
+			if i != 0:
+				# skip the calculation for the first entry
+				dw.append(-0.5 * (r1[f_col] * r1[v_col] + r0[f_col] * r0[v_col]) / (r1[t_col] - r0[t_col]))
+			r0 = r1 # save the current row for the next calculation
+		# append the work calculation to the data frame
+		df['dw_fvdt'] = dw
+
+	if calc_fxdx:
+		dw = [0.]
+		for i, r1 in df.iterrows():
+			if i != 0:
+				# skip the calculation for the first entry
+				dw.append(-0.5 * (r1[f_col] + r0[f_col]) / (r1[x_col] - r0[x_col]))
+			r0 = r1 # save the current row for the next calculation
+		# append the work calculation to the data frame
+		df['dw_fdx'] = dw
+
+	## save the dataframe
+	df.to_csv(d + s, index = False)
 
 ## ARGUMENTS
 # first argument: path to directory that contains the file
@@ -210,7 +252,5 @@ extract_febio_out(d = d, f = f)
 calculate_displacement (d = d, f = default_savefile, z = True)
 # calculate force magnitude
 calculate_force (d = d, f = default_savefile, z = True, y = True, x = True)
-# calculate work - F(x)dx
-calculate_work(f = f, s = default_savefile, fdx = True)
-# calculate work - F(t)v(t)dt
-calculate_work(f = f, s = default_savefile, fvdt = True)
+# calculate work
+calculate_workd = d, f = default_savefile, x_col = 'z', v_col = 'Vz', f_col = 'Fz', t_col = 't')
