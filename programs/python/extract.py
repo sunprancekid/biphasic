@@ -202,10 +202,10 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 
 	## open the file, check the headers
 	df = pd.read_csv(d + f)
-	has_f = f_col in df.header
-	has_v = v_col in df.header
-	has_x = x_col in df.header
-	has_t = t_col in df.header
+	has_f = f_col in df.columns
+	has_v = v_col in df.columns
+	has_x = x_col in df.columns
+	has_t = t_col in df.columns
 	calc_fxdx = has_f and has_x # to calculate work from force, both force and position must be specified
 	calc_fvdt = has_f and has_v and has_t # to calculate work from force and velocity, force, velocity, and time must be specified
 	if not calc_fvdt and not calc_fxdx:
@@ -219,7 +219,7 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 		for i, r1 in df.iterrows():
 			if i != 0:
 				# skip the calculation for the first entry
-				dw.append(-0.5 * (r1[f_col] * r1[v_col] + r0[f_col] * r0[v_col]) / (r1[t_col] - r0[t_col]))
+				dw.append(0.5 * (r1[f_col] * r1[v_col] + r0[f_col] * r0[v_col]) / (r1[t_col] - r0[t_col]))
 			r0 = r1 # save the current row for the next calculation
 		# append the work calculation to the data frame
 		df['dw_fvdt'] = dw
@@ -229,7 +229,7 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 		for i, r1 in df.iterrows():
 			if i != 0:
 				# skip the calculation for the first entry
-				dw.append(-0.5 * (r1[f_col] + r0[f_col]) / (r1[x_col] - r0[x_col]))
+				dw.append(0.5 * (r1[f_col] + r0[f_col]) / (r1[x_col] - r0[x_col]))
 			r0 = r1 # save the current row for the next calculation
 		# append the work calculation to the data frame
 		df['dw_fdx'] = dw
@@ -253,4 +253,4 @@ calculate_displacement (d = d, f = default_savefile, z = True)
 # calculate force magnitude
 calculate_force (d = d, f = default_savefile, z = True, y = True, x = True)
 # calculate work
-calculate_workd = d, f = default_savefile, x_col = 'z', v_col = 'Vz', f_col = 'Fz', t_col = 't')
+calculate_work(d = d, f = default_savefile, x_col = 'z', v_col = 'vz', f_col = 'Fz', t_col = 't')
