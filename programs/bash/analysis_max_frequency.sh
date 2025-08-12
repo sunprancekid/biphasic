@@ -191,6 +191,47 @@ linscale() {
     echo $(printf "%8.5f\n" "${scale}")
 }
 
+## TODO :: add to math module
+# divide two numbers, return the results
+div () {
+
+    ## PARAMETERS
+    # none
+
+
+    ## ARGUMENTS
+    # first argument: numerator
+    local num=$1
+    # second argument: denomenator
+    local denom=$2
+
+
+    ## SCRIPT
+    # divide two numbers, return the result
+    echo "${num}/${denom}" | bc -l
+
+}
+
+## TODO :: add to math module
+# multiply two numbers by each other, return the result
+mul () {
+
+    ## PARAMETERS
+    # none
+
+
+    ## ARGUMENTS
+    # first argument: first number
+    local num1=$1
+    # second argument: second number
+    local num2=$2
+
+
+    ## SCRIPT
+    # multiply the two numbers by each other
+    echo "${num1}*${num2}" | bc -l
+}
+
 
 ## OPTIONS
 # parse options
@@ -248,11 +289,13 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     # determine the frequency as a period
     PERIOD_VAL=$( logscale $n )
     # determine max numerical step size
+    TIMESTEP=$(div $PERIOD_VAL $N_CYCLE_STEPS)
     # determine the simulation length
+    LENGTH=$(mul $PERIOD_VAL $N_CYCLES )
 
     # augment the feb file
-    # ./programs/bash/generate_time_sensitivity.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH
+    ./programs/bash/generate_time_sensitivity.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -p $PERIOD_VAL
     # copy the simulation parameters to the parameter file
-    echo "${SUBDIR},${n},${PERIOD_VAL}," >> $PARM_FILE
+    echo "${SUBDIR},${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
 done

@@ -26,7 +26,6 @@ declare -i BOOL_VERBOSE=0
 declare -i BOOL_SIM_PATH=0
 # boolean determining if the '.feb' model file to use
 declare -i BOOL_FEB_FILE=0
-# boolean determining if the
 ## OPTIONAL FLAG PARAMETERS
 # job name
 JOB="time_sensitivity"
@@ -194,7 +193,7 @@ for n in ${N_LIST[@]}; do
         mkdir -p $SUBDIR
     fi
 
-    cp -v models/$FEB_FILE $SUBDIR
+    cp models/$FEB_FILE $SUBDIR
     # determine simulation parameters based on input
     # set the max step size according to period and number of steps
     TIMESTEP=$(div $PERIOD $n)
