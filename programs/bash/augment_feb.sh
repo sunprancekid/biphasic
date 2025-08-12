@@ -11,6 +11,10 @@ set -e
 ## PARAMETERS
 # filename
 FILENAME="augment_feb"
+# assumed periodic equation used for cyclical bending
+PERIOD_EQUATION="0.5 \* (cos(0.1 \* 3.14 \* t - 3.14) + 1)"
+# used as an approximate for pi
+PI="3.14159265359"
 ## FLAG PROTOCOL
 # execute script verbosely
 declare -i BOOL_VERBOSE=0
@@ -63,11 +67,11 @@ help () {
 
 ## OPTIONS
 # parse options
-while getopts "hf:p:m:l:" option; do
+while getopts "hf:p:m:l:c:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
-        v) # execute script verbosely
+        v) # execute script verbosely3.14159265359
             declare -i BOOL_VERBOSE=1 ;;
         f) # specify the febio file
             declare -i BOOL_FEB_FILE=1
@@ -96,17 +100,17 @@ done
 
 
 ## SCRIPT
-if [ $BOOL_VERBOSE -eq 1 ]; then
-    echo $FEB_FILE
-fi
+# TODO :: would it be possible to parse the contents of a field, and then use that to replace them ..
+#         otherwise the field has to contain the value in order for it to be replaced ..
+
 # given a step size or the number of steps
 # if the step size has been specified
 if [ $BOOL_STEP_SIZE -eq 1 ]; then
     # assign the maximum step size
-    sed -i "s/<dtmax>0.1<\/dtmax>/<dtmax>${STEP_SIZE}<\/dtmax>/" $FEB_FILE
+    sed -i "s/<dtmax>1<\/dtmax>/<dtmax>${STEP_SIZE}<\/dtmax>/" $FEB_FILE
     # assign the initial step size
     MIN_STEP=$( echo "${STEP_SIZE} / 10" | bc -l )
-    sed -i "s/<step_size>0.01<\/step_size>/<step_size>${MIN_STEP}<\/step_size>/" $FEB_FILE
+    sed -i "s/<step_size>0.1<\/step_size>/<step_size>${MIN_STEP}<\/step_size>/" $FEB_FILE
     if [ $BOOL_LENGTH -eq 1 ]; then
         # assign the total number of interations (based on the minimum)
         TIME_STEPS=$( echo "((10 * ${LENGTH}) / ${STEP_SIZE})" | bc -l )
@@ -116,5 +120,13 @@ fi
 
 # adjust the load curve according to the period
 if [ $BOOL_PERIOD -eq 1 ]; then
-    return
+
+    # use the period to calculate the frequency
+    ANG_FREQ=$(echo "2. / $PERIOD" | bc -l )
+    NEW_EQUATION="0.5 \* (cos( ${PI} \* (${ANG_FREQ} \* t - 1.0)) + 1)"
+#     echo -e $PERIOD_EQUATION
+#     echo -e $NEW_EQUATION
+
+    # replace old equation with new equation
+    sed -i "s/<math>${PERIOD_EQUATION}<\/math>/<math>${NEW_EQUATION}<\/math>/" $FEB_FILE
 fi

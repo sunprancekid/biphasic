@@ -187,7 +187,7 @@ echo $PARM_HEADER > ${PARM_FILE}
 for n in ${N_LIST[@]}; do
 
     # generate path
-    SUBDIR="${SIM_PATH}/${JOB}/n_${n}"
+    SUBDIR="${SIM_PATH}/${JOB}/n${n}"
     if [ ! -d $SUBDIR ]; then
         # if the path does not exist, make it
         mkdir -p $SUBDIR
@@ -200,11 +200,11 @@ for n in ${N_LIST[@]}; do
     # set the simulation length according to period and number of cycles
     LENGTH=$(mul $PERIOD $N_CYCLES)
     # copy the feb file to the sub directory
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -c $PERIOD
     # generate simulation files
     # save parameters to csv
 
-    echo "${n},${PERIOD},${TIMESTEP},${N_CYCLES}" #>> ${PARM_FILE}
+    echo "${n},${PERIOD},${TIMESTEP},${N_CYCLES}" >> ${PARM_FILE}
 
 
 done
