@@ -20,8 +20,12 @@ declare -i BOOL_FEB_FILE=0
 # boolean that determines if the path was specified
 declare -i BOOL_SIM_PATH=0
 ## OPTIONAL SCRIPT PARAMETERS
+# boolean that determines if the simulation step size has been specified
+declare -i BOOL_STEP_SIZE=0
 # boolean that determines if the period has been specified
 declare -i BOOL_PERIOD=0
+# boolean that determines if the simulation length has been specified
+declare -i BOOL_LENGTH=0
 
 
 ## FUNCTIONS
@@ -49,7 +53,7 @@ help () {
     echo -e " -m  << ARG >>\t| MANDATORY: specify max simulation step size."
     echo -e " -l  << ARG >>\t| OPTIONAL:  specify simulation length (default is .. )."
     echo -e " -n  << ARG >>\t| OPTIONAL:  specify starting step size (default is 1 / 100 of max step)."
-    echo -e " -p  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
+    echo -e " -c  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
     echo -e "\n"
 
     # exit with exit code
@@ -72,11 +76,13 @@ while getopts "hf:p:m:l:" option; do
             declare -i BOOL_SIM_PATH=1
             SIM_PATH=${OPTARG} ;;
         m) # specify the maximum simulation step size
+            declare -i BOOL_STEP_SIZE=1
             STEP_SIZE=${OPTARG} ;;
         l) # simulation length
+            declare -i BOOL_LENGTH=1
             LENGTH=${OPTARG} ;;
-        p) # specify cycle period
-            declare -i BOOL_PERIOD=0
+        c) # specify cycle period
+            declare -i BOOL_PERIOD=1
             PERIOD=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
@@ -90,18 +96,24 @@ done
 
 
 ## SCRIPT
-echo $FEB_FILE
-# copy the feb file to the path
+if [ $BOOL_VERBOSE -eq 1 ]; then
+    echo $FEB_FILE
+fi
 # given a step size or the number of steps
-# assign the maximum step size
-sed -i "s/<dtmax>0.1<\/dtmax>/<dtmax>${STEP_SIZE}<\/dtmax>/" $FEB_FILE
-# assign the initial step size
-MIN_STEP=$( echo "${STEP_SIZE} / 10" | bc -l )
-sed -i "s/<step_size>0.01<\/step_size>/<step_size>${MIN_STEP}<\/step_size>/" $FEB_FILE
-# assign the total number of interations (based on the minimum)
-TIME_STEPS=$( echo "((10 * ${LENGTH}) / ${STEP_SIZE})" | bc -l )
-echo $TIME_STEPS
-sed -i "s/<time_steps>1000<\/time_steps>/<time_steps>${TIME_STEPS}<\/time_steps>/" $FEB_FILE
+# if the step size has been specified
+if [ $BOOL_STEP_SIZE -eq 1 ]; then
+    # assign the maximum step size
+    sed -i "s/<dtmax>0.1<\/dtmax>/<dtmax>${STEP_SIZE}<\/dtmax>/" $FEB_FILE
+    # assign the initial step size
+    MIN_STEP=$( echo "${STEP_SIZE} / 10" | bc -l )
+    sed -i "s/<step_size>0.01<\/step_size>/<step_size>${MIN_STEP}<\/step_size>/" $FEB_FILE
+    if [ $BOOL_LENGTH -eq 1 ]; then
+        # assign the total number of interations (based on the minimum)
+        TIME_STEPS=$( echo "((10 * ${LENGTH}) / ${STEP_SIZE})" | bc -l )
+        sed -i "s/<time_steps>1000<\/time_steps>/<time_steps>${TIME_STEPS}<\/time_steps>/" $FEB_FILE
+    fi
+fi
+
 # adjust the load curve according to the period
 if [ $BOOL_PERIOD -eq 1 ]; then
     return

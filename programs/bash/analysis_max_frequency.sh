@@ -294,7 +294,7 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     LENGTH=$(mul $PERIOD_VAL $N_CYCLES )
 
     # augment the feb file
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -p $PERIOD_VAL
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL
     # copy the simulation parameters to the parameter file
     echo "${SUBDIR},${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
