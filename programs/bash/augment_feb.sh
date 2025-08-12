@@ -10,7 +10,7 @@ set -e
 
 ## PARAMETERS
 # filename
-FILENAME="generate_time_sensitivity"
+FILENAME="augment_feb"
 ## FLAG PROTOCOL
 # execute script verbosely
 declare -i BOOL_VERBOSE=0
@@ -38,7 +38,7 @@ help () {
 
     ## SCRIPT
     # display useage
-    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: generate simulation that adjust the size of the numerical time step in order to determine the effect of time step analysis on the hystersis calculations.\n"
+    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: augment the '.feb' files in order to parameterize simulation conditions.\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
     echo -e " -v\t\t| execute script verbosely."

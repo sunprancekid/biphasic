@@ -200,7 +200,7 @@ for n in ${N_LIST[@]}; do
     # set the simulation length according to period and number of cycles
     LENGTH=$(mul $PERIOD $N_CYCLES)
     # copy the feb file to the sub directory
-    ./programs/bash/generate_time_sensitivity.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH
     # generate simulation files
     # save parameters to csv
 
