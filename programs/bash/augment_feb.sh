@@ -20,7 +20,8 @@ declare -i BOOL_FEB_FILE=0
 # boolean that determines if the path was specified
 declare -i BOOL_SIM_PATH=0
 ## OPTIONAL SCRIPT PARAMETERS
-# none
+# boolean that determines if the period has been specified
+declare -i BOOL_PERIOD=0
 
 
 ## FUNCTIONS
@@ -48,6 +49,7 @@ help () {
     echo -e " -m  << ARG >>\t| MANDATORY: specify max simulation step size."
     echo -e " -l  << ARG >>\t| OPTIONAL:  specify simulation length (default is .. )."
     echo -e " -n  << ARG >>\t| OPTIONAL:  specify starting step size (default is 1 / 100 of max step)."
+    echo -e " -p  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
     echo -e "\n"
 
     # exit with exit code
@@ -73,6 +75,9 @@ while getopts "hf:p:m:l:" option; do
             STEP_SIZE=${OPTARG} ;;
         l) # simulation length
             LENGTH=${OPTARG} ;;
+        p) # specify cycle period
+            declare -i BOOL_PERIOD=0
+            PERIOD=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
@@ -97,4 +102,7 @@ sed -i "s/<step_size>0.01<\/step_size>/<step_size>${MIN_STEP}<\/step_size>/" $FE
 TIME_STEPS=$( echo "((10 * ${LENGTH}) / ${STEP_SIZE})" | bc -l )
 echo $TIME_STEPS
 sed -i "s/<time_steps>1000<\/time_steps>/<time_steps>${TIME_STEPS}<\/time_steps>/" $FEB_FILE
-# assign the loadcurve
+# adjust the load curve according to the period
+if [ $BOOL_PERIOD -eq 1 ]; then
+    return
+fi
