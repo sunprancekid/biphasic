@@ -218,7 +218,7 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 		for i, r1 in df.iterrows():
 			if i != 0:
 				# skip the calculation for the first entry
-				dw.append(0.5 * (r1[f_col] * r1[v_col] + r0[f_col] * r0[v_col]) / (r1[t_col] - r0[t_col]))
+				dw.append(0.5 * (r1[f_col] * r1[v_col] + r0[f_col] * r0[v_col]) * (r1[t_col] - r0[t_col]))
 			r0 = r1 # save the current row for the next calculation
 		# append the work calculation to the data frame
 		df['dw_fvdt'] = dw
@@ -228,7 +228,7 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 		for i, r1 in df.iterrows():
 			if i != 0:
 				# skip the calculation for the first entry
-				dw.append(0.5 * (r1[f_col] + r0[f_col]) / (r1[x_col] - r0[x_col]))
+				dw.append(0.5 * (r1[f_col] + r0[f_col]) * (r1[x_col] - r0[x_col]))
 			r0 = r1 # save the current row for the next calculation
 		# append the work calculation to the data frame
 		df['dw_fdx'] = dw
