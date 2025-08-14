@@ -53,7 +53,7 @@ help () {
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
 #     echo -e " -f  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
-    echo -e "/n"
+    echo -e ""
     # exit
     exit $exitcode
 
@@ -199,6 +199,6 @@ do
         exit $NONZEROEXITCODE
     elif [ $BOOL_SLURM -eq 1 ]; then
         # if slurm, generate submission script and run sbatch
-        display_error "TODO :: implement running febio4 simulations via slurm"
+        $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${JOB}
     fi
 done

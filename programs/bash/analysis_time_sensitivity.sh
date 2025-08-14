@@ -183,28 +183,31 @@ check
 # start parameter file
 PARM_FILE="${SIM_PATH}/${JOB}/${JOB}.csv"
 echo $PARM_HEADER > ${PARM_FILE}
+# copy the initial model file to the main directory
+cp models/$FEB_FILE ${SIM_PATH}/${JOB}/
 # loop through each step size
 for n in ${N_LIST[@]}; do
 
     # generate path
+    SIMID="n${n}"
     SUBDIR="${SIM_PATH}/${JOB}/n${n}"
     if [ ! -d $SUBDIR ]; then
         # if the path does not exist, make it
         mkdir -p $SUBDIR
     fi
 
-    cp models/$FEB_FILE $SUBDIR
+    cp models/$FEB_FILE $SUBDIR/${SIMID}.feb
     # determine simulation parameters based on input
     # set the max step size according to period and number of steps
     TIMESTEP=$(div $PERIOD $n)
     # set the simulation length according to period and number of cycles
     LENGTH=$(mul $PERIOD $N_CYCLES)
     # copy the feb file to the sub directory
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -c $PERIOD
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/${SIMID}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD
     # generate simulation files
     # save parameters to csv
 
-    echo "$n/,n$n,${n},${PERIOD},${TIMESTEP},${N_CYCLES}" >> ${PARM_FILE}
+    echo "${SIMID}/,${SIMID},${n},${PERIOD},${TIMESTEP},${N_CYCLES}" >> ${PARM_FILE}
 
 
 done

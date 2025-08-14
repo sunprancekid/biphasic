@@ -175,7 +175,7 @@ sub_slurm_script () {
     echo $pwd
 
     # log into cluster and submit script
-    ssh $CLUSTER "sbatch ${SIMID}.slurm.sub"
+    sbatch ${SIMID}.slurm.sub
 
     # exit cluster, return to starting directory
     cd $currdir
