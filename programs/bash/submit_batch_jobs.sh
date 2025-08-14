@@ -48,7 +48,7 @@ help () {
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
 #     echo -e " -f  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
     # exit
-    exit $exitcode1
+    exit $exitcode
 
 }
 
@@ -155,7 +155,9 @@ do
     # the first column is the SUBDIR
     SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 1)
     # the second column is the SIMID
-    SIMID=$($PRASE_CSV -f $PARM_FILE -l $n -c 2)
+    SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
+
+    echo $SUBDIR $SIMID
 
     ## run job ..
     # if local, run on current machine with 'febio4'

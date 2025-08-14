@@ -216,6 +216,8 @@ get_cols_line(){
 	echo $n_col
 }
 # function that gets a particular element in a line
+# path to parse csv file
+PARSE_CSV="./programs/bash/util/parse_csv.sh"
 get_element_col_line(){
 
 	## PARAMETERS
