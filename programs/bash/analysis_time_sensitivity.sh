@@ -17,7 +17,7 @@ FILENAME="analysis_time_sensitivity"
 # n refers to the number numerical steps in one period
 N_LIST=( 10 20 40 60 80 120 160 200 240 280 320 )
 # header used to store parameters
-PARM_HEADER="n,period,time_step,cycles"
+PARM_HEADER="subdir,subid,n,period,time_step,cycles"
 ## FLAG PROTOCOL
 # boolean determining if the script should be execute verbosely
 declare -i BOOL_VERBOSE=0
@@ -204,7 +204,7 @@ for n in ${N_LIST[@]}; do
     # generate simulation files
     # save parameters to csv
 
-    echo "${n},${PERIOD},${TIMESTEP},${N_CYCLES}" >> ${PARM_FILE}
+    echo "$n/,n$n,${n},${PERIOD},${TIMESTEP},${N_CYCLES}" >> ${PARM_FILE}
 
 
 done

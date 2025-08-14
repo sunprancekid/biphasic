@@ -48,7 +48,7 @@ help () {
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
 #     echo -e " -f  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
     # exit
-    exit $exitcode
+    exit $exitcode1
 
 }
 
@@ -158,6 +158,6 @@ do
     SIMID=$($PRASE_CSV -f $PARM_FILE -l $n -c 2)
 
     ## run job ..
-    # if local, run on current machine
+    # if local, run on current machine with 'febio4'
     # if slurm, generate submission script and run sbatch
 done
