@@ -13,6 +13,10 @@ set -e
 declare -i NONZEROEXITCODE=120
 # file name
 FILENAME="submit_bash_jobs"
+# path to parse csv file
+PARSE_CSV="./programs/bash/util/parse_csv.sh"
+# path to script for slurm submission
+SUB_SLURM="./programs/bash/util/submit_febio_slurm.sh"
 
 ## OPTION PARAMETERS
 # boolean that determines if the job directory path has been specified
@@ -60,7 +64,7 @@ display_error () {
 
     ## SCRIPT
     # display error message
-    echo "\nERROR :: ${FILENAME} :: $ERR_MSG.\n"
+    echo -e "\nERROR :: ${FILENAME} :: ${ERR_MSG}.\n"
 
 }
 
@@ -75,7 +79,7 @@ check () {
 
     ## SCRIPT
     # check that the job path exists
-    if [ $JOB_PATH -eq 0 ]
+    if [ $BOOL_PATH -eq 0 ]
     then
         # if the job path has not been specified
         display_error "must specify path to simulation directory (option '-d')"
@@ -133,8 +137,27 @@ done # not do backwards ...
 # none
 
 
+## TODO
+# specify absolute path to bash scripts via enivronment variable or .. (how do expert bash developers do this)
+
 ## SCRIPT
 # check options specified by user
 check
 
 # open csv parameter file, parse options from each row
+# get the number of lines
+declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l)
+
+# loop through each line, line 1 is the header ..
+for n in $(seq 2 $N_LINES)
+do
+    ## get simulation paths
+    # the first column is the SUBDIR
+    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 1)
+    # the second column is the SIMID
+    SIMID=$($PRASE_CSV -f $PARM_FILE -l $n -c 2)
+
+    ## run job ..
+    # if local, run on current machine
+    # if slurm, generate submission script and run sbatch
+done
