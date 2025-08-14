@@ -11,7 +11,14 @@ set -e
 ## PARAMETERS
 # nonzero exit code
 declare -i NONZEROEXITCODE=120
+# file name
+FILENAME="submit_bash_jobs"
 
+## MANDATORY OPTION PARAMETERS
+# none
+
+## OPTIONAL OPTION PARAMETERS
+# none
 
 ## FUNCTIONS
 # display options, exit
@@ -25,8 +32,13 @@ help () {
     local exitcode=$1
 
     ## SCRIPT
-    # display options
-    echo -e "TODO :: add options"
+    # report options to user
+    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: submit jobs in batch to a user specified cluster.\n"
+    echo -e "\n ## SCRIPT PROTOCOL ## \n"
+    echo -e " -h\t\t| display options, exit 0"
+    echo -e "\n ## SCRIPT PARAEMETERS ## \n"
+    echo -e " -d  << ARG >>\t| MADATORY: path to job directory, contains '.feb' file."
+    echo -e " -j  << ARG >>\t| MADATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
     # exit
     exit $exitcode
 
@@ -47,9 +59,25 @@ check () {
 
 }
 
+#     echo -e " -f  << ARG >>\t| OPTIONAL: '.feb' file name, when it does not correspond to \$JOB."
 
 ## OPTIONS
-# none
+# parse options
+while getopts "hd:j:" opt
+do
+    case $opt in
+        h) # display help options and exit zero
+            help 0 ;;
+        d) # path to job directory
+            declare -i BOOL_PATH=1
+            JOB_PATH=${OPTARG} ;;
+        j) # specify job name
+            declare -i BOOL_JOB=1
+            JOB=${OPTARG} ;;
+        ?) # unknown option
+            help $NONZEROEXITCODE
+    esac # case backwards ...
+done # not do backwards ...
 
 
 ## ARGUMENTS
@@ -57,4 +85,7 @@ check () {
 
 
 ## SCRIPT
-# none
+# check options specified by user
+check
+
+# open csv parameter file, parse options from each row
