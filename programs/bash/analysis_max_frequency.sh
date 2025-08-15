@@ -15,7 +15,7 @@ declare -i NONZEROEXITCODE=120
 # filename
 FILENAME="analysis_max_frequency"
 # header for parameter file
-PARM_HEADER="path,simid,period,step_size,n_cycles"
+PARM_HEADER="path,simid,period,perm,step_size,n_cycles"
 
 ## FLAG PROTOCOL
 # boolean that determines if the script should be executed verbosely
@@ -301,6 +301,6 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     # augment the feb file
     ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL -k $PERM
     # copy the simulation parameters to the parameter file
-    echo "k${n}/,k${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
+    echo "k${n}/,k${n},${PERIOD_VAL},${PERM},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
 done
