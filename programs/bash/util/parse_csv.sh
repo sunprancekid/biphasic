@@ -250,7 +250,7 @@ get_element_col_line(){
 # that the path to the file is correct
 if [[ GOT_FILENAME -eq 0 ]]
 # if the script did not parse the file name
-thenSIM_PATH
+then
 	# inform the user and exit
 	echo -e "\nERROR: Must specify filename when parsing file."
 	echo -e "USAGE: ./parse_csv.sh -f FILENAME [...]"
