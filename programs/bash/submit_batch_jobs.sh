@@ -190,8 +190,6 @@ do
     # the second column is the SIMID
     SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
 
-    echo $SUBDIR $SIMID
-
     ## run job ..
     # if local, run on current machine with 'febio4'
     if [ $BOOL_LOCAL -eq 1 ]; then
