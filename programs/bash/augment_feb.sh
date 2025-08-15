@@ -30,6 +30,8 @@ declare -i BOOL_STEP_SIZE=0
 declare -i BOOL_PERIOD=0
 # boolean that determines if the simulation length has been specified
 declare -i BOOL_LENGTH=0
+# boolean that determines if the permeability parameter has been specified
+declare -i BOOL_PERM=0
 
 
 ## FUNCTIONS
@@ -58,6 +60,7 @@ help () {
     echo -e " -l  << ARG >>\t| OPTIONAL:  specify simulation length (default is .. )."
     echo -e " -n  << ARG >>\t| OPTIONAL:  specify starting step size (default is 1 / 100 of max step)."
     echo -e " -c  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
+    echo -e " -k  << ARG >>\t| OPTIONAL:  specify the material permiability."
     echo -e "\n"
 
     # exit with exit code
@@ -67,7 +70,7 @@ help () {
 
 ## OPTIONS
 # parse options
-while getopts "hf:p:m:l:c:" option; do
+while getopts "hf:p:m:l:c:k:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -88,6 +91,9 @@ while getopts "hf:p:m:l:c:" option; do
         c) # specify cycle period
             declare -i BOOL_PERIOD=1
             PERIOD=${OPTARG} ;;
+        k) # specify the material permiability
+            declare -i BOOL_PERM=1
+            PERM=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
@@ -129,4 +135,10 @@ if [ $BOOL_PERIOD -eq 1 ]; then
 
     # replace old equation with new equation
     sed -i "s/<math>${PERIOD_EQUATION}<\/math>/<math>${NEW_EQUATION}<\/math>/" $FEB_FILE
+fi
+
+# adjust the permiability
+if [ $BOOL_PERM -eq 1 ]; then
+    # replace the material permiability with the new value
+    sed -i "s/<perm>0.001<\/perm>/<perm>${PERM}<\/perm>/" $FEB_FILE
 fi
