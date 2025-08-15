@@ -261,7 +261,7 @@ while getopts "hvf:p:A:B:N:t:n:k:" opt; do
         n) # number of cycles
             declare -i N_CYCLES=$OPTARG ;;
         k) # update the material permiability
-            PERM=${OPTARG}
+            PERM=${OPTARG} ;;
         ?) # unknown option, get help and exit nonzero
             help $NONZEROEXITCODE
     esac
