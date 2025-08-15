@@ -43,6 +43,8 @@ declare -i N_PERIOD_VAL=21
 declare -i N_CYCLE_STEPS=20
 # number of times to cycle
 declare -i N_CYCLES=5
+# default permeability
+PERM="0.001"
 
 
 ## FUNCTIONS
@@ -69,6 +71,7 @@ help () {
     echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use, presumed to be stored in 'models/'."
     echo -e " -p  << ARG >>\t| MANDATORY: specify the path to generate directory hirearchy 'time_sensitivity'."
     echo -e " -j  << ARG >>\t| OPTIONAL:  rename the job (default is ${JOB})."
+    echo -e " -k  << ARG >>\t| OPTIONAL:  specify the material permeability (default is ${PERM})."
     echo -e " -A  << ARG >>\t| OPTIONAL:  specify the minimum cycle period to test (default is ${MIN_PERIOD_VAL})."
     echo -e " -B  << ARG >>\t| OPTIONAL:  specify the maximum cycle period to test (default is ${MAX_PERIOD_VAL})."
     echo -e " -N  << ARG >>\t| OPTIONAL:  specify the number of unique cycle periods to test on logscale (default is ${N_PERIOD_VAL})."
@@ -235,7 +238,7 @@ mul () {
 
 ## OPTIONS
 # parse options
-while getopts "hvf:p:A:B:N:t:n:" opt; do
+while getopts "hvf:p:A:B:N:t:n:k:" opt; do
     case $opt in
         h) # get help, exit zero
             help 0 ;;
@@ -257,6 +260,8 @@ while getopts "hvf:p:A:B:N:t:n:" opt; do
             declare -i N_CYCLE_STEPS=${OPTARG} ;;
         n) # number of cycles
             declare -i N_CYCLES=$OPTARG ;;
+        k) # update the material permiability
+            PERM=${OPTARG}
         ?) # unknown option, get help and exit nonzero
             help $NONZEROEXITCODE
     esac
@@ -294,7 +299,7 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     LENGTH=$(mul $PERIOD_VAL $N_CYCLES )
 
     # augment the feb file
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL -k $PERM
     # copy the simulation parameters to the parameter file
     echo "k${n}/,k${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
