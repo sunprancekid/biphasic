@@ -238,7 +238,7 @@ mul () {
 
 ## OPTIONS
 # parse options
-while getopts "hvf:p:A:B:N:t:n:k:" opt; do
+while getopts "hvf:p:j:A:B:N:t:n:k:" opt; do
     case $opt in
         h) # get help, exit zero
             help 0 ;;
@@ -250,6 +250,8 @@ while getopts "hvf:p:A:B:N:t:n:k:" opt; do
         p) # directory path
             declare -i BOOL_SIM_PATH=1
             SIM_PATH=${OPTARG} ;;
+        j) # rename job
+            JOB=${OPTARG} ;;
         A) # minimum period val to test
             MIN_PERIOD_VAL=${OPTARG} ;;
         B) # maximum period val to test
