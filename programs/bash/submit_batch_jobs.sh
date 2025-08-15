@@ -133,15 +133,15 @@ check () {
     fi
 
     # if the jobs should be run via slurm
-    if [ $BOOL_SLURM -eq 1 ]; then
-        # check if the sbatch command exists
-        if ! command -v sbatch >/dev/null/ 2>&1
-        then
-            # if the sbatch does not exist, jobs cannot be submitted
-            display_error "the command 'sbatch' cound not be found, please log onto computing cluster before exectuing jobs to submit to slurm"
-            help $NONZEROEXITCODE
-        fi
-    fi
+#     if [ $BOOL_SLURM -eq 1 ]; then
+#         # check if the sbatch command exists
+#         if ! command -v sbatch >/dev/null/ 2>&1
+#         then
+#             # if the sbatch does not exist, jobs cannot be submitted
+#             display_error "the command 'sbatch' cound not be found, please log onto computing cluster before exectuing jobs to submit to slurm"
+#             help $NONZEROEXITCODE
+#         fi
+#     fi
 }
 
 ## OPTIONS
@@ -199,6 +199,6 @@ do
         exit $NONZEROEXITCODE
     elif [ $BOOL_SLURM -eq 1 ]; then
         # if slurm, generate submission script and run sbatch
-        $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${JOB}
+        $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${SIMID}
     fi
 done

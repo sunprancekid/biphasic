@@ -15,7 +15,7 @@ declare -i NONZEROEXITCODE=120
 # filename
 FILENAME="analysis_max_frequency"
 # header for parameter file
-PARM_HEADER="path,n,period,step_size,n_cycles,"
+PARM_HEADER="path,simid,period,step_size,n_cycles,"
 
 ## FLAG PROTOCOL
 # boolean that determines if the script should be executed verbosely
@@ -277,14 +277,14 @@ echo $PARM_HEADER > ${PARM_FILE}
 for n in $(seq 0 $(($N_PERIOD_VAL))); do
 
     # generate path
-    SUBDIR="${SIM_PATH}/${JOB}/n${n}"
+    SUBDIR="${SIM_PATH}/${JOB}/k${n}"
     if [ ! -d $SUBDIR ]; then
         # if the path does not exist, make it
         mkdir -p $SUBDIR
     fi
 
     # copy the model file
-    cp models/$FEB_FILE $SUBDIR
+    cp models/$FEB_FILE $SUBDIR/k${n}.feb
 
     # determine the frequency as a period
     PERIOD_VAL=$( logscale $n )
@@ -294,8 +294,8 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     LENGTH=$(mul $PERIOD_VAL $N_CYCLES )
 
     # augment the feb file
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/$FEB_FILE -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL
     # copy the simulation parameters to the parameter file
-    echo "${SUBDIR},${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
+    echo "k${n}/,k${n},${PERIOD_VAL},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
 done
