@@ -15,7 +15,7 @@ declare -i NONZEROEXITCODE=120
 # filename
 FILENAME="analysis_max_frequency"
 # header for parameter file
-PARM_HEADER="path,simid,period,step_size,n_cycles,"
+PARM_HEADER="path,simid,period,step_size,n_cycles"
 
 ## FLAG PROTOCOL
 # boolean that determines if the script should be executed verbosely
