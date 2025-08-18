@@ -32,6 +32,12 @@ declare -i BOOL_PERIOD=0
 declare -i BOOL_LENGTH=0
 # boolean that determines if the permeability parameter has been specified
 declare -i BOOL_PERM=0
+# boolean that determines if the elastic modulus has been specified
+declare -i BOOL_EMOD=0
+# boolean that determines if the solid fraction parameter has been specified
+declare -i BOOL_VFRAC=0
+# boolean that determines if the poisson ratio has been specified
+declare -i BOOL_PRATIO=0
 
 
 ## FUNCTIONS
@@ -61,6 +67,9 @@ help () {
     echo -e " -n  << ARG >>\t| OPTIONAL:  specify starting step size (default is 1 / 100 of max step)."
     echo -e " -c  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
     echo -e " -k  << ARG >>\t| OPTIONAL:  specify the material permiability."
+    echo -e " -e  << ARG >>\t| OPTIONAL:  specify the material elastic modulus."
+    echo -e " -f  << ARG >>\t| OPTIONAL:  specify the material solid fraction."
+    echo -e " -r  << ARG >>\t| OPTIONAL:  specify the material poisson ratio."
     echo -e "\n"
 
     # exit with exit code
@@ -70,7 +79,7 @@ help () {
 
 ## OPTIONS
 # parse options
-while getopts "hf:p:m:l:c:k:" option; do
+while getopts "hf:p:m:l:c:k:e:f:r:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -94,6 +103,15 @@ while getopts "hf:p:m:l:c:k:" option; do
         k) # specify the material permiability
             declare -i BOOL_PERM=1
             PERM=${OPTARG} ;;
+        e) # specify the material elastic modulus
+            declare -i BOOL_EMOD=1
+            EMOD=${OPTARG} ;;
+        f) # specify the material volume fraction
+            declare -i BOOL_VFRAC=1
+            VFRAC=${OPTARG} ;;
+        r) # specify the material poisson ratio
+            declare -i BOOL_PRATIO=1
+            PRATIO=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
@@ -141,4 +159,22 @@ fi
 if [ $BOOL_PERM -eq 1 ]; then
     # replace the material permiability with the new value
     sed -i "s/<perm>0.001<\/perm>/<perm>${PERM}<\/perm>/" $FEB_FILE
+fi
+
+# adjust the elastic modulus
+if [ $BOOL_EMOD -eq 1 ]; then
+    # replace the material elastic modulus with the new value
+    sed -i "s/<E>0.5<\/E>/<E>${EMOD}<\/E>/" $FEB_FILE
+fi
+
+# adjust the poisson ratio
+if [ $BOOL_PRATIO -eq 1 ]; then
+    # replace the material poisson ratio with the new value
+    sed -i "s/<v>0.1<\/v>/<v>${PRATIO}<\/v>/"
+fi
+
+# adjust the volume fraction
+if [ $BOOL_VFRAC -eq 1 ]; then
+    # replace the material volume fraction with the new value
+    sed -i "s/<phi0>0.2<\/phi0>/<phi0>${PRATIO}<\/phi0>/"
 fi
