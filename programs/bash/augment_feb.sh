@@ -68,7 +68,7 @@ help () {
     echo -e " -c  << ARG >>\t| OPTIONAL:  specify the period used for beam bending."
     echo -e " -k  << ARG >>\t| OPTIONAL:  specify the material permiability."
     echo -e " -e  << ARG >>\t| OPTIONAL:  specify the material elastic modulus."
-    echo -e " -f  << ARG >>\t| OPTIONAL:  specify the material solid fraction."
+    echo -e " -F  << ARG >>\t| OPTIONAL:  specify the material solid fraction."
     echo -e " -r  << ARG >>\t| OPTIONAL:  specify the material poisson ratio."
     echo -e "\n"
 
@@ -79,7 +79,7 @@ help () {
 
 ## OPTIONS
 # parse options
-while getopts "hf:p:m:l:c:k:e:f:r:" option; do
+while getopts "hf:p:m:l:c:k:e:F:r:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -106,7 +106,7 @@ while getopts "hf:p:m:l:c:k:e:f:r:" option; do
         e) # specify the material elastic modulus
             declare -i BOOL_EMOD=1
             EMOD=${OPTARG} ;;
-        f) # specify the material volume fraction
+        F) # specify the material volume fraction
             declare -i BOOL_VFRAC=1
             VFRAC=${OPTARG} ;;
         r) # specify the material poisson ratio
@@ -170,11 +170,11 @@ fi
 # adjust the poisson ratio
 if [ $BOOL_PRATIO -eq 1 ]; then
     # replace the material poisson ratio with the new value
-    sed -i "s/<v>0.1<\/v>/<v>${PRATIO}<\/v>/"
+    sed -i "s/<v>0.1<\/v>/<v>${PRATIO}<\/v>/" $FEB_FILE
 fi
 
 # adjust the volume fraction
 if [ $BOOL_VFRAC -eq 1 ]; then
     # replace the material volume fraction with the new value
-    sed -i "s/<phi0>0.2<\/phi0>/<phi0>${PRATIO}<\/phi0>/"
+    sed -i "s/<phi0>0.2<\/phi0>/<phi0>${VFRAC}<\/phi0>/" $FEB_FILE
 fi
