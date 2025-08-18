@@ -45,6 +45,12 @@ declare -i N_CYCLE_STEPS=20
 declare -i N_CYCLES=5
 # default permeability
 PERM="0.001"
+# default solid fraction
+VFRAC="0.20"
+# default elastic modulus
+EMOD="0.5"
+# deafult poisson ratio
+PRATIO="0.0"
 
 
 ## FUNCTIONS
@@ -71,7 +77,10 @@ help () {
     echo -e " -f  << ARG >>\t| MANDATORY: specify the '.feb' file to use, presumed to be stored in 'models/'."
     echo -e " -p  << ARG >>\t| MANDATORY: specify the path to generate directory hirearchy 'time_sensitivity'."
     echo -e " -j  << ARG >>\t| OPTIONAL:  rename the job (default is ${JOB})."
-    echo -e " -k  << ARG >>\t| OPTIONAL:  specify the material permeability (default is ${PERM})."
+    echo -e " -K  << ARG >>\t| OPTIONAL:  specify the material permeability (default is ${PERM})."
+    echo -e " -F  << ARG >>\t| OPTIONAL:  specify the material solid fraction (default is ${VFRAC})."
+    echo -e " -E  << ARG >>\t| OPTIONAL:  specify the material's elastic modulus (default is ${EMOD} MPa)."
+    echo -e " -R  << ARG >>\t| OPTIONAL:  specify the material's Possion ratio (default is ${PRATIO})."
     echo -e " -A  << ARG >>\t| OPTIONAL:  specify the minimum cycle period to test (default is ${MIN_PERIOD_VAL})."
     echo -e " -B  << ARG >>\t| OPTIONAL:  specify the maximum cycle period to test (default is ${MAX_PERIOD_VAL})."
     echo -e " -N  << ARG >>\t| OPTIONAL:  specify the number of unique cycle periods to test on logscale (default is ${N_PERIOD_VAL})."
@@ -238,7 +247,7 @@ mul () {
 
 ## OPTIONS
 # parse options
-while getopts "hvf:p:j:A:B:N:t:n:k:" opt; do
+while getopts "hvf:p:j:A:B:N:t:n:K:F:E:R:" opt; do
     case $opt in
         h) # get help, exit zero
             help 0 ;;
@@ -262,8 +271,14 @@ while getopts "hvf:p:j:A:B:N:t:n:k:" opt; do
             declare -i N_CYCLE_STEPS=${OPTARG} ;;
         n) # number of cycles
             declare -i N_CYCLES=$OPTARG ;;
-        k) # update the material permiability
+        K) # update the material permiability
             PERM=${OPTARG} ;;
+        F) # update the solid fraction assigned to the material
+            VFRAC=${OPTARG} ;;
+        E) # update the elastic modulus assigned to the material model
+            EMOD=${OPTARG} ;;
+        R) # update poisson ratio assigned to the material model
+            PRATIO=${OPTARG} ;;
         ?) # unknown option, get help and exit nonzero
             help $NONZEROEXITCODE
     esac

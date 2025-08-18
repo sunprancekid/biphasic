@@ -10,7 +10,8 @@
 import sys, os, math
 import pandas as pd
 import numpy as np
-from scipy import curve_fit # used for curve fitting
+from scipy.optimize import curve_fit # used for curve fitting
+import matplotlib.pyplot as plt
 # local
 # none
 
@@ -30,8 +31,8 @@ def log2lin (x, base = 10.):
     return math.pow(base, x)
 
 # cauchy distribution function
-def cauchy_dist (x, xo, gamma):
-    return (1. / math.pi) * (gamma / (math.pow(x - x0, 2) + math.pow(gamma, 2)))
+def cauchy_dist (x, x0, gamma):
+    return (1. / math.pi) * (gamma / (np.pow(x - x0, 2) + math.pow(gamma, 2)))
 
 
 ## ARGUMENTS
@@ -67,9 +68,33 @@ for i in range(c):
         p_log.append(lin2log(p[j]))
 
     # fit the data to cauchy distribution
-    popt, pcov = curve_fit(cauchy_dist, p_log, w)
+    init = [ p_log[w.index(max(w))], 0.0000001] # initial values to start with
+    popt, pcov = curve_fit(cauchy_dist, p_log, w, p0 = init)
     p_fit = [ ((max(p_log) - min(p_log)) / (n_fit - 1)) * j + min(p_log) for j in range(n_fit)]
     w_fit = [ cauchy_dist(x, *popt) for x in p_fit ]
+
+    print(popt)
+    print("The maximum period is {} seconds.".format(log2lin(popt[0])))
+
+    # plot to double check
+    fig, ax = plt.subplots()
+    plt.plot(p_fit, w_fit, 'k--',   label = "Cauchy Fit"    )
+    plt.plot(p_log,     w,  'rx',   label = "Hystersis Data")
+    plt.legend(loc = 'upper right')
+    plt.show()
+    exit()
+
+    # print(popt)
+    # exit()
+    #
+    # print("The maximum period is {} seconds".format(popt[0]))
+
+    for j in range(len(p_fit)):
+        print(j, p_fit[j], w_fit[j])
+
+    res = 0.
+    for j in range(len(w)):
+        res += math.pow(w[j] - cauchy_dist(p_log[j], *popt), 2)
 
     # find the maximum
     # write to file
