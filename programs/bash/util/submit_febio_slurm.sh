@@ -139,6 +139,7 @@ gen_slurm_script () {
     echo "#SBATCH -J ${SIMID}.%j.slurm" >> $FILEPATH$FILENAME
     echo "#SBATCH --nodes=1" >> $FILEPATH$FILENAME  # number of nodes
     echo "#SBATCH --ntasks=1" >> $FILEPATH$FILENAME   # number of processor cores (i.e. tasks)
+    echo "#SBATCH --cpus-per-task=16" >> $FILEPATH$FILENAME
     echo "#SBATCH --error=${SIMID}.%j.err" >> $FILEPATH$FILENAME
     echo "#SBATCH --output=${SIMID}.%j.out" >> $FILEPATH$FILENAME
     # echo "#SBATCH --mail-type=FAIL" >> $FILEPATH$FILENAME
