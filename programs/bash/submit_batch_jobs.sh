@@ -29,6 +29,8 @@ declare -i BOOL_JOB=0
 declare -i BOOL_LOCAL=0
 # boolean that determines if the jobs should be run via slurm
 declare -i BOOL_SLURM=0
+# boolean that determines if jobs should be transfered to another folder before execution
+declare -i BOOL_TRANSFER=0
 
 ## FUNCTIONS
 # display options, exit
@@ -50,8 +52,9 @@ help () {
     echo -e " -l\t\t| run job locally ('febio4' must be installed)."
     echo -e " -s\t\t| submit job via slurm (via 'sbatch' - see ${SUB_SLURM})."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
-    echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
+    echo -e " -d  << ARG >>\t| MANDATORY: path to job directory."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
+    echo -e " -t  << ARG >>\t| OPTIONAL:  transfer job files to another location before execution."
 #     echo -e " -f  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
     echo -e ""
     # exit
@@ -142,11 +145,20 @@ check () {
 #             help $NONZEROEXITCODE
 #         fi
 #     fi
+
+    # if a transfer pathwas specified, make sure that it exists
+    if [ $BOOL_TRANSFER -eq 1 ]; then
+        if [ ! -d $TRANS_PATH ]; then
+            # the transfer path does not exist
+            display_error "the transfer path ('${TRANS_PATH}') does not exist or cannot be found."
+            help $NONZEROEXITCODE
+        fi
+    fi
 }
 
 ## OPTIONS
 # parse options
-while getopts "hlsd:j:" opt
+while getopts "hlsd:j:t:" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -161,6 +173,9 @@ do
         j) # specify job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
+        t) # transfer files to another directory before execution
+            declare -i BOOL_TRANSFER=1
+            TRANS_PATH=${OPTARG} ;;
         ?) # unknown option
             help $NONZEROEXITCODE
     esac # case backwards ...
@@ -184,7 +199,7 @@ declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l)
 # loop through each line, line 1 is the header ..
 for n in $(seq 2 $N_LINES)
 do
-    ## get simulation pathsfebio4
+    ## get simulation paths
     # the first column is the SUBDIR
     SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 1)
     # the second column is the SIMID
@@ -196,7 +211,18 @@ do
         display_error "TODO :: implement running febio4 simulations locally"
         exit $NONZEROEXITCODE
     elif [ $BOOL_SLURM -eq 1 ]; then
-        # if slurm, generate submission script and run sbatch
-        $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${SIMID}
+        # if slurm, generate the submission script and submit
+        if [ $BOOL_TRANSFER -eq 1 ]; then
+            # create a subdirectory corresponding to the simulation path in the local directory
+            mkdir -p ${TRANS_PATH}${JOB_PATH}${SUBDIR}
+            # copy any files in the local directory to the transfer directory
+            cp ${JOB_PATH}${SUBDIR}* ${TRANS_PATH}${JOB_PATH}${SUBDIR}
+            # generate the slurm script in the transfer directory
+            $SUB_SLURM -d ${TRANS_PATH}${JOB_PATH}${SUBDIR} -j ${SIMID}
+        else
+            # submit the script from the local directory
+            $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${SIMID}
+        fi
+        exit 0
     fi
 done
