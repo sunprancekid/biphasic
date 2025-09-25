@@ -223,6 +223,5 @@ do
             # submit the script from the local directory
             $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${SIMID}
         fi
-        exit 0
     fi
 done
