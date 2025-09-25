@@ -29,8 +29,11 @@ declare -i BOOL_FEBFILE=0
 # boolean for overwrite protocol
 declare -i BOOL_OVERWRITE=0
 # boolean that determines if the script should generate directories
+declare -i BOOL_GEN=0
 # boolean that determines if the script should analyze and compile results
+declare -i BOOL_ANAL=0
 # boolean that determines if the script should submit to slurm
+declare -i BOOL_SUB=0
 # boolean that determines if the script should run locally
 ## testable parameters
 # list of volume fractions to test
@@ -130,14 +133,47 @@ check () {
 }
 
 # generate simulation parameters
+gen () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # none
+}
 
 # submit simulations to compute cluster via slurm
+sub () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # none
+}
 
 # compile simulation results
+anal () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # none
+}
 
 ## OPTIONS
 # parse option
-while getopts "hof:p:j:" opt; do
+while getopts "hof:p:j:gas" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
@@ -150,6 +186,12 @@ while getopts "hof:p:j:" opt; do
             DIR=${OPTARG} ;;
         j) # set the job name
             JOB=${OPTARG} ;;
+        g) # generate simulation files and directories
+            declare -i BOOL_GEN=1 ;;
+        a) # analyze and compile simulation data
+            declare -i BOOL_ANAL=1 ;;
+        s) # submit simulations for execution on slurm
+            declare -i BOOL_SUB=1 ;;
         ?) # default option, exit nonzero
             help $NONZERO_EXITCODE
     esac
@@ -163,3 +205,12 @@ done
 ## SCRIPT
 # check parameters passed as options to the script
 check
+
+# generate simulations
+gen
+
+# submit simulations
+sub
+
+# analyze and compile simulations
+anal
