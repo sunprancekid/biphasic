@@ -316,10 +316,7 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     LENGTH=$(mul $PERIOD_VAL $N_CYCLES )
 
     # augment the feb file
-    # set the material volume fraction
-    python programs/python/febio/parse_feb.py $SUBDIR/k${n}.feb "Material/material[@id='1']/phi0" $VFRAC
-    # set the material permiability
-    ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL -k $PERM -e $EMOD -r $PRATIO
+    ./programs/bash/augment_feb.sh -f ${SUBDIR}/k${n}.feb -m $TIMESTEP -l $LENGTH -c $PERIOD_VAL -r $PRATIO
     # copy the simulation parameters to the parameter file
     echo "k${n}/,k${n},${PERIOD_VAL},${PERM},${TIMESTEP},${N_CYCLES}" >> $PARM_FILE
 
