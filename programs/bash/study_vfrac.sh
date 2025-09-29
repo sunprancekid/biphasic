@@ -21,7 +21,7 @@ FILENAME="study_vfrac"
 # script purpose
 PURPOSE="perform max frequency analysis as a function of volume fraction, permeability, and elasticity."
 # default directory path
-DIR="./"
+DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # default job name
 JOB="vfrac_study"
 # boolean that determines if the feb file path has been passed to the method
@@ -37,8 +37,11 @@ declare -i BOOL_SUB=0
 # boolean that determines if the script should run locally
 ## testable parameters
 # list of volume fractions to test
+PARM_P=( "0.01" "0.1" "1.0" "10." "100." )
 # list of elasticity values to test
+PARM_E=( "0.005" "0.05" "0.5" "5.0" "50." )
 # list of permiability values to test
+PARM_K=( "0.00001" "0.0001" "0.001" "0.01" "0.1" )
 # maximum time scale to test
 # minimum timescale to test
 # number of timescales to test
@@ -122,13 +125,6 @@ check () {
     fi
 
     # check if the job already exists
-    if [[ -p ${DIR}/${JOB} && $BOOL_OVERWRITE -eq 0 ]]; then
-        # if the job already exists and overwrite has not been called
-        display_error "job directory already exists and cannot be overwritten (to overwrite, call -o)"
-    elif [[ ! -p ${DIR}/${JOB} ]]; then
-        # if the job path does not exist, make it
-        mkdir -p ${DIR}/${JOB}
-    fi
 
 }
 
@@ -136,13 +132,62 @@ check () {
 gen () {
 
     ## PARAMETERS
-    # none
+    # file which contains job parameters
+    local parm_file=${JOB}.csv
+    # integer used to count the number of unique parameters which are tested
+    declare -i count_int=0
+    # header used for parameter file
+    local parm_header="n,id,dir,E,K,P"
 
     ## ARGUMENTS
     # none
 
     ## SCRIPT
-    # none
+    # check if the path to the simulation job directory already exists
+    if [[ -p ${DIR}/${JOB} ]]; then
+        # if the job already exists, check if overwrite has been called
+        if [[ $BOOL_OVERWRITE -eq 1 ]]; then
+            # the directory exists and overwrite has been called
+            display_error "TODO :: implement method for clearing existing simulations with overwrite flag in 'gen' subroutine"
+        else
+            # the directory already exists and overwrite has not been called
+            display_error "job directory already exists and cannot be overwritten (to overwrite, call -o)"
+        fi
+    else
+        # the job path does not exist, so make it
+        mkdir -p ${DIR}/${JOB}
+        # initialize the parameter file
+        echo $parm_header #> $parm_file
+    fi
+
+    # if a parameter file has already been written to the job directory, check for overwrite
+
+    # loop through elastic, permiability constants
+    for e in "${PARM_E[@]}"; do
+        declare -i e_count=0
+        for k in "${PARM_K[@]}"; do
+            declare -i k_count=0
+            for p in "${PARM_P[@]}"; do
+                declare -i p_count=0
+
+                # generate directories
+                id="E${e_count}K${k_count}P${p_count}"
+                path="E${e_count}/K${k_count}/P${p_count}/"
+                echo "${n_count},${id},${path},${e},${k},${p}"
+                # write feb file
+                # generate max frequency analysis
+
+                # accumulate the void fraction count
+                ((p_count++))
+                # accumulate the total simulation parameter count
+                ((n_count++))
+            done
+            # accumulate the permeability parameter count
+            ((k_count++))
+        done
+        # accumulate the elasticity parameter count
+        ((e_count++))
+    done
 }
 
 # submit simulations to compute cluster via slurm
@@ -207,10 +252,16 @@ done
 check
 
 # generate simulations
-gen
+if [[ $BOOL_GEN -eq 1 ]]; then
+    gen
+fi
 
 # submit simulations
-sub
+if [[ $BOOL_SUB -eq 1 ]]; then
+ sub
+fi
 
 # analyze and compile simulations
-anal
+if [[ $BOOL_SUB -eq 1 ]]; then
+    anal
+fi
