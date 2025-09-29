@@ -10,7 +10,9 @@ set -e
 
 
 ## PARAMETERS
-## callable subscripts
+## callable subscripts and programs
+# augment feb file
+AUGMENT_FEB="python programs/python/febio/parse_feb.py"
 # used to parse information from csv files
 # used for generate and submit slurm scripts
 ## script execution
@@ -133,9 +135,9 @@ gen () {
 
     ## PARAMETERS
     # file which contains job parameters
-    local parm_file=${JOB}.csv
+    local parm_file=${DIR}${JOB}/${JOB}.csv
     # integer used to count the number of unique parameters which are tested
-    declare -i count_int=0
+    declare -i n_count=0
     # header used for parameter file
     local parm_header="n,id,dir,E,K,P"
 
@@ -144,7 +146,7 @@ gen () {
 
     ## SCRIPT
     # check if the path to the simulation job directory already exists
-    if [[ -p ${DIR}/${JOB} ]]; then
+    if [[ -p ${DIR}${JOB} ]]; then
         # if the job already exists, check if overwrite has been called
         if [[ $BOOL_OVERWRITE -eq 1 ]]; then
             # the directory exists and overwrite has been called
@@ -155,38 +157,51 @@ gen () {
         fi
     else
         # the job path does not exist, so make it
-        mkdir -p ${DIR}/${JOB}
+        mkdir -p ${DIR}${JOB}
         # initialize the parameter file
-        echo $parm_header #> $parm_file
+        echo $parm_header > $parm_file
     fi
 
     # if a parameter file has already been written to the job directory, check for overwrite
 
     # loop through elastic, permiability constants
+    declare -i e_count=0 # counter for each elasticity parameter
     for e in "${PARM_E[@]}"; do
-        declare -i e_count=0
+        
+        declare -i k_count=0 # counter for permeability parameter
         for k in "${PARM_K[@]}"; do
-            declare -i k_count=0
+
+            declare -i p_count=0 # counter for void fraction parameter
             for p in "${PARM_P[@]}"; do
-                declare -i p_count=0
 
                 # generate directories
                 id="E${e_count}K${k_count}P${p_count}"
                 path="E${e_count}/K${k_count}/P${p_count}/"
-                echo "${n_count},${id},${path},${e},${k},${p}"
-                # write feb file
+                echo "${n_count},${id},${path},${e},${k},${p}" >> $parm_file
+                mkdir -p ${DIR}${JOB}/${path}
+
+                # write / augment feb file
+                local feb="${DIR}${JOB}/${path}/${id}.feb"
+                cp $FEBFILE $feb
+                # assign the elasticity
+                $AUGMENT_FEB $feb "Material/material[@id='1']/solid[@type='isotropic elastic']/E" $e
+                # assign the permiability
+                $AUGMENT_FEB $feb "Material/material[@id='1']/permeability[@type='perm-const-iso']/perm" $k
+                # assign the solid volume fraction
+                $AUGMENT_FEB $feb "Material/material[@id='1']/phi0" $( echo "1 / (${p} + 1) " | bc -l)
+
                 # generate max frequency analysis
 
                 # accumulate the void fraction count
-                ((p_count++))
+                ((p_count=p_count+1))
                 # accumulate the total simulation parameter count
-                ((n_count++))
+                ((n_count=n_count+1))
             done
             # accumulate the permeability parameter count
-            ((k_count++))
+            ((k_count=k_count+1))
         done
         # accumulate the elasticity parameter count
-        ((e_count++))
+        ((e_count=e_count+1))
     done
 }
 
@@ -201,6 +216,7 @@ sub () {
 
     ## SCRIPT
     # none
+    display_error "TODO :: implement 'sub' subroutine"
 }
 
 # compile simulation results
@@ -214,6 +230,7 @@ anal () {
 
     ## SCRIPT
     # none
+    display_error "TODO :: implement 'anal' subroutine"
 }
 
 ## OPTIONS
