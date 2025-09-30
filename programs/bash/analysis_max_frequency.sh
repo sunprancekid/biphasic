@@ -108,9 +108,9 @@ check () {
         # feb file must be specified
         echo -e "\nERROR :: ${FILENAME} :: must specify '.feb' file.\n"
         help $NONZEROEXITCODE
-    elif [ ! -f models/${FEB_FILE} ]; then
+    elif [ ! -f ${FEB_FILE} ]; then
         # the feb file does not exist
-        echo -e "\nERROR :: ${FILENAME} :: the file 'models/${FEB_FILE}' cannot be found.\n"
+        echo -e "\nERROR :: ${FILENAME} :: the file '${FEB_FILE}' cannot be found.\n"
         help $NONZEROEXITCODE
     fi
     # the feb file exists
@@ -306,7 +306,7 @@ for n in $(seq 0 $(($N_PERIOD_VAL))); do
     fi
 
     # copy the model file
-    cp models/$FEB_FILE $SUBDIR/k${n}.feb
+    cp $FEB_FILE $SUBDIR/k${n}.feb
 
     # determine the frequency as a period
     PERIOD_VAL=$( logscale $n )

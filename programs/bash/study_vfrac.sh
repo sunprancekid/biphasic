@@ -12,7 +12,8 @@ set -e
 ## PARAMETERS
 ## callable subscripts and programs
 # augment feb file
-AUGMENT_FEB="python programs/python/febio/parse_feb.py"
+AUGMENT_FEB_PYTHON="python programs/python/febio/parse_feb.py"
+AUGMENT_FEB_LINUX="./programs/bash/augment_feb.sh"
 # used to find the max frequency associated with a model
 MAX_FREQUENCY="./programs/bash/analysis_max_frequency.sh"
 # used to parse information from csv files
@@ -44,13 +45,13 @@ declare -i BOOL_SUB=0
 # list of volume fractions to test
 PARM_P=( "0.01" "0.1" "1.0" "10." "100." )
 # list of elasticity values to test
-PARM_E=( "0.005" "0.05" "0.5" "5.0" "50." )
+PARM_E=( "0.5" ) #( "0.005" "0.05" "0.5" "5.0" "50." )
 # list of permiability values to test
 PARM_K=( "0.00001" "0.0001" "0.001" "0.01" "0.1" )
 # maximum time scale to test
-MIN_PERIOD="2."
+MIN_PERIOD="0.1"
 # minimum timescale to test
-MAX_PERIOD="2000."
+MAX_PERIOD="10000."
 # number of timescales to test
 declare -i N_PERIOD=30
 # number of simulation time steps per cycle
@@ -149,7 +150,7 @@ gen () {
     # integer used to count the number of unique parameters which are tested
     declare -i n_count=0
     # header used for parameter file
-    local parm_header="n,id,dir,E,K,P"
+    local parm_header="path,id,n,E,K,P"
 
     ## ARGUMENTS
     # none
@@ -188,21 +189,24 @@ gen () {
                 id="E${e_count}K${k_count}P${p_count}"
                 path="E${e_count}/K${k_count}/P${p_count}/"
                 local simdir=${DIR}${JOB}/${path}
-                echo "${n_count},${id},${path},${e},${k},${p}" >> $parm_file
+                echo "${path},${id},${n_count},${e},${k},${p}" >> $parm_file
                 mkdir -p ${DIR}${JOB}/${path}
 
                 # write / augment feb file
                 local feb="${simdir}${id}.feb"
                 cp $FEBFILE $feb
                 # assign the elasticity
-                $AUGMENT_FEB $feb "Material/material[@id='1']/solid[@type='isotropic elastic']/E" $e
+                # $AUGMENT_FEB_PYTHON $feb "Material/material[@id='1']/solid[@type='isotropic elastic']/E" $e
+                $AUGMENT_FEB_LINUX -f $feb -e $e
                 # assign the permiability
-                $AUGMENT_FEB $feb "Material/material[@id='1']/permeability[@type='perm-const-iso']/perm" $k
+                # $AUGMENT_FEB_PYTHON $feb "Material/material[@id='1']/permeability[@type='perm-const-iso']/perm" $k
+                $AUGMENT_FEB_LINUX -f $feb -k $k
                 # assign the solid volume fraction
-                $AUGMENT_FEB $feb "Material/material[@id='1']/phi0" $( echo "1 / (${p} + 1) " | bc -l)
+                # $AUGMENT_FEB_PYTHON $feb "Material/material[@id='1']/phi0" $( echo "1 / (${p} + 1) " | bc -l)
+                $AUGMENT_FEB_LINUX -f $feb -F $( echo "1 / (${p} + 1) " | bc -l)
 
                 # generate max frequency analysis within the sub directory
-                $MAX_FREQUENCY -f $feb -p $simdir -A -B -N -t -n
+                $MAX_FREQUENCY -f $feb -p $simdir -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -t $N_TIMESTEP -n $N_CYCLE
 
                 # accumulate the void fraction count
                 ((p_count=p_count+1))
@@ -240,6 +244,7 @@ sub () {
     for n in $(seq 2 $n_lines); do
         # get the directory corresponding to the simulation
         local simdir="${DIR}${JOB}/$($PARSE_CSV -f $parm_file -l $n -c 3)"
+        echo $simdir
 
     done
     display_error "TODO :: implement 'sub' subroutine"
@@ -301,7 +306,7 @@ fi
 
 # submit simulations
 if [[ $BOOL_SUB -eq 1 ]]; then
- sub
+    sub
 fi
 
 # analyze and compile simulations
