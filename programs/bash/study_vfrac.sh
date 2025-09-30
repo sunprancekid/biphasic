@@ -13,7 +13,10 @@ set -e
 ## callable subscripts and programs
 # augment feb file
 AUGMENT_FEB="python programs/python/febio/parse_feb.py"
+# used to find the max frequency associated with a model
+MAX_FREQUENCY="./programs/bash/analysis_max_frequency.sh"
 # used to parse information from csv files
+PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # used for generate and submit slurm scripts
 ## script execution
 # nonzero exit code for errors
@@ -45,8 +48,15 @@ PARM_E=( "0.005" "0.05" "0.5" "5.0" "50." )
 # list of permiability values to test
 PARM_K=( "0.00001" "0.0001" "0.001" "0.01" "0.1" )
 # maximum time scale to test
+MIN_PERIOD="2."
 # minimum timescale to test
+MAX_PERIOD="2000."
 # number of timescales to test
+declare -i N_PERIOD=30
+# number of simulation time steps per cycle
+declare -i N_TIMESTEP=40
+# number of cycles
+declare -i N_CYCLE=10
 
 
 ## FUNCTIONS
@@ -146,14 +156,14 @@ gen () {
 
     ## SCRIPT
     # check if the path to the simulation job directory already exists
-    if [[ -p ${DIR}${JOB} ]]; then
+    if [[ -d ${DIR}${JOB} ]]; then
         # if the job already exists, check if overwrite has been called
         if [[ $BOOL_OVERWRITE -eq 1 ]]; then
             # the directory exists and overwrite has been called
             display_error "TODO :: implement method for clearing existing simulations with overwrite flag in 'gen' subroutine"
         else
             # the directory already exists and overwrite has not been called
-            display_error "job directory already exists and cannot be overwritten (to overwrite, call -o)"
+            display_error "job directory ('${DIR}${JOB}') already exists and cannot be overwritten. to overwrite, call -o; or name job differently."
         fi
     else
         # the job path does not exist, so make it
@@ -177,11 +187,12 @@ gen () {
                 # generate directories
                 id="E${e_count}K${k_count}P${p_count}"
                 path="E${e_count}/K${k_count}/P${p_count}/"
+                local simdir=${DIR}${JOB}/${path}
                 echo "${n_count},${id},${path},${e},${k},${p}" >> $parm_file
                 mkdir -p ${DIR}${JOB}/${path}
 
                 # write / augment feb file
-                local feb="${DIR}${JOB}/${path}/${id}.feb"
+                local feb="${simdir}${id}.feb"
                 cp $FEBFILE $feb
                 # assign the elasticity
                 $AUGMENT_FEB $feb "Material/material[@id='1']/solid[@type='isotropic elastic']/E" $e
@@ -190,7 +201,8 @@ gen () {
                 # assign the solid volume fraction
                 $AUGMENT_FEB $feb "Material/material[@id='1']/phi0" $( echo "1 / (${p} + 1) " | bc -l)
 
-                # generate max frequency analysis
+                # generate max frequency analysis within the sub directory
+                $MAX_FREQUENCY -f $feb -p $simdir -A -B -N -t -n
 
                 # accumulate the void fraction count
                 ((p_count=p_count+1))
@@ -209,13 +221,27 @@ gen () {
 sub () {
 
     ## PARAMETERS
-    # none
+    # file which contains job parameters
+    local parm_file=${DIR}${JOB}/${JOB}.csv
+    # 
 
     ## ARGUMENTS
     # none
 
     ## SCRIPT
-    # none
+    # check that the parameter file exists
+    if [[ ! -f $parm_file ]]; then
+        # the file containing the parameters does not exist
+        display_error "unable to find parameter file '$parm_file' in '${DIR}${JOB}'."
+    fi
+
+    # open the parameter file, loop through each line
+    local n_lines=$($PARSE_CSV -f $parm_file -l)
+    for n in $(seq 2 $n_lines); do
+        # get the directory corresponding to the simulation
+        local simdir="${DIR}${JOB}/$($PARSE_CSV -f $parm_file -l $n -c 3)"
+
+    done
     display_error "TODO :: implement 'sub' subroutine"
 }
 
