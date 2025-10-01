@@ -19,6 +19,7 @@ MAX_FREQUENCY="./programs/bash/analysis_max_frequency.sh"
 # used to parse information from csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # used for generate and submit slurm scripts
+SUB_SLURM="./programs/bash/submit_batch_jobs.sh"
 ## script execution
 # nonzero exit code for errors
 declare -i NONZERO_EXITCODE=120
@@ -243,11 +244,13 @@ sub () {
     local n_lines=$($PARSE_CSV -f $parm_file -l)
     for n in $(seq 2 $n_lines); do
         # get the directory corresponding to the simulation
-        local simdir="${DIR}${JOB}/$($PARSE_CSV -f $parm_file -l $n -c 3)"
-        echo $simdir
-
+        local simdir="${DIR}${JOB}/$($PARSE_CSV -f $parm_file -l $n -c 1)"
+        # check that the maximum frequency analysis csv exists
+        if [[ -f "${simdir}/max_frequency/max_frequency.csv" ]]; then
+            # submit to slurm
+            $SUB_SLURM -d "${simdir}/max_frequency/" -j "max_frequency" -s
+        fi
     done
-    display_error "TODO :: implement 'sub' subroutine"
 }
 
 # compile simulation results
@@ -310,6 +313,6 @@ if [[ $BOOL_SUB -eq 1 ]]; then
 fi
 
 # analyze and compile simulations
-if [[ $BOOL_SUB -eq 1 ]]; then
+if [[ $BOOL_ANAL -eq 1 ]]; then
     anal
 fi
