@@ -16,6 +16,8 @@ AUGMENT_FEB_PYTHON="python programs/python/febio/parse_feb.py"
 AUGMENT_FEB_LINUX="./programs/bash/augment_feb.sh"
 # used to find the max frequency associated with a model
 MAX_FREQUENCY="./programs/bash/analysis_max_frequency.sh"
+# used for loading analysis
+LOADING="./programs/bash/analysis_loading.sh"
 # used to parse information from csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # used for generate and submit slurm scripts
@@ -41,12 +43,16 @@ declare -i BOOL_GEN=0
 declare -i BOOL_ANAL=0
 # boolean that determines if the script should submit to slurm
 declare -i BOOL_SUB=0
+# boolean for loading simulations
+declare -i BOOL_LOAD=0
+# boolean for frequency simulations
+declare -i BOOL_FREQ=0
 # boolean that determines if the script should run locally
 ## testable parameters
 # list of volume fractions to test
-PARM_P=( "0.01" "0.1" "1.0" "10." "100." )
+PARM_P=( "4." )
 # list of elasticity values to test
-PARM_E=( "0.5" ) #( "0.005" "0.05" "0.5" "5.0" "50." )
+PARM_E=( "0.005" "0.05" "0.5" "5.0" "50." )
 # list of permiability values to test
 PARM_K=( "0.00001" "0.0001" "0.001" "0.01" "0.1" )
 # maximum time scale to test
@@ -84,6 +90,8 @@ help () {
     echo -e " -g\t\t| generate simulation directories."
     echo -e " -s\t\t| submit simulations to slurm."
     echo -e " -a\t\t| analyze and compile simulation results."
+    echo -e " -L\t\t| perform loading analysis simulations."
+    echo -e " -F\t\t| perform frequency analysis simulations."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -f << ARG >>\t| MANDATORY: path to feb file to use as base model (typically stored in 'models')."
     echo -e " -p << ARG >>\t| path to which contains directory hirearchy (default is ${DIR})."
@@ -206,8 +214,18 @@ gen () {
                 # $AUGMENT_FEB_PYTHON $feb "Material/material[@id='1']/phi0" $( echo "1 / (${p} + 1) " | bc -l)
                 $AUGMENT_FEB_LINUX -f $feb -F $( echo "1 / (${p} + 1) " | bc -l)
 
-                # generate max frequency analysis within the sub directory
-                $MAX_FREQUENCY -f $feb -p $simdir -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -t $N_TIMESTEP -n $N_CYCLE
+                # frequency analysis
+                if [[ $BOOL_FREQ -eq 1 ]]; then
+                    # generate max frequency analysis within the sub directory
+                    $MAX_FREQUENCY -f $feb -p $simdir -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -t $N_TIMESTEP -n $N_CYCLE
+                fi
+
+                # loading analysis
+                if [[ $BOOL_LOAD -eq 1 ]]; then
+                    # generate loading analysis within subdirectory
+                    $LOADING -f $feb -p $simdir
+                    display_error "TODO :: implement loading analysis"
+                fi
 
                 # accumulate the void fraction count
                 ((p_count=p_count+1))
@@ -249,6 +267,11 @@ sub () {
         if [[ -f "${simdir}/max_frequency/max_frequency.csv" ]]; then
             # submit to slurm
             $SUB_SLURM -d "${simdir}/max_frequency/" -j "max_frequency" -s
+        fi
+        # check if the load analysis exists
+        if [[ -f "${simdir}/loading/loading.csv" ]]
+            # submit to slurm
+            $SUB_SLURM -d "${simdir}/loading/" -j "loading" -s
         fi
     done
 }

@@ -3,3 +3,13 @@
 *.xplt
 *.fs2
 *.log 
+*.csv
+*.sub
+
+# python compilation
+*.pyc
+
+# kate text editor
+*.kate-swp
+
+
