@@ -42,8 +42,8 @@ MAX_LOADTIME="100."
 declare -i N_LOAD_TIMES=30
 # loading depth (mm)
 LOADING_DEPTH="0.025"
-# loading duration (seconds)
-LOADING_LENGTH="10."
+# DEPRICATED - loading duration (seconds)
+# LOADING_LENGTH="10."
 # holding duration (seconds)
 HOLDING_LENGTH="1000."
 # steps during loading
@@ -172,11 +172,17 @@ generate () {
         # adjust the loading rate (stored in the load controller)
         $AUGMENT_FEB $feb "LoadData/load_controller[@name='tip_displacement_controller']/math" "t/$load_time"
         # adjust the number of loading steps
+        local load_step_size=$( echo "$load_time / $N_LOAD_STEPS"| bc -l )
         $AUGMENT_FEB $feb "Step/step[@id='1']/Control/time_steps" $( echo "10 * (${N_LOAD_STEPS})" | bc -l )
-        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/step_size" $( echo "$load_time / ($N_LOAD_STEPS * 10)" | bc -l )
-        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/time_stepper/dtmin" $( echo "$load_time / ($N_LOAD_STEPS * 100)" | bc -l )
-        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/time_stepper/dtmax" $( echo "$load_time / $N_LOAD_STEPS"| bc -l )
+        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/step_size" $( echo "$load_step_size / 10" | bc -l )
+        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/time_stepper/dtmin" $( echo "$load_step_size / 100" | bc -l )
+        $AUGMENT_FEB $feb "Step/step[@id='1']/Control/time_stepper/dtmax" $load_step_size
         # adjust the holding time and number of steps
+        local hold_step_size=$( echo "100 * $load_time / $N_HOLD_STEPS" | bc -l )
+#         $AUGMENT_FEB $feb "LoadData/load_controller[@name='hold_maxstep_controller']/math" "$hold_step_size + (${hold_step_size} * 10 * t)"
+#         $AUGMENT_FEB $feb "Step/step[@id='2']/Control/time_steps" $( echo "10 * (${N_HOLD_STEPS})" | bc -l )
+#         $AUGMENT_FEB $feb "Step/step[@id='2']/Control/step_size" $( echo "$hold_step_size / 10" | bc -l )
+#         $AUGMENT_FEB $feb "Step/step[@id='2']/Control/time_stepper/dtmin" $( echo "$hold_step_size / 100" | bc -l )
     done
 }
 

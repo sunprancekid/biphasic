@@ -22,6 +22,9 @@ LOADING="./programs/bash/analysis_loading.sh"
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # used for generate and submit slurm scripts
 SUB_SLURM="./programs/bash/submit_batch_jobs.sh"
+# used for parsing simulation results
+ANALYSIS="./programs/bash/analysis.sh"
+
 ## script execution
 # nonzero exit code for errors
 declare -i NONZERO_EXITCODE=120
@@ -52,7 +55,7 @@ declare -i BOOL_FREQ=0
 # list of volume fractions to test
 PARM_P=( "4." )
 # list of elasticity values to test
-PARM_E=( "0.005" "0.05" "0.5" "5.0" "50." )
+PARM_E=( "0.5" ) #( "0.005" "0.05" "0.5" "5.0" "50." )
 # list of permiability values to test
 PARM_K=( "0.00001" "0.0001" "0.001" "0.01" "0.1" )
 # maximum time scale to test
@@ -101,7 +104,7 @@ help () {
     # exit with exit code
     exit $exitcode
 
-    }
+}
 
 # display formatted error message, exit nonzero
 display_error () {
@@ -223,8 +226,7 @@ gen () {
                 # loading analysis
                 if [[ $BOOL_LOAD -eq 1 ]]; then
                     # generate loading analysis within subdirectory
-                    $LOADING -f $feb -p $simdir
-                    display_error "TODO :: implement loading analysis"
+                    $LOADING -f $feb -p $simdir -j "load"
                 fi
 
                 # accumulate the void fraction count
@@ -255,7 +257,7 @@ sub () {
     # check that the parameter file exists
     if [[ ! -f $parm_file ]]; then
         # the file containing the parameters does not exist
-        display_error "unable to find parameter file '$parm_file' in '${DIR}${JOB}'."
+        display_error "unable to submit jobs, cannot find parameter file '$parm_file' in '${DIR}${JOB}'."
     fi
 
     # open the parameter file, loop through each line
@@ -269,9 +271,10 @@ sub () {
             $SUB_SLURM -d "${simdir}/max_frequency/" -j "max_frequency" -s
         fi
         # check if the load analysis exists
-        if [[ -f "${simdir}/loading/loading.csv" ]]
+        if [[ -f "${simdir}/load/load.csv" ]]; then
             # submit to slurm
-            $SUB_SLURM -d "${simdir}/loading/" -j "loading" -s
+            $SUB_SLURM -d "${simdir}/load/" -j "load" -s
+    display_error "TODO :: implement 'anal' subroutine"
         fi
     done
 }
@@ -280,19 +283,38 @@ sub () {
 anal () {
 
     ## PARAMETERS
-    # none
+    # file which contains job parameters
+    local parm_file=${DIR}${JOB}/${JOB}.csv
 
     ## ARGUMENTS
     # none
 
     ## SCRIPT
-    # none
-    display_error "TODO :: implement 'anal' subroutine"
+    # check that the parameter file exists
+    if [[ ! -f $parm_file ]]; then
+        display_error "unable to analyze jobs, parameter file '$parm_file' in '${DIR}${JOB}' does not exist."
+    fi
+
+    # open the parameter file and check that each
+    local n_lines=$( $PARSE_CSV -f $parm_file -l )
+    for n in $(seq 2 $n_lines ); do
+        # get the directory corresponding to the simulation
+        local simdir="${DIR}${JOB}/$($PARSE_CSV -f $parm_file -l $n -c 1 )"
+        # if max frequency jobs have been performed
+        if [[ -f "${simdir}/max_frequency/max_frequency.csv" ]]; then
+            $ANALYSIS -d "${simdir}max_frequency" -j "max_frequency" -H # hystersis analysis
+        fi
+        # if loading jobs have been performed
+        if [[ -f "${simdir}/load/load.csv" ]]; then
+            $ANALYSIS -d "${simdir}load/" -j "load"
+        fi
+        exit 0
+    done
 }
 
 ## OPTIONS
 # parse option
-while getopts "hof:p:j:gas" opt; do
+while getopts "hof:p:j:gasFL" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
@@ -311,6 +333,10 @@ while getopts "hof:p:j:gas" opt; do
             declare -i BOOL_ANAL=1 ;;
         s) # submit simulations for execution on slurm
             declare -i BOOL_SUB=1 ;;
+        L) # loading analysis
+            declare -i BOOL_LOAD=1 ;;
+        F) # frequency analysis
+            declare -i BOOL_FREQ=1 ;;
         ?) # default option, exit nonzero
             help $NONZERO_EXITCODE
     esac

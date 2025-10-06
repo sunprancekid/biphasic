@@ -27,6 +27,10 @@ declare -i NONZEROEXITCODE=120
 FILENAME="analysis.sh"
 # text explaining the purpose of the script
 PURPOSE="extract and compile results from febio simulations"
+# boolean for hysteresis analysis
+declare -i BOOL_HYS=0
+# boolean for performing relaxation analysis
+declare -i BOOL_RELAX=0
 
 ## FUNCTIONS
 # display options, exit
@@ -44,6 +48,8 @@ help () {
     echo -e "\nFILE: ${FILENAME}\nPURPOSE: ${PURPOSE}\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
+    echo -e " -H\t\t| perform hystersis analysis."
+    echo -e " -R\t\t| perform relaxation analysis."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.csv' file with job parameters."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
@@ -117,10 +123,14 @@ check () {
 
 ## OPTIONS
 # parse options, if any
-while getopts "hd:j:" opt; do
+while getopts "hHRd:j:" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
+        H) # perform hystersis analysis
+            declare -i BOOL_HYS=1 ;;
+        R) # perform relaxation analysis
+            declare -i BOOL_RELAX=1 ;;
         d) # path to job directory
             declare -i BOOL_PATH=1
             JOB_PATH=${OPTARG} ;;
@@ -160,9 +170,14 @@ do
         declare -i HAS_PERIOD_COL=1
     fi
 done
-# if the period column was not processed, abort
-if [ $HAS_PERIOD_COL -eq 0 ]; then
-    display_error "unable to parse 'period' column from ${PARM_FILE}, cannot perform hystersis analysis"
+
+# if hystersis analysis should be performed
+if [[ $BOOL_HYS -eq 1 ]]; then
+    # check if the simulation parameter includes the period
+    if [ $HAS_PERIOD_COL -eq 0 ]; then
+        # if it does not, abort
+        display_error "unable to parse 'period' column from ${PARM_FILE}, cannot perform hystersis analysis"
+    fi
 fi
 
 # loop through each line, line 1 is the header ..
@@ -178,20 +193,23 @@ do
     $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
 
     ## perform analysis as requested
-    # for now, just determine hystersis
-    # determine the column which contains the period
-    $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
+    # hystersis analysis
+    if [[ $BOOL_HYS -eq 1 ]]; then
+        # for now, just determine hystersis
+        # determine the column which contains the period
+        $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
 
-    ## get the information from the save file, append to the parameter file
-    # get the header for the summary file, if not already
-    if [ $HAS_SUM_HEADER -eq 0 ]; then
-        PARM_HEADER=$($PARSE_CSV -f $PARM_FILE -l 1)
-        HYS_HEADER=$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 1)
-        SUM_HEADER="${PARM_HEADER},${HYS_HEADER}"
-        echo "$SUM_HEADER" > $SUM_FILE
-        declare -i HAS_SUM_HEADER=1
+        ## get the information from the save file, append to the parameter file
+        # get the header for the summary file, if not already
+        if [ $HAS_SUM_HEADER -eq 0 ]; then
+            PARM_HEADER=$($PARSE_CSV -f $PARM_FILE -l 1)
+            HYS_HEADER=$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 1)
+            SUM_HEADER="${PARM_HEADER},${HYS_HEADER}"
+            echo "$SUM_HEADER" > $SUM_FILE
+            declare -i HAS_SUM_HEADER=1
+        fi
+        # write the hysterseis information to the summary file
+        echo "$($PARSE_CSV -f $PARM_FILE -l $n),$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 2)" >> $SUM_FILE
     fi
-    # write the hysterseis information to the summary file
-    echo "$($PARSE_CSV -f $PARM_FILE -l $n),$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 2)" >> $SUM_FILE
 
 done
