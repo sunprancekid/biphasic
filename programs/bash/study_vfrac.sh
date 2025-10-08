@@ -260,7 +260,8 @@ sub () {
         display_error "unable to submit jobs, cannot find parameter file '$parm_file' in '${DIR}${JOB}'."
     fi
 
-    # open the parameter file, loop through each line
+    # open the parameter file, ## execution
+# loop through each line
     local n_lines=$($PARSE_CSV -f $parm_file -l)
     for n in $(seq 2 $n_lines); do
         # get the directory corresponding to the simulation
