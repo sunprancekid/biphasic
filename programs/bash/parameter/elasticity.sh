@@ -13,6 +13,10 @@ set -e
 ## PROGRAMS
 # used to parse and write information to csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
+# used to generate range of values along a logscale
+LOGSCALE="./programs/bash/util/math/logscale.sh"
+# used to generate range of values along a linear scale
+LINSCALE="./programs/bash/util/math/linscale.sh"
 
 ## PARAMETERS
 # nonzero exit code
