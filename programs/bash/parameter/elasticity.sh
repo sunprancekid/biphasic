@@ -13,10 +13,8 @@ set -e
 ## PROGRAMS
 # used to parse and write information to csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
-# used to generate range of values along a logscale
-LOGSCALE="./programs/bash/util/math/logscale.sh"
-# used to generate range of values along a linear scale
-LINSCALE="./programs/bash/util/math/linscale.sh"
+# used to generate range of values along either a logscale or a linear scale
+LINLOGSCALE="./programs/bash/util/math/linlogscale.sh"
 
 ## PARAMETERS
 # nonzero exit code
@@ -70,6 +68,7 @@ help () {
     # display script options
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0."
+    echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e "\n ## SCRIPT MODIFIABLE PARAEMETERS ## \n"
     echo -e " -d << ARG >>\t| PATH to which contains directory hirearchy (default is ${DIR})."
     echo -e " -j << ARG >>\t| named assgined to JOB, contains simulation directories (default is ${JOB})."
@@ -78,7 +77,6 @@ help () {
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
     echo -e " -B << ARG >>\t| MAX value assigned to parameter."
-    echo -e " -L << ARG >>\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e " -N << ARG >>\t| NUMBER of unique parameters to generate between A and B."
     echo -e ""
 
@@ -183,25 +181,61 @@ gen () {
         if [[ $lines -eq 1 ]]; then
             # if there is only one line in the parameter file
             # then only the header has been written and no paraemeters have been generated for the job
-            for n in $( seq 0 $( echo "$NVALS - 1" | bc -l ) ); do
+            for n in $( seq 1 $( echo "$NVALS" | bc -l ) ); do
                 # generate parameters, append to file
-                if [[ $BOOL_LOGSCALE -eq 1 ]];
+                if [[ $BOOL_LOGSCALE -eq 1 ]]; then
                     # generate along a log scale
-                    VAL="0."
+                    VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n -L )
                 else
                     # generate along a lin scale
-                    VAL="0."
+                    VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n )
                 fi
                 # append to file
-                echo "${n},${KEY}${n},${KEY}${n},$VAL" >> $PARM_FILE
+                echo "${n},${KEY}${n},${KEY}${n}/,$VAL" >> $PARM_FILE
             done
+        else
+            # multiple values have already been specified
+            # loop through each line in parameter file, and replicate all values
+            OLD_PARM_FILE="${PARM_FILE}~"
+            cp $PARM_FILE $OLD_PARM_FILE # create copy of the parameter file
+            echo $( $PARSE_CSV -f $OLD_PARM_FILE -l 1 ) > $PARM_FILE # copy the header, overwrite the original
+            # loop through each new parameter
+            declare -i count=1
+            for n in $( seq 1 $( echo "NVALS" | bc -l )); do
+                # loop through each line of the old file
+                for l in $(seq 2 $lines ); do
+                    # update the id
+                    local simid="$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c 2 )${KEY}${n}"
+                    # update the directory
+                    local simdir="$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c 3)${KEY}${n}/"
+                    # parse the parameters
+                    local columns=$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c )
+                    local parms=""
+                    for c in $( seq 4 $columns ); do
+                        parms="${parms}$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c $c ),"
+                    done
+                    # determine the new value
+                    if [[ $BOOL_LOGSCALE -eq 1 ]]; then
+                        # generate along a log scale
+                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n -L )
+                    else
+                        # generate along a lin scale
+                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n )
+                    fi
+                    # append to the new file
+                    echo "${count},${simid},${simdir},${parms}${VAL}" >> $PARM_FILE
+                    # update the count
+                    ((count++))
+                done
+            done
+            # delete the old file
         fi
     fi
 }
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:x:k:C:A:B:L:N:" opt; do
+while getopts "hd:j:x:k:C:A:B:LN:" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;

@@ -17,7 +17,7 @@ set -e
 # nonzero exit value
 declare -i NONZERO_EXITCODE=120
 # file name
-FILENAME="progams/bash/util/math/logscale.sh"
+FILENAME="progams/bash/util/math/linlogscale.sh"
 # purpose
 PURPOSE="generate one value (n) corresponding to range of number (N) between (A) and (B) along either linear or logscale"
 
