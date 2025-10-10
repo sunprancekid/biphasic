@@ -8,7 +8,7 @@ set -e
 ## 2025.10.06
 
 ## FILE: bash/parameter/elasticity.sh
-## PURPOSE: generate set of elasticity parameters according to linear or logscale, write to FEB file
+## PURPOSE: generate set of parameters, which can later be written to a feb file
 
 ## PROGRAMS
 # used to parse and write information to csv files
@@ -28,13 +28,16 @@ PARM_HEADER="n,id,path"
 
 ## options
 # default directory path for storing parameters
+declare -i BOOL_DIR=0
 DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # default job name
+# boolean for job name
+declare -i BOOL_JOB=0
 JOB="biphasic_job"
-# default xml path specifying elasticity in '.feb' file
-XML_PATH="Material/material[@id='1']/solid[@type='isotropic elastic']/E"
-# default key use to identify the elasticity parameter
-KEY="E"
+# boolean for xml path
+declare -i BOOL_XML=0
+# boolean corresponding to parameter key
+declare -i BOOL_KEY=0
 # boolean used to determine if a cosntant value has been specifed
 declare -i BOOL_CONSTANT=0
 # boolean determining if a minimum value has been specified
@@ -70,10 +73,10 @@ help () {
     echo -e " -h\t\t| display options, exit 0."
     echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e "\n ## SCRIPT MODIFIABLE PARAEMETERS ## \n"
-    echo -e " -d << ARG >>\t| PATH to which contains directory hirearchy (default is ${DIR})."
-    echo -e " -j << ARG >>\t| named assgined to JOB, contains simulation directories (default is ${JOB})."
-    echo -e " -x << ARG >>\t| XML path specifiying elastic modulus in '.feb' file (default is '${XML_PATH}')."
-    echo -e " -k << ARG >>\t| shortcut KEY used to identify elasticity parameter (default is ${KEY})."
+    echo -e " -d << ARG >>\t| MANDATORYPATH to which contains directory hirearchy (default is ${DIR})."
+    echo -e " -j << ARG >>\t| MANDATORY: named assgined to JOB, contains simulation directories (default is ${JOB})."
+    echo -e " -x << ARG >>\t| MANDATORY: XML path specifiying elastic modulus in '.feb' file (default is '${XML_PATH}')."
+    echo -e " -k << ARG >>\t| MANDATORY: shortcut KEY used to identify elasticity parameter (default is ${KEY})."
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
     echo -e " -B << ARG >>\t| MAX value assigned to parameter."
@@ -116,16 +119,29 @@ check () {
 
     ## SCRIPT
     # check that the path to the directory exists
-    if [[ ! -d $DIR ]]; then
+    if [[ $BOOL_DIR -eq 0 ]]; then
+        display_error "must specify job DIRECTORY (option -d)"
+    elif [[ ! -d $DIR ]]; then
         # if the path does not exist, thow an error
         display_error "unable to find path '$DIR'"
     fi
 
     # check if the job exist
     SUBDIR="$DIR/$JOB/"
-    if [[ ! -d $SUBDIR ]]; then
+    if [[ $BOOL_JOB -eq 1 ]]; then
+        display_error "must specify JOB name (option -j)"
+    elif [[ ! -d $SUBDIR ]]; then
         # if the directory does not exist, make it
         mkdir -p $SUBDIR
+    fi
+
+    # check that the key, and the xml path have been specified
+    if [[ $BOOL_KEY -eq 0 ]]; then 
+        display_error "must specify parameter KEY (option -k)"
+    fi
+
+    if [[ $BOOL_XML -eq 0 ]]; then 
+        display_error "must specify parameter XML path corresponding to parameter in feb file (option -x)"
     fi
 
     # check if the parameter file already exists
@@ -240,12 +256,16 @@ while getopts "hd:j:x:k:C:A:B:LN:" opt; do
         h) # display options exit zero
             help 0 ;;
         d) # path to simulation directory
+            declare -i BOOL_DIR=1
             DIR=${OPTATG} ;;
         j) # job name
+            declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
         x) # xml path
+            declare -i BOOL_XML=1
             XML_PATH=${OPTARG} ;;
         k) # key used for parameter
+            declare -i BOOL_KEY=1
             KEY=${OPTARG} ;;
         C) # specify constant value
             declare -i BOOL_CONSTANT=1
