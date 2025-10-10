@@ -34,10 +34,14 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean for job name
 declare -i BOOL_JOB=0
 JOB="biphasic_job"
-# boolean for xml path
+# boolean for XML path
 declare -i BOOL_XML=0
-# boolean corresponding to parameter key
+# boolean corresponding to parameter KEY
 declare -i BOOL_KEY=0
+# boolean corresponding to parameter DESCRIPTION
+declare -i BOOL_DESCRIPT=0
+# boolean corresponding to parameter UNITS
+declare -i BOOL_UNITS=0
 # boolean used to determine if a cosntant value has been specifed
 declare -i BOOL_CONSTANT=0
 # boolean determining if a minimum value has been specified
@@ -69,15 +73,21 @@ help () {
     # display script name and purpose
     echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: ${PURPOSE}.\n"
     # display script options
-    echo -e "\n ## SCRIPT PROTOCOL ## \n"
-    echo -e " -h\t\t| display options, exit 0."
-    echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
-    echo -e "\n ## SCRIPT MODIFIABLE PARAEMETERS ## \n"
-    echo -e " -d << ARG >>\t| MANDATORYPATH to which contains directory hirearchy (default is ${DIR})."
-    echo -e " -j << ARG >>\t| MANDATORY: named assgined to JOB, contains simulation directories (default is ${JOB})."
-    echo -e " -x << ARG >>\t| MANDATORY: XML path specifiying elastic modulus in '.feb' file (default is '${XML_PATH}')."
-    echo -e " -k << ARG >>\t| MANDATORY: shortcut KEY used to identify elasticity parameter (default is ${KEY})."
+    echo -e "\n ## SCRIPT PROTOCOL ##"
+    echo -e " -h\t\t| display HELP options, exit 0."
+    # echo -e " -v\t\t| VERBOSE execution of script as export single line describing script actions to CLT."
+    # echo -e " -V\t\t| VERY VERBOSE execution of script, export script execution to CLT at least step."
+    echo -e "\n ## FEB PARAMETER OPTIONS ##"
+    echo -e " -d << ARG >>\t| MANDATORY: path to DIRECTORY to which contains directory hirearchy."
+    echo -e " -j << ARG >>\t| MANDATORY: named assgined to JOB, contains simulation directories."
+    echo -e " -x << ARG >>\t| MANDATORY: XML path specifiying parameter in '.feb' file."
+    echo -e " -k << ARG >>\t| MANDATORY: shortcut KEY used to identify parameter."
+    echo -e " -u << ARG >>\t| OPTIONAL: units corresponding to parameter, stored in config file."
+    echo -e " -D << ARG >>\t| OPTIONAL: single string describing parameter, store in config file."
+    echo -e "\n ## GENERATING ONE VALUE ##"
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
+    echo -e "\n ## GENERATING MULTIPLE VALUES ##"
+    echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
     echo -e " -B << ARG >>\t| MAX value assigned to parameter."
     echo -e " -N << ARG >>\t| NUMBER of unique parameters to generate between A and B."
