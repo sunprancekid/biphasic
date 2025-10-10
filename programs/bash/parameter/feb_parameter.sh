@@ -261,13 +261,13 @@ gen () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:x:k:C:A:B:LN:" opt; do
+while getopts "hd:j:x:k:u:D:C:A:B:LN:" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;
         d) # path to simulation directory
             declare -i BOOL_DIR=1
-            DIR=${OPTATG} ;;
+            DIR=${OPTARG} ;;
         j) # job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
@@ -277,6 +277,12 @@ while getopts "hd:j:x:k:C:A:B:LN:" opt; do
         k) # key used for parameter
             declare -i BOOL_KEY=1
             KEY=${OPTARG} ;;
+        u) # units
+            declare -i BOOL_UNITS=1
+            UNITS=${OPTARG} ;; 
+        D) # parameter description
+            declare -i BOOL_DESCRIPT
+            DESCRIPTION=${OPTARG} ;;
         C) # specify constant value
             declare -i BOOL_CONSTANT=1
             CONSTANT_VALUE=${OPTARG} ;;
