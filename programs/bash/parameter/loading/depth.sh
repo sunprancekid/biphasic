@@ -7,7 +7,7 @@ set -e
 ## Max Planck Institute for Colloids and Interfaces
 ## 2025.10.10
 
-## FILENAME: programs/bash/parameters/oscillation/amplitude.sh
+## FILENAME: programs/bash/parameters/loading/depth.sh
 ## PURPOSE: specify or vary the amplitude associated with a FEB oscillation simulation
 
 ## MODULES
