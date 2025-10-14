@@ -26,7 +26,7 @@ PURPOSE="generate values along a scale which correspond with augmenting of '.feb
 # default header used for parameter files
 PARM_HEADER="n,id,path"
 # default header used for the config file
-CONFIG_HEADER="key,xml,description,units,value,relationship"
+CONFIG_HEADER="key,xml,description,units,constant,related"
 
 ## options
 # default directory path for storing parameters
@@ -54,7 +54,8 @@ declare -i BOOL_MAXVAL=0
 declare -i BOOL_LOGSCALE=0
 # boolean for specifying the number of values that should be generated
 declare -i BOOL_NVALS=0
-
+# boolean for flaging parameter as related to other parameters
+declare -i BOOL_RELATED=0
 
 
 ## FUNCTIONS
@@ -204,13 +205,7 @@ gen () {
 
     ## SCRIPT
     # write information about the parameter to the config file
-    if [[ $BOOL_CONSTANT -eq 1 ]]; then
-        # the parameter is constant 'type'
-        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,constant,independent" >> $CONFIG_FILE
-    else
-        # the parameter is a range of values
-        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,range,independent" >> $CONFIG_FILE
-    fi
+    echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,$BOOL_CONSTANT,$BOOL_RELATED" >> $CONFIG_FILE
 
     # append key to parameter file header
     local head=$( $PARSE_CSV -f $PARM_FILE -l 1 )
@@ -288,7 +283,7 @@ gen () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:x:k:u:D:C:A:B:LN:" opt; do
+while getopts "hd:j:x:k:u:D:C:A:B:LN:R" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;
@@ -324,6 +319,8 @@ while getopts "hd:j:x:k:u:D:C:A:B:LN:" opt; do
         N) # specify the number of values to generate
             declare -i BOOL_NVALS=1
             declare -i NVALS=${OPTARG} ;;
+        R) # flag parameter is being related to other defined parameters
+            declare -i BOOL_RELATED=1 ;;
         ?) # default, display options with nonzero exitcode
             help $NONZERO_EXITCODE
     esac
