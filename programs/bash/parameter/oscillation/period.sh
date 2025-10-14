@@ -192,9 +192,9 @@ gen () {
 	declare -i TOTAL_STEPS_MIN=$( echo "$TOTAL_STEPS_MAX * 10" | bc -l ) # based on the inital step size
 	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_STEPS -x $XML_STEPS -D $DESCRIP_STEPS -C $( echo "$TOTAL_STEPS_MIN" )
 	# write the max step size (dependent on the period - OT)
-	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_MAX_STEP -D $DESCRIP_MAX_STEP -k $KEY_MAX_STEP -C "${KEY}/${KEY_STEPS}"
+	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_MAX_STEP -D $DESCRIP_MAX_STEP -k $KEY_MAX_STEP -C "${KEY}/${KEY_STEPS}" -R
 	# write the initial step size (dependent on the period - OT)
-	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_INIT_STEP -D $DESCRIP_INIT_STEP -k $KEY_INIT_STEP -C "${KEY}/(${KEY_STEPS}*10)"
+	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_INIT_STEP -D $DESCRIP_INIT_STEP -k $KEY_INIT_STEP -C "${KEY}/(${KEY_STEPS}*10)" -R
 }
 
 ## OPTIONS
