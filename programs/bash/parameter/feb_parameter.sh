@@ -26,7 +26,7 @@ PURPOSE="generate values along a scale which correspond with augmenting of '.feb
 # default header used for parameter files
 PARM_HEADER="n,id,path"
 # default header used for the config file
-CONFIG_HEADER="key,xml,description,units,type"
+CONFIG_HEADER="key,xml,description,units,value,relationship"
 
 ## options
 # default directory path for storing parameters
@@ -206,10 +206,10 @@ gen () {
     # write information about the parameter to the config file
     if [[ $BOOL_CONSTANT -eq 1 ]]; then
         # the parameter is constant 'type'
-        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,constant" >> $CONFIG_FILE
+        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,constant,independent" >> $CONFIG_FILE
     else
         # the parameter is a range of values
-        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,range" >> $CONFIG_FILE
+        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,range,independent" >> $CONFIG_FILE
     fi
 
     # append key to parameter file header
