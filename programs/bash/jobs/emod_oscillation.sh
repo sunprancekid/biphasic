@@ -85,3 +85,8 @@ $OSC_AMP -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
 $MAT_EMOD -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
 # oscillation period
 $OSC_PER -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
+
+# TODO :: generate feb files and directories (en masse, from parm file)
+# TODO :: submit jobs to HPC cluster (en masse, from parm file)
+# TODO :: update jobs status (en mass, from parm file)
+# TODO :: parse results (en mass, from parm file)
