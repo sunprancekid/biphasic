@@ -20,9 +20,9 @@ LINLOGSCALE="./programs/bash/util/math/linlogscale.sh"
 # nonzero exit code
 declare -i NONZERO_EXITCODE=120
 # filename
-FILENAME="/bash/parameter/elasticity.sh"
+FILENAME="/bash/parameter/feb_parameter.sh"
 # file purpose
-PURPOSE="generate elasticity parameters and write to '.feb' file"
+PURPOSE="generate values along a scale which correspond with augmenting of '.feb' style files."
 # default header used for parameter files
 PARM_HEADER="n,id,path"
 
@@ -138,7 +138,7 @@ check () {
 
     # check if the job exist
     SUBDIR="$DIR/$JOB/"
-    if [[ $BOOL_JOB -eq 1 ]]; then
+    if [[ $BOOL_JOB -eq 0 ]]; then
         display_error "must specify JOB name (option -j)"
     elif [[ ! -d $SUBDIR ]]; then
         # if the directory does not exist, make it

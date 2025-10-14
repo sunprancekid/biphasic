@@ -12,13 +12,13 @@ set -e
 
 ## MODULES
 # generates parameters and integrates with feb file
-FEB_PARAMETER="./programs/bash/parameters/feb_parameter.sh"
+FEB_PARAMETER="./programs/bash/parameter/feb_parameter.sh"
 
 ## PARAMETERS - CONSTANTS
 # non-zero exit code
 declare -i NONZERO_EXITCODE=120
 # script filename
-FILENAME="programs/bash/parameters/loading/depth.sh"
+FILENAME="programs/bash/parameter/loading/depth.sh"
 # script purpouse
 PURPOSE="specify or vary the depth of tip prestress associated with FEB loading simulations"
 

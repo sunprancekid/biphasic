@@ -12,13 +12,13 @@ set -e
 
 ## MODULES
 # generates parameters and integrates with feb file
-FEB_PARAMETER="./programs/bash/parameters/feb_parameter.sh"
+FEB_PARAMETER="./programs/bash/parameter/feb_parameter.sh"
 
 ## PARAMETERS - CONSTANTS
 # non-zero exit code
 declare -i NONZERO_EXITCODE=120
 # script filename
-FILENAME="programs/bash/parameters/oscillation/amplitude.sh"
+FILENAME="programs/bash/parameter/oscillation/amplitude.sh"
 # script purpouse
 PURPOSE="specify or vary the depth of tip amplitude associated with FEB osclliation simulations"
 
