@@ -25,6 +25,8 @@ FILENAME="/bash/parameter/feb_parameter.sh"
 PURPOSE="generate values along a scale which correspond with augmenting of '.feb' style files."
 # default header used for parameter files
 PARM_HEADER="n,id,path"
+# default header used for the config file
+CONFIG_HEADER="key,xml,description,units,type"
 
 ## options
 # default directory path for storing parameters
@@ -171,6 +173,21 @@ check () {
         done
     fi
 
+    # check if the config file exists
+    CONFIG_FILE="$SUBDIR$JOB.config.csv"
+    if [[ ! -f $CONFIG_FILE ]]; then
+        # if the file does not exist, write the header
+        echo $CONFIG_HEADER > $CONFIG_FILE
+    fi
+
+    # set default units and description if none is provided
+    if [[ $BOOL_DESCRIPT -eq 0 ]]; then
+        DESCRIPTION="na"
+    fi
+    if [[ $BOOL_UNITS -eq 0 ]]; then
+        UNITS="na"
+    fi
+
     # TODO :: add check for specify the scale to generate numbers along
     # e.g. negative numbers cannot be generated on a log scale
 
@@ -186,9 +203,19 @@ gen () {
     # none
 
     ## SCRIPT
+    # write information about the parameter to the config file
+    if [[ $BOOL_CONSTANT -eq 1 ]]; then
+        # the parameter is constant 'type'
+        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,constant" >> $CONFIG_FILE
+    else
+        # the parameter is a range of values
+        echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,range" >> $CONFIG_FILE
+    fi
+
     # append key to parameter file header
     local head=$( $PARSE_CSV -f $PARM_FILE -l 1 )
     sed -i "s/$head/$head,$KEY/" $PARM_FILE
+
     # for constant values, add constant value to find row
     local lines=$( $PARSE_CSV -f $PARM_FILE -l )
     if [[ $BOOL_CONSTANT -eq 1 ]]; then
@@ -281,7 +308,7 @@ while getopts "hd:j:x:k:u:D:C:A:B:LN:" opt; do
             declare -i BOOL_UNITS=1
             UNITS=${OPTARG} ;; 
         D) # parameter description
-            declare -i BOOL_DESCRIPT
+            declare -i BOOL_DESCRIPT=1
             DESCRIPTION=${OPTARG} ;;
         C) # specify constant value
             declare -i BOOL_CONSTANT=1
