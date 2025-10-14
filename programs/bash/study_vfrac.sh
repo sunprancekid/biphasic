@@ -179,7 +179,7 @@ gen () {
             display_error "job directory ('${DIR}${JOB}') already exists and cannot be overwritten. to overwrite, call -o; or name job differently."
         fi
     else
-        # the job path does not exist, so make it
+        # the job path does not exist, so make itN_COL
         mkdir -p ${DIR}${JOB}
         # initialize the parameter file
         echo $parm_header > $parm_file
@@ -261,7 +261,7 @@ sub () {
     fi
 
     # open the parameter file, ## execution
-# loop through each line
+    # loop through each line
     local n_lines=$($PARSE_CSV -f $parm_file -l)
     for n in $(seq 2 $n_lines); do
         # get the directory corresponding to the simulation
