@@ -13,7 +13,7 @@ MAT_PERM="./programs/bash/parameter/material/permeability.sh"
 # material property - poissons ratio
 MAT_PR="./programs/bash/parameter/material/poisson-ratio.sh"
 # material property - elastic modulus
-MAT_EMOD="./programs/bash/parameter/material/elastic.sh"
+MAT_EMOD="./programs/bash/parameter/material/elastic-modulus.sh"
 # material property - volume fraction
 MAT_VF="./programs/bash/parameter/material/solid-volume-fraction.sh"
 # loading - depth of prestress displacement
@@ -72,7 +72,7 @@ N_PERIOD="25"
 # constant volume fraction
 $MAT_VF -j $JOB -C $VOLUME_FRAC
 # constant poisson ratio
-$MAT_PR -j $JOB -C $POISSON_RATIO
+# $MAT_PR -j $JOB -C $POISSON_RATIO
 # constant permeability
 $MAT_PERM -j $JOB -C $PERMEABILITY
 # constant loading depth
