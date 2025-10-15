@@ -149,9 +149,9 @@ check () {
     fi
 
     # check that the key, and the xml path have been specified
-    if [[ $BOOL_KEY -eq 0 ]]; then 
-        display_error "must specify parameter KEY (option -k)"
-    fi
+#     if [[ $BOOL_KEY -eq 0 ]]; then
+#         display_error "must specify parameter KEY (option -k)"
+#     fi
 
     if [[ $BOOL_XML -eq 0 ]]; then 
         display_error "must specify parameter XML path corresponding to parameter in feb file (option -x)"
@@ -220,7 +220,7 @@ gen () {
         else
             # otherwise, loop through all lines and append the constant value
             for n in $( seq 2 $lines ); do
-                local l=$($PARSE_CSV -f $PARM_FILE -l $n )
+                local l=$( $PARSE_CSV -f $PARM_FILE -l $n )
                 sed -i "${n}c${l},${CONSTANT_VALUE}" $PARM_FILE
             done
         fi

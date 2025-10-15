@@ -31,7 +31,7 @@ JOB="osc_emod"
 # permiability (mm^4 / N * s)
 PERMEABILITY="0.001"
 # poissons ratio
-POISSON_RATIO="0.0"
+POISSON_RATIO="0.1"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
@@ -72,7 +72,7 @@ N_PERIOD="25"
 # constant volume fraction
 $MAT_VF -j $JOB -C $VOLUME_FRAC
 # constant poisson ratio
-# $MAT_PR -j $JOB -C $POISSON_RATIO
+$MAT_PR -j $JOB -C $POISSON_RATIO
 # constant permeability
 $MAT_PERM -j $JOB -C $PERMEABILITY
 # constant loading depth

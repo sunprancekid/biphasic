@@ -28,7 +28,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean determining if the job name has been specified
 declare -i BOOL_JOB=0
 # default xml path
-XML_PATH="Material/material[@id='1']/solid[@type='isotropic elastic']/v"
+XML_PATH="Material/material[@id='1']/solid/v"
 # default key 
 KEY="PR"
 # default units

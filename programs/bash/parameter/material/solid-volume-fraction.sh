@@ -147,7 +147,7 @@ gen () {
 	# execute feb paramterization script
 	if [[ $BOOL_CONSTANT -eq 1 ]]; then
 		# append constant value to job
-		$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE
+		$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE -k $KEY
 	else
 		# generate multiple values and append to job
 		if [[ $BOOL_LOGSCALE -eq 1 ]]; then
