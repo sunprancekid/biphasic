@@ -1,3 +1,6 @@
+# local backup files can be ignored
+*.DS_Store
+
 # febio files
 *.feb
 *.xplt
