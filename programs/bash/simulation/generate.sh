@@ -13,6 +13,8 @@ set -e
 ## MODULES
 # used to parse and write information to csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
+# used to augment feb files
+AUGMENT_FEB="python programs/python/febio/augment_feb_batch.py"
 
 ## CONSTANTS
 # nonzero exit code
@@ -90,10 +92,35 @@ check () {
 	# none
 
 	## SCRIPT
+	# check that the job has been specified
+	if [[ $BOOL_JOB -eq 0 ]]; then
+        display_error "must specify the JOB (option -j)"
+	fi
+	# check that the feb file has been specified
+	if [[ $BOOL_FEB -eq 0 ]]; then
+        display_error "must specify the FEB FILE (option -f)"
+	fi
 	# check that the directory exists
+	if [[ ! -d $DIR ]]; then
+        display_error "the DIRECTORY '${DIR}' cannot be found (option -d)"
+	fi
 	# check that the job exists
+	SUBDIR=${DIR}${JOB}
+	if [[ ! -d $SUBDIR ]]; then
+        display_error "the JOB '${JOB}' does not exist within DIRECTORY '${DIR}'"
+	fi
 	# check that feb file exists
-	display_error "TODO :: implement check"
+	if [[ ! -f $FEB ]]; then
+        display_error "unable to find FEB FILE '${FEB}' (option -f)"
+	fi
+	# check that config and parameter files exist
+	PARM_FILE="$SUBDIR/$JOB.parm.csv"
+	CONFIG_FILE="$SUBDIR/$JOB.config.csv"
+	if [[ ! -f ${PARM_FILE} ]]; then
+        display_error "JOB '${JOB}' parameter file '${PARM_FILE}' has not been generated yet"]
+	elif [[ ! -f ${CONFIG_FILE} ]]; then
+        display_error "JOB '${JOB}' configuration file '${CONFIG_FILE}' has not been generated yet"
+	fi
 }
 
 # generate simulations en gen_batch
@@ -106,7 +133,22 @@ gen_batch () {
     # none
 
     ## SCRIPT
-    # none
+    # open the parameter file
+    declare -i LINES=$( $PARSE_CSV -f $PARM_FILE -l )
+    # loop through each line
+    for l in $( seq 2 $LINES); do
+        # generate directory
+        local simid=$( $PARSE_CSV -f $PARM_FILE -l $l -c 2 )
+        local simdir=$SUBDIR/$( $PARSE_CSV -f $PARM_FILE -l $l -c 3 )
+        if [[ ! -d $simdir ]]; then
+            mkdir -p $simdirThat seems terrible for the
+        fi
+        # copy feb to simulation directory
+        cp $FEB $simdir$simid.feb
+        # augment feb locally (python call)
+        $AUGMENT_FEB $FEB $DIR $JOB 1
+        display_error "TODO :: implement feb augmentation"
+    done
     display_error "TODO :: implement batch job generation"
 }
 
