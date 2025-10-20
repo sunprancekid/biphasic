@@ -141,15 +141,15 @@ gen_batch () {
         local simid=$( $PARSE_CSV -f $PARM_FILE -l $l -c 2 )
         local simdir=$SUBDIR/$( $PARSE_CSV -f $PARM_FILE -l $l -c 3 )
         if [[ ! -d $simdir ]]; then
-            mkdir -p $simdirThat seems terrible for the
+            mkdir -p $simdir # That seems terrible for the
         fi
         # copy feb to simulation directory
         cp $FEB $simdir$simid.feb
         # augment feb locally (python call)
-        $AUGMENT_FEB $FEB $DIR $JOB 1
-        display_error "TODO :: implement feb augmentation"
+        $AUGMENT_FEB $FEB $DIR $JOB $((${l}-1))
+#         display_error "TODO :: implement feb augmentation"
     done
-    display_error "TODO :: implement batch job generation"
+#     display_error "TODO :: implement batch job generation"
 }
 
 # generate single simulation

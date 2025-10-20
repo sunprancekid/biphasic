@@ -113,7 +113,7 @@ check () {
     else
         # the job name has been specified
         # check that the parameter file exists
-        PARM_FILE="${JOB_PATH}${JOB}.csv"
+        PARM_FILE="${JOB_PATH}${JOB}.parm.csv"
         if [ ! -f $PARM_FILE ]
         then
             # the parameter file does not exist
@@ -167,7 +167,7 @@ do
             declare -i BOOL_LOCAL=1 ;;
         s) # run the jobs via slurm
             declare -i BOOL_SLURM=1 ;;
-        d) # path to job directory
+        d) # path to job directory$SUB_SLURM
             declare -i BOOL_PATH=1
             JOB_PATH=${OPTARG} ;;
         j) # specify job name
@@ -201,7 +201,7 @@ for n in $(seq 2 $N_LINES)
 do
     ## get simulation paths
     # the first column is the SUBDIR
-    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 1)
+    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 3)
     # the second column is the SIMID
     SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e 
+# set -e
 
 ## Matthew A. Dorsey
 ## @mad-mpikg
@@ -82,9 +82,9 @@ $OSC_AMP -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
 
 ## generate parameters
 # elastic modulus
-$MAT_EMOD -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
+echo $MAT_EMOD -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
 # oscillation period
-$OSC_PER -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
+echo $OSC_PER -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
 
 # TODO :: generate feb files and directories (en masse, from parm file)
 # TODO :: submit jobs to HPC cluster (en masse, from parm file)

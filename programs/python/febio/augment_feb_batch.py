@@ -59,6 +59,13 @@ def augment_feb_single (feb, path, job, simint):
     # parse each path way from the config file, check that it exists
     for idx, row in df_config.iterrows():
         elm_path = row['xml']
+
+        # check if the xml path is na
+        if elm_path == 'na':
+            # skip augmenting this value in the feb file
+            continue
+
+        # otherwise, find the xml path in the tree
         elm = root.findall(elm_path)
         if elm is None or (isinstance(elm, list) and len(elm) == 0):
             print("ERROR :: {:s} :: UNABLE  to find ELEMENT '{:s}' in FEB FILE '{:s}'".format(filename, elm_path, feb))
@@ -71,7 +78,7 @@ def augment_feb_single (feb, path, job, simint):
             if row['related'] == 0:
                 # the new value is independent of other values
                 # update the value in the tree
-                print(" - KEY '{:s}' in JOB '{:s}' is INDEPENDENT of other values.".format(row['key'], job))
+                # print(" - KEY '{:s}' in JOB '{:s}' is INDEPENDENT of other values.".format(row['key'], job))
                 for e in elm:
                     e.text = str(df_gen.iloc[0][row['key']])
             else:
@@ -88,9 +95,16 @@ def augment_feb_single (feb, path, job, simint):
                     if row2['key'] in df_gen.iloc[0][row['key']]:
                         # print(row2['key'])
                         relationship = relationship.replace(row2['key'],"{:.2f}".format(df_gen.iloc[0][row2['key']]))
+
+                # check if the relationship should be evaluated (i.e. is not symbolic), or should be left as is
+                if row['symbolic'] == 0:
+                    # if the relationship is not symbolic, evaluate it
+                    relationship = eval(relationship)
+                    print(relationship)
+
                 # print("AFTER: {:s}".format(relationship)) 
                 for e in elm:
-                    e.text = relationship
+                    e.text = str(relationship)
 
     # make the simulation subdirectory
     simdir=df_gen.iloc[0]['path']

@@ -199,15 +199,15 @@ gen () {
 	fi
 	## write dependencies
 	# write the math equation used for tip oscillation
-	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C "0.5*sin($PI((2.*t/OT)-1))" -R -S
+	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C "0.5*sin(${PI}*((2.*t/OT)-1))" -R -S
 	# write the total number of numerical steps (constant)
 	declare -i TOTAL_STEPS_MAX=$( echo "$N_CYCLES * $N_STEPS" | bc -l ) # based on max step size
 	declare -i TOTAL_STEPS_MIN=$( echo "$TOTAL_STEPS_MAX * 10" | bc -l ) # based on the inital step size
 	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_STEPS -x $XML_STEPS -D $DESCRIP_STEPS -C $( echo "$TOTAL_STEPS_MIN" )
 	# write the max step size (dependent on the period - OT)
-	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_MAX_STEP -D $DESCRIP_MAX_STEP -k $KEY_MAX_STEP -C "${KEY}/${KEY_STEPS}" -R
+	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_MAX_STEP -D $DESCRIP_MAX_STEP -k $KEY_MAX_STEP -C "(${KEY_OT}*${N_CYCLES})/${TOTAL_STEPS_MAX}" -R
 	# write the initial step size (dependent on the period - OT)
-	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_INIT_STEP -D $DESCRIP_INIT_STEP -k $KEY_INIT_STEP -C "${KEY}/(${KEY_STEPS}*10)" -R
+	$FEB_PARAMETER -j $JOB -d $DIR -x $XML_INIT_STEP -D $DESCRIP_INIT_STEP -k $KEY_INIT_STEP -C "(${KEY_OT}*${N_CYCLES})/(${TOTAL_STEPS_MIN})" -R
 }
 
 ## OPTIONS
