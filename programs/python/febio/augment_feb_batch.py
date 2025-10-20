@@ -52,47 +52,57 @@ def augment_feb_single (feb, path, job, simint):
         exit(nonzero_exitcode)
 
     # parse information from parameter file, config file
-    simdir=df_gen.iloc[0]['path']
-    simdir="{:s}{:s}".format(path, simdir)
     # open the feb file
+    print("opening feb files")
     tree = ET.parse(feb_file)
     root = tree.getroot()
     # parse each path way from the config file, check that it exists
-    for index, row in df_config.iterrows():
+    for idx, row in df_config.iterrows():
         elm_path = row['xml']
         elm = root.findall(elm_path)
-        # if elm is None or (isinstance(elm, list) and len(elm) == 0):
-        #     print("ERROR :: {:s} :: UNABLE  to find ELEMENT '{:s}' in FEB FILE '{:s}'".format(filename, elm_path, feb))
-        # elif isinstance(elm, list) and len(elm) > 1:
-        #     # more than one element was found
-        #     print("ERROR :: {:s} :: FEB FILE '{:s}' contains multiple ELEMENTS '{:s}'.".format(filename, feb_file, elm_path))
-
-        # check the relationship
-        if row['related'] == 0:
-            # the new value is independent of other values
-            # update the value in the tree
-            print("KEY '{:s}' in JOB '{:s}' is INDEPENDENT of other values.".format(row['key'], job))
-            # for e in elm:
-            #     e.text = new_val
+        if elm is None or (isinstance(elm, list) and len(elm) == 0):
+            print("ERROR :: {:s} :: UNABLE  to find ELEMENT '{:s}' in FEB FILE '{:s}'".format(filename, elm_path, feb))
+        elif isinstance(elm, list) and len(elm) > 1:
+            # more than one element was found
+            print("ERROR :: {:s} :: FEB FILE '{:s}' contains multiple ELEMENTS '{:s}'.".format(filename, feb_file, elm_path))
         else:
-            # the new value is dependent on other values
-            # determine which ones
-            print("KEY '{:s}' in JOB '{:s}' is DEPENDENT on other values.".format(row['key'], job))
-            for jdx, row2 in df_config.iterrow():
-                # skip line if self
-                if jdx == idx: continue
+            # check the relationship
+            # print ("KEY '{:s}' exists in FEB '{:s}' as ELEMENT '{:s}'".format(row['key'], feb, elm_path))
+            if row['related'] == 0:
+                # the new value is independent of other values
+                # update the value in the tree
+                print(" - KEY '{:s}' in JOB '{:s}' is INDEPENDENT of other values.".format(row['key'], job))
+                for e in elm:
+                    e.text = str(df_gen.iloc[0][row['key']])
+            else:
+                # the new value is dependent on other values
+                # determine which ones
+                # print(" - KEY '{:s}' in JOB '{:s}' is DEPENDENT on other values.".format(row['key'], job))
+                key_jdx_list = []
+                relationship = df_gen.iloc[0][row['key']]
+                # print("BEFORE: {:s}".format(relationship))
+                for jdx, row2 in df_config.iterrows():
+                    # skip line if self
+                    if jdx == idx: continue
+                    # determine if the row corresponds to a value in the value
+                    if row2['key'] in df_gen.iloc[0][row['key']]:
+                        # print(row2['key'])
+                        relationship = relationship.replace(row2['key'],"{:.2f}".format(df_gen.iloc[0][row2['key']]))
+                # print("AFTER: {:s}".format(relationship)) 
+                for e in elm:
+                    e.text = relationship
 
-                # determine if the row corresponds to a value in the value
-
-
-    exit()
     # make the simulation subdirectory
+    simdir=df_gen.iloc[0]['path']
+    simdir="{:s}{:s}/{:s}".format(path, job, simdir)
     if not os.path.exists(simdir):
         # if the simulation path does not exist, make the directory
         os.makedirs(simdir)
-
-    #
-
+    # write to file
+    tree.write("{:s}{:s}/{:s}{:s}.feb".format(path, job, df_gen.iloc[0]['path'], df_gen.iloc[0]['id']), encoding='ISO-8859-1', xml_declaration=True)
+    # with open("{:s}{:s}/{:s}{:s}.feb".format(path, job, df_gen.iloc[0]['path'], df_gen.iloc[0]['id']), 'w') as f:
+    #     print("{:s}{:s}/{:s}{:s}.feb".format(path, job, df_gen.iloc[0]['path'], df_gen.iloc[0]['id']))
+    #     tree.write(f, encoding='ISO-8859-1', xml_declaration=True)
 
 
 # generate and augment feb files en masse
