@@ -24,6 +24,12 @@ OSC_AMP="./programs/bash/parameter/oscillation/amplitude.sh"
 OSC_PER="./programs/bash/parameter/oscillation/period.sh"
 
 ## PARAMETERS
+# nonzero exit code
+declare -i NONZERO_EXITCODE=120
+# filename
+FILENAME="programs/bash/jobs/emod_oscillation.sh"
+# file purpose
+PURPOSE="perform oscillation simulations where the elastic modulus is a variable parameter."
 # job name
 JOB="osc_emod"
 
@@ -55,14 +61,64 @@ MAX_PERIOD="20000."
 # number of unique period values to test
 N_PERIOD="25"
 
-## LOADING - PRESTRESS
-# depth of loading 
-
 ## METHODS
-# none
+# display options, exit with exit code
+help () {
+
+	## PARAMETERS
+	# none
+
+	## ARGUMENTS
+	# first argument: exit code
+    local exitcode=$1
+
+	## SCRIPT
+    # display script name and purpose
+    echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: ${PURPOSE}.\n"
+    # display script options
+    echo -e "\n ## SCRIPT EXECUTION ##"
+    echo -e " -h\t\t| display HELP options, exit 0."
+    echo -e " -p\t\t| create PARAMETER and CONFIG files."
+    echo -e " -g\t\t| GENERATE FEB files."
+    echo -e " -s\t\t| SUBMIT jobs to cluster."
+    echo -e " -a\t\t| ANALYZE results post-simulation."
+    echo -e "\n ## SCRIPT PARAMETERS ##"
+    echo -e " -j  << ARG >>\t| JOB name (default is ${JOB})"
+    echo -e " -f  << ARG >>\t| FEB FILE to use when GENERATING jobs."
+    echo -e " -n  << ARG >>\t| perform execution for only one parameter set, integer N."
+
+    # exit with exit code
+    exit $exitcode
+}
+
+# display error message, exit with nonzero exitcode
+display_error () {
+
+    # PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # first argument: error message to display
+    local err_msg=$1
+
+    ## SCRIPT
+    # display error message
+    echo -e "\nERROR :: ${FILENAME} :: ${err_msg}.\n"
+    help $NONZERO_EXITCODE
+
+}
 
 ## OPTIONS
-# none
+# parse options
+while getopts "hpgsaj:f:n:" opt; do
+ case $opt in
+    h) # display options, exit 0
+        help 0 ;;
+    ?) # default option
+        help $NONZERO_EXITCODE
 
 ## ARGUMENTS
 # none
