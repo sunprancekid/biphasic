@@ -78,6 +78,9 @@ help () {
     # display script options
     echo -e "\n ## SCRIPT EXECUTION ##"
     echo -e " -h\t\t| display HELP options, exit 0."
+    echo -e " -v\t\t| VERBOSE script execution."
+    echo -e " -V\t\t| VERY VERBOSE script execution."
+    echo -e " -o\t\t| overwrite existing simulation files."
     echo -e " -p\t\t| create PARAMETER and CONFIG files."
     echo -e " -g\t\t| GENERATE FEB files."
     echo -e " -s\t\t| SUBMIT jobs to cluster."
@@ -86,6 +89,7 @@ help () {
     echo -e " -j  << ARG >>\t| JOB name (default is ${JOB})"
     echo -e " -f  << ARG >>\t| FEB FILE to use when GENERATING jobs."
     echo -e " -n  << ARG >>\t| perform execution for only one parameter set, integer N."
+    echo -e " -c  << ARG >>\t| if CHECKFILE exists in simulation directory, skip operation."
 
     # exit with exit code
     exit $exitcode
@@ -113,10 +117,36 @@ display_error () {
 
 ## OPTIONS
 # parse options
-while getopts "hpgsaj:f:n:" opt; do
+while getopts "hvVopgsaj:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
+    v) # verbose
+        declare -i BOOL_VERBOSE=1 ;;
+    V) # very verbose
+        declare -i BOOL_VERYVERBOSE=1 ;;
+    o) # overwrite simulations if they exist
+        declare -i BOOL_OVERWRITE=1 ;;
+    p) # create parameter and config files
+        declare -i BOOL_PARM=1 ;;
+    g) # generate FEB files
+        declare -i BOOL_GEN=1 ;;
+    s) # SUBMIT simulations to cluster
+        declare -i BOOL_SUB=1 ;;
+    a) # analyze simulation results
+        declare -i BOOL_ANAL=1 ;;
+    j) # job title
+        declare -i BOOL_JOB=1
+        JOB=${OPT_ARG};;
+    f) # feb file specification
+        declare -i BOOL_FEB=1
+        FEB_FILE=${OPTARG};;
+    n) # integer for specific job number
+        declare -e BOOL_INT=1
+        SIM_INT=${OPTARG} ;;
+    c) # specify check file
+        declare -i BOOL_CHECKFILE=1
+        CHECKFILE=${OPTARG} ;;
     ?) # default option
         help $NONZERO_EXITCODE
 
