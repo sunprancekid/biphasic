@@ -26,7 +26,7 @@ PURPOSE="generate values along a scale which correspond with augmenting of '.feb
 # default header used for parameter files
 PARM_HEADER="n,id,path"
 # default header used for the config file
-CONFIG_HEADER="key,xml,description,units,constant,related"
+CONFIG_HEADER="key,xml,description,units,constant,related,symbolic"
 
 ## options
 # default directory path for storing parameters
@@ -54,8 +54,10 @@ declare -i BOOL_MAXVAL=0
 declare -i BOOL_LOGSCALE=0
 # boolean for specifying the number of values that should be generated
 declare -i BOOL_NVALS=0
-# boolean for flaging parameter as related to other parameters
+# boolean for flagging constant valued parameters as related to other parameters
 declare -i BOOL_RELATED=0
+# boolean for flagging constant valued parameters as related to one another
+declare -i BOOL_SYMBOLIC=0
 
 
 ## FUNCTIONS
@@ -89,6 +91,8 @@ help () {
     echo -e " -D << ARG >>\t| OPTIONAL: single string describing parameter, store in config file."
     echo -e "\n ## GENERATING ONE VALUE ##"
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
+    echo -e " -R\t\t| flag parameter as being related to other parameters (constant value contains KEY of other parameters)."
+    echo -e " -S\t\t| flag parameter as symbolic (i.e. is a maths equation, which should not be evaulated)."
     echo -e "\n ## GENERATING MULTIPLE VALUES ##"
     echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
@@ -189,6 +193,18 @@ check () {
         UNITS="na"
     fi
 
+    # if parameter is not constant valued, parameter cannot also be symbolic or related
+    if [[ $BOOL_CONSTANT -eq 0 ]]; then
+        # check symbolic
+        if [[ $BOOL_SYMBOLIC -eq 1 ]]; then
+            display_error "non-constant valued parameters cannot also be symbolic"
+        fi
+        # check related
+        if [[ $BOOL_RELATED -eq 1 ]]; then
+            display_error "non-constant-valued parameters cannot also be related"
+        fi
+    fi
+
     # TODO :: add check for specify the scale to generate numbers along
     # e.g. negative numbers cannot be generated on a log scale
 
@@ -205,7 +221,7 @@ gen () {
 
     ## SCRIPT
     # write information about the parameter to the config file
-    echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,$BOOL_CONSTANT,$BOOL_RELATED" >> $CONFIG_FILE
+    echo "$KEY,$XML_PATH,$DESCRIPTION,$UNITS,$BOOL_CONSTANT,$BOOL_RELATED,$BOOL_SYMBOLIC" >> $CONFIG_FILE
 
     # append key to parameter file header
     local head=$( $PARSE_CSV -f $PARM_FILE -l 1 )
@@ -321,6 +337,8 @@ while getopts "hd:j:x:k:u:D:C:A:B:LN:R" opt; do
             declare -i NVALS=${OPTARG} ;;
         R) # flag parameter is being related to other defined parameters
             declare -i BOOL_RELATED=1 ;;
+        S) # flag parameter is being a symbolic equation
+            declare -i BOOL_SYMBOLIC=1 ;;
         ?) # default, display options with nonzero exitcode
             help $NONZERO_EXITCODE
     esac
