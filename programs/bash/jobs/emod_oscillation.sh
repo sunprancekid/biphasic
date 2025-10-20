@@ -23,7 +23,7 @@ OSC_AMP="./programs/bash/parameter/oscillation/amplitude.sh"
 # oscillation - period
 OSC_PER="./programs/bash/parameter/oscillation/period.sh"
 
-## PARAMETERS
+## PARAMETERS - OPTIONS
 # nonzero exit code
 declare -i NONZERO_EXITCODE=120
 # filename
@@ -32,6 +32,10 @@ FILENAME="programs/bash/jobs/emod_oscillation.sh"
 PURPOSE="perform oscillation simulations where the elastic modulus is a variable parameter."
 # job name
 JOB="osc_emod"
+# boolean for file overwriting
+declare -i BOOL_OVERWRITE=0
+# boolean for parameter and config file writing
+declare -i BOOL_PARM=0
 
 ## CONSTANTS
 # permiability (mm^4 / N * s)
@@ -115,6 +119,23 @@ display_error () {
 
 }
 
+# check options before execution
+check () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # parameter generation
+    if [[ $BOOL_PARM -eq 1 ]]; then
+        # check if the directory, and config and parm files already exist
+        display_error "TODO :: implement check for job parameters"
+    fi
+}
+
 ## OPTIONS
 # parse options
 while getopts "hvVopgsaj:f:n:c:" opt; do
@@ -154,6 +175,8 @@ while getopts "hvVopgsaj:f:n:c:" opt; do
 # none
 
 ## SCRIPT
+# check options passed to script
+check
 ## set constants
 # constant volume fraction
 $MAT_VF -j $JOB -C $VOLUME_FRAC
