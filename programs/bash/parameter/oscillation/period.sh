@@ -15,6 +15,8 @@
 FEB_PARAMETER="./programs/bash/parameter/feb_parameter.sh"
 
 ## PARAMETERS - CONSTANTS
+# constant pi
+PI="3.14159265359"
 # non-zero exit code
 declare -i NONZERO_EXITCODE=120
 # script filename
@@ -28,13 +30,13 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean determining if the job name has been specified
 declare -i BOOL_JOB=0
 # default xml path
-XML_PATH="Step/step[@id='2']/Rigid/rigid_bc[@name='tip_oscillation']/value[@lc='2']"
+XML_PATH_OT="na" # path is not assigned to OT
 # default key 
-KEY="OT"
+KEY_OT="OT"
 # default units
-UNITS="s"
+UNITS_OT="s"
 # default description
-DESCRIPTION="oscillation_period"
+DESCRIPTION_OT="oscillation_period"
 # boolean for a constant value
 declare -i BOOL_CONSTANT=0
 # boolean for min val
@@ -45,6 +47,14 @@ declare -i BOOL_MAXVAL=0
 declare -i BOOL_NVALS=0
 # boolean for logscale
 declare -i BOOL_LOGSCALE=0
+
+## PARAMETERS - PERIOD TIP OSCILLATION EQUATION
+# xml path for equation
+XML_MATH="LoadData/load_controller[@id='2']/math"
+# description of maths
+DESCRIP_MATH="tip_oscillation_equation"
+# key used for the math equation
+KEY_MATH="OTMa"
 
 ## PARAMETERS - SIMULATION LENGTH and NUMERICAL STEP SIZE OPTIONS
 # number of oscillation cycles
@@ -58,13 +68,13 @@ DESCRIP_STEPS="oscillation_total_numerical_steps"
 # xml path for the number of steps
 XML_STEPS="Step/step[@id='2']/Control/time_steps"
 # key for simulation initial step size
-KEY_INIT_STEP="OSMi"
+KEY_INIT_STEP="OSMn"
 # description for numerical step size
 DESCRIP_INIT_STEP="oscillation_initial_step"
 # xml path for minimum / initial step size
 XML_INIT_STEP="Step/step[@id='2']/Control/step_size"
 # key for simulation max step size
-KEY_MAX_STEP="OSMa"
+KEY_MAX_STEP="OSMx"
 # description for the maximum step size
 DESCRIP_MAX_STEP="oscillation_max_step"
 # xml path for max step size
@@ -173,20 +183,23 @@ gen () {
 
 	## SCRIPT
 	# execute feb paramterization script
-	# write the period 
+	## write the period, which is variable and specified by user
 	if [[ $BOOL_CONSTANT -eq 1 ]]; then
 		# append constant value to job
-		$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE
+		$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH_OT -k $KEY_OT -u $UNITS_OT -D $DESCRIPTION_OT -C $CONSTANT_VALUE
 	else
 		# generate multiple values and append to job
 		if [[ $BOOL_LOGSCALE -eq 1 ]]; then
 			# generate values on logscale
-			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -A $MINVAL -B $MAXVAL -N $NVALS -L
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH_OT -k $KEY_OT -u $UNITS_OT -D $DESCRIPTION_OT -A $MINVAL -B $MAXVAL -N $NVALS -L
 		else
 			# generate values on linear scale
-			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -A $MINVAL -B $MAXVAL -N $NVALS
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH_OT -k $KEY_OT -u $UNITS_OT -D $DESCRIPTION_OT -A $MINVAL -B $MAXVAL -N $NVALS
 		fi
 	fi
+	## write dependencies
+	# write the math equation used for tip oscillation
+	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C "0.5*sin($PI((2.*t/OT)-1))" -R -S
 	# write the total number of numerical steps (constant)
 	declare -i TOTAL_STEPS_MAX=$( echo "$N_CYCLES * $N_STEPS" | bc -l ) # based on max step size
 	declare -i TOTAL_STEPS_MIN=$( echo "$TOTAL_STEPS_MAX * 10" | bc -l ) # based on the inital step size
