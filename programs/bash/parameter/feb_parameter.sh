@@ -299,7 +299,7 @@ gen () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:x:k:u:D:C:A:B:LN:R" opt; do
+while getopts "hd:j:x:k:u:D:C:A:B:LN:RS" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;
