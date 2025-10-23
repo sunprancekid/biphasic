@@ -10,6 +10,8 @@
 ## MODULES - JOB MANAGEMENT
 # generate directory hirearchy and feb parameterization
 GEN="./programs/bash/simulation/generate.sh"
+# submit job to linux cluster en masse
+SUB="./programs/bash/submit_batch_jobs.sh"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -78,6 +80,10 @@ declare -i BOOL_PARM=0
 declare -i BOOL_FEB=0
 # boolean for generating files
 declare -i BOOL_GEN=0
+# boolean for submitting jobs
+declare -i BOOL_SUB=0
+# boolean for analyzing jobs
+declare -i BOOL_ANAL=0
 # boolean for specifying job integer
 declare -i BOOL_INT=0
 
@@ -219,9 +225,51 @@ generate () {
 	if [[ $BOOL_INT -eq 0 ]]; then
 		$GEN -d $DIR -j $JOB -f $FEB_FILE
 	else
+		echo "TODO :: implement single parameter generation"
 		$GEN -d $DIR -j $JOB -f $FEB_FILE -n $SIM_INT
+		# TODO :: add local option, generate feb in pwd
 	fi
 
+}
+
+# submit job to linux cluster
+submit () {
+
+	## PARAMETER
+	# none
+
+	## ARGUMENT
+	# none
+
+	## SCRIPT
+	# submit single or multiple jobs to linux cluster
+	if [[ $BOOL_INT -eq 0 ]]; then
+		$SUB -d $DIR -j $JOB -s
+	else
+		display_error "TODO :: implement single job cluster submission"
+	fi
+
+
+	## TODO :: add these to submission script
+	# submit single job
+	# check host before submission
+	# for batch generation, add columns that contains the job number and the status
+	# run local, also serial
+
+}
+
+# run analysis routine
+analysis () {
+
+	## PARAMETER
+	# none
+
+	## ARGUMENT
+	# none
+
+	## SCRIPT
+	# run selected analysis routine
+	display_error "TODO :: implement analysis routines for ${JOB}"
 }
 
 ## OPTIONS
@@ -277,9 +325,13 @@ fi
 if [[ $BOOL_GEN -eq 1 ]]; then
 	generate
 fi
+if [[ $BOOL_SUB	-eq 1 ]]; then
+	submit
+fi
+if [[ $BOOL_ANAL -eq 1 ]]; then
+	analysis
+fi
 
 
-# TODO :: generate feb files and directories (en masse, from parm file)
-# TODO :: submit jobs to HPC cluster (en masse, from parm file)
 # TODO :: update jobs status (en mass, from parm file)
 # TODO :: parse results (en mass, from parm file)
