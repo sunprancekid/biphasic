@@ -7,7 +7,11 @@
 ## Max Planck Institute for Colloids and Interfacial Sciences
 ## 2025.10.14
 
-## MODULES
+## MODULES - JOB MANAGEMENT
+# generate directory hirearchy and feb parameterization
+GEN="./programs/bash/simulation/generate.sh"
+
+## MODULES - FEB PARAMETERIZATION
 # material property - permeability
 MAT_PERM="./programs/bash/parameter/material/permeability.sh"
 # material property - poissons ratio
@@ -23,23 +27,15 @@ OSC_AMP="./programs/bash/parameter/oscillation/amplitude.sh"
 # oscillation - period
 OSC_PER="./programs/bash/parameter/oscillation/period.sh"
 
-## PARAMETERS - OPTIONS
+## SCRIPT CONSTANTS
 # nonzero exit code
 declare -i NONZERO_EXITCODE=120
 # filename
 FILENAME="programs/bash/jobs/emod_oscillation.sh"
 # file purpose
 PURPOSE="perform oscillation simulations where the elastic modulus is a variable parameter."
-# directory which contains jobs
-DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
-# job name
-JOB="osc_emod"
-# boolean for file overwriting
-declare -i BOOL_OVERWRITE=0
-# boolean for parameter and config file writing
-declare -i BOOL_PARM=0
 
-## CONSTANTS
+## FEB PARAMETERIZATION CONSTANTS
 # permiability (mm^4 / N * s)
 PERMEABILITY="0.001"
 # poissons ratio
@@ -51,7 +47,7 @@ VAL_LOAD_DEPTH="0.05"
 # oscillation amplitude (mm)
 VAL_OSCILLATION_AMPLITUDE="0.025"
 
-## ELASTIC MODULUS (logscale)
+## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
 MIN_EMOD="0.005"
 # maximum elastic modulus to test (MPa)
@@ -59,13 +55,31 @@ MAX_EMOD="50."
 # number of unique elastic modulus values to test
 N_EMOD="9"
 
-## OSCILLATION PERIOD (logscale)
+## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
 MIN_PERIOD="0.2"
 # maximum period to test (seconds)
 MAX_PERIOD="20000."
 # number of unique period values to test
 N_PERIOD="25"
+
+# OPTION PARAMETERS
+# directory which contains jobs
+DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
+# boolean for declaring job name
+declare -i BOOL_JOB=0
+# job name
+JOB="osc_emod"
+# boolean for file overwriting
+declare -i BOOL_OVERWRITE=0
+# boolean for parameter and config file writing
+declare -i BOOL_PARM=0
+# boolean for feb file
+declare -i BOOL_FEB=0
+# boolean for generating files
+declare -i BOOL_GEN=0
+# boolean for specifying job integer
+declare -i BOOL_INT=0
 
 ## METHODS
 # display options, exit with exit code
@@ -132,13 +146,15 @@ check () {
     # none
 
     ## SCRIPT
+    # check that the main directory exists
+    if [[ ! -p $DIR ]]; then
+    	# the directory doesnt exist
+    	display_error "DIRECTORY '${DIR}' cannot be found"
+    fi
+
     # parameter generation
     if [[ $BOOL_PARM -eq 1 ]]; then
         # check if the directory, and config and parm files already exist
-        if [[ ! -p $DIR ]]; then
-        	# the directory doesnt exist
-        	display_error "DIRECTORY '${DIR}' cannot be found"
-        fi
         if [[ -p ${DIR}${JOB} && $BOOL_OVERWRITE -eq 0 ]]; then
         	# the job already exists but overwrite has not been called
         	display_error "the job parameters have already been generated and cannot be overwritten without an overwrite flag (-o)."
@@ -146,6 +162,16 @@ check () {
       		display_error "TODO :: implement overwrite routine."
       	fi
         display_error "TODO :: implement check for job parameters"
+    fi
+
+    # directory generation and feb parameterization
+    if [[ $BOOL_GEN -eq 1 ]]; then
+    	# check that the feb file exists
+    	if [[ $BOOL_FEB -eq 0 ]]; then
+    		display_error "must specify FEB FILE (-f)"
+    	elif [[ ! -f $FEB_FILE ]]; then
+    		display_error "specified FEB FILE '${FEB_FILE}' does not exist."
+    	fi
     fi
 }
 
@@ -177,6 +203,24 @@ parameter () {
 	# oscillation period
 	echo $OSC_PER -d $DIR -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
 
+}
+
+# generate directories and parameterize feb files
+generate () {
+
+	## PARAMETER
+	# none
+
+	## ARGUMENT
+	# none
+
+	## SCRIPT
+	# generate parameters depending on if an integer was specified or not
+	if [[ $BOOL_INT -eq 0 ]]; then
+		$GEN -d $DIR -j $JOB -f $FEB_FILE
+	else
+		$GEN -d $DIR -j $JOB -f $FEB_FILE -n $SIM_INT
+	fi
 
 }
 
@@ -216,6 +260,8 @@ while getopts "hvVopgsad:j:f:n:c:" opt; do
         CHECKFILE=${OPTARG} ;;
     ?) # default option
         help $NONZERO_EXITCODE
+    esac
+done
 
 ## ARGUMENTS
 # none
@@ -227,6 +273,9 @@ check
 # perform specified operation
 if [[ $BOOL_PARM -eq 1 ]]; then
 	parameter
+fi
+if [[ $BOOL_GEN -eq 1 ]]; then
+	generate
 fi
 
 
