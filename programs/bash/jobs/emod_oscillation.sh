@@ -30,6 +30,8 @@ declare -i NONZERO_EXITCODE=120
 FILENAME="programs/bash/jobs/emod_oscillation.sh"
 # file purpose
 PURPOSE="perform oscillation simulations where the elastic modulus is a variable parameter."
+# directory which contains jobs
+DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # job name
 JOB="osc_emod"
 # boolean for file overwriting
@@ -90,6 +92,7 @@ help () {
     echo -e " -s\t\t| SUBMIT jobs to cluster."
     echo -e " -a\t\t| ANALYZE results post-simulation."
     echo -e "\n ## SCRIPT PARAMETERS ##"
+    echo -e " -d  << ARG >>\t| DIRECTORY path to generate jobs (default is ${DIR})"
     echo -e " -j  << ARG >>\t| JOB name (default is ${JOB})"
     echo -e " -f  << ARG >>\t| FEB FILE to use when GENERATING jobs."
     echo -e " -n  << ARG >>\t| perform execution for only one parameter set, integer N."
@@ -132,13 +135,54 @@ check () {
     # parameter generation
     if [[ $BOOL_PARM -eq 1 ]]; then
         # check if the directory, and config and parm files already exist
+        if [[ ! -p $DIR ]]; then
+        	# the directory doesnt exist
+        	display_error "DIRECTORY '${DIR}' cannot be found"
+        fi
+        if [[ -p ${DIR}${JOB} && $BOOL_OVERWRITE -eq 0 ]]; then
+        	# the job already exists but overwrite has not been called
+        	display_error "the job parameters have already been generated and cannot be overwritten without an overwrite flag (-o)."
+      	elif [[ -p ${DIR}${JOB} && $BOOL_OVERWRITE -eq 1 ]]; then
+      		display_error "TODO :: implement overwrite routine."
+      	fi
         display_error "TODO :: implement check for job parameters"
     fi
 }
 
+# create parameters
+parameter () {
+
+	## PARAMETERS
+	# none
+
+	## ARGUMENTS
+	# none
+
+	## SCRIPT
+	## set constants
+	# constant volume fraction
+	$MAT_VF -d $DIR -j $JOB -C $VOLUME_FRAC
+	# constant poisson ratio
+	$MAT_PR -d $DIR -j $JOB -C $POISSON_RATIO
+	# constant permeability
+	$MAT_PERM -d $DIR -j $JOB -C $PERMEABILITY
+	# constant loading depth
+	$LOAD_DEPTH -d $DIR -j $JOB -C $VAL_LOAD_DEPTH
+	# constant oscillation amplitude 
+	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
+
+	## generate variable parameters
+	# elastic modulus
+	echo $MAT_EMOD -d $DIR -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
+	# oscillation period
+	echo $OSC_PER -d $DIR -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
+
+
+}
+
 ## OPTIONS
 # parse options
-while getopts "hvVopgsaj:f:n:c:" opt; do
+while getopts "hvVopgsad:j:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -156,6 +200,8 @@ while getopts "hvVopgsaj:f:n:c:" opt; do
         declare -i BOOL_SUB=1 ;;
     a) # analyze simulation results
         declare -i BOOL_ANAL=1 ;;
+    d) # specify directory for job
+    	DIR=${OPTARG} ;;
     j) # job title
         declare -i BOOL_JOB=1
         JOB=${OPT_ARG};;
@@ -177,23 +223,12 @@ while getopts "hvVopgsaj:f:n:c:" opt; do
 ## SCRIPT
 # check options passed to script
 check
-## set constants
-# constant volume fraction
-$MAT_VF -j $JOB -C $VOLUME_FRAC
-# constant poisson ratio
-$MAT_PR -j $JOB -C $POISSON_RATIO
-# constant permeability
-$MAT_PERM -j $JOB -C $PERMEABILITY
-# constant loading depth
-$LOAD_DEPTH -j $JOB -C $VAL_LOAD_DEPTH
-# constant oscillation amplitude 
-$OSC_AMP -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
 
-## generate parameters
-# elastic modulus
-echo $MAT_EMOD -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
-# oscillation period
-echo $OSC_PER -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
+# perform specified operation
+if [[ $BOOL_PARM -eq 1 ]]; then
+	parameter
+fi
+
 
 # TODO :: generate feb files and directories (en masse, from parm file)
 # TODO :: submit jobs to HPC cluster (en masse, from parm file)
