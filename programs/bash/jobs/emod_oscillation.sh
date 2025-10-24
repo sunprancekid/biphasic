@@ -12,6 +12,8 @@
 GEN="./programs/bash/simulation/generate.sh"
 # submit job to linux cluster en masse
 RUN="./programs/bash/simulation/run.sh"
+# contains analysis routines
+ANAL="./programs/bash/simulation/analysis.sh"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
