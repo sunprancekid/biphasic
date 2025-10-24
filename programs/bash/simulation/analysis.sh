@@ -186,12 +186,17 @@ for n in $(seq 2 $N_LINES)
 do
     ## get simulation pathsfebio4
     # the first column is the SUBDIR
-    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 1)
+    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 3)
     # the second column is the SIMID
     SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
 
     ## extract results
     $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
+
+    # remove xplt files
+    if [[ -f $JOB_PATH$SUBDIR$SIMID.xplt ]]; then
+        rm $JOB_PATH$SUBDIR$SIMID.xplt
+    fi
 
     ## perform analysis as requested
     # hystersis analysis
