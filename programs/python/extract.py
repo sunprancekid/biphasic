@@ -67,7 +67,8 @@ def extract_febio_out (d = None, f = None, s = None):
 	with open(d + f, 'r') as f_io:
 
 		# initialize io collection
-		n = 0 # count the number of data points collected
+		n_step = 0 # count the number of data points collected
+		n_total = 0
 		has_header = False # boolean determining if header has been parsed
 		header = None # contains header, once parsed
 		time = [] # array contianing increments
@@ -82,7 +83,10 @@ def extract_febio_out (d = None, f = None, s = None):
 			l = l.strip()
 
 			# if the line matched for the format for the data entry
-			if l == "Step = {}".format(n):
+			if l == "Step = {}".format(n_step) or l == "Step = 1":
+				if l == "Step = 1": 
+					n_step = 1
+					
 				# parse the time
 				l = f_io.readline().strip()
 				l = l.split(" ")
@@ -106,7 +110,8 @@ def extract_febio_out (d = None, f = None, s = None):
 				for i in range(1, len(temp)):
 					data[-1] += ",{}".format(temp[i])
 				# print("{},{}{}".format(n,time[-1],data[-1]))
-				n += 1
+				n_step += 1
+				n_total += 1
 
 	## write io to formatted file within same directory
 	if s is None:
