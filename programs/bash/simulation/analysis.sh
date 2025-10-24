@@ -166,7 +166,7 @@ declare -i PERIOD_COL=0 # integer that determines the column in the csv which co
 for c in $(seq 1 $($PARSE_CSV -f $PARM_FILE -l 1 -c))
 do
     COL_HEADER=$($PARSE_CSV -f $PARM_FILE -l 1 -c $c)
-    if [ "${COL_HEADER}" = "period" ]; then
+    if [ "${COL_HEADER}" = "OT" ]; then
         declare -i PERIOD_COL=$c
         declare -i HAS_PERIOD_COL=1
     fi

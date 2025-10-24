@@ -44,6 +44,10 @@ if not os.path.exists(path + febio_out):
     print("ERROR :: hystersis :: unable to find file {}{} ..".format(path, febio_out))
     exit(nonzero_exitcode)
 
+# drop the first 1000 seconds of simulation data
+df.drop(df[df['t'] < 1000].index, inplace = True)
+df['t'] = df['t'] - 1000
+
 # open the file, get the time and the work
 df = pd.read_csv(path + febio_out)
 time = df['t'].to_list()
