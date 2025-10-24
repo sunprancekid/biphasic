@@ -44,18 +44,21 @@ if not os.path.exists(path + febio_out):
     print("ERROR :: hystersis :: unable to find file {}{} ..".format(path, febio_out))
     exit(nonzero_exitcode)
 
-# drop the first 1000 seconds of simulation data
-df.drop(df[df['t'] < 1000].index, inplace = True)
-df['t'] = df['t'] - 1000
-
 # open the file, get the time and the work
 df = pd.read_csv(path + febio_out)
+
+# drop the first 1000 seconds of simulation data
+df.drop(df[df['t'] <= 1000].index, inplace = True)
+df['t'] = df['t'] - 1000
+
+# parse data
 time = df['t'].to_list()
 work = df['dw_fvdt'].to_list()
 # determine the number of cycles which have occured
 n_cyc = math.floor(time[-1] / period)
 hys = [0.]
 for i in range(len(time)):
+    # print(i, time[i], work[i])
     # accumulate the work done in each cycle
     if len(hys) < math.ceil(time[i] / period):
         hys.append(0.)

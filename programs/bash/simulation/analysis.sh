@@ -199,6 +199,7 @@ do
         # for now, just determine hystersis
         # determine the column which contains the period
         $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
+        # exit
 
         ## get the information from the save file, append to the parameter file
         # get the header for the summary file, if not already
