@@ -263,7 +263,7 @@ run () {
 		display_error "must specify running simulations locally (flag -l) or submitting to slurm cluster (flag -s) to run."
 	fi
 	# execute
-	echo $RUN $RUN_FLAGS
+	$RUN $RUN_FLAGS
 
 	## TODO :: add these to submission script
 	# for batch generation, add columns that contains the job number and the status
