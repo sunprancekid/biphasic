@@ -111,11 +111,11 @@ check () {
     else
         # the job name has been specified
         # check that the parameter file exists
-        PARM_FILE="${JOB_PATH}${JOB}.csv"
+        PARM_FILE="${JOB_PATH}${JOB}.parm.csv"
         if [ ! -f $PARM_FILE ]
         then
             # the parameter file does not exist
-            display_error "the parameter file '$PARM_FILE' cannot be foundfebio4."
+            display_error "the parameter file '$PARM_FILE' cannot be found."
             help $NONZEROEXITCODE
         fi
     fi
