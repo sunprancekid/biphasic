@@ -350,37 +350,3 @@ if [[ $BOOL_SIMINT -eq 0 ]]; then
 else # bool_simint is 1
     submit_single $SIMINT
 fi
-exit
-# open csv parameter file, parse options from each row
-# get the number of lines
-declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l)
-
-# loop through each line, line 1 is the header ..
-for n in $(seq 2 $N_LINES)
-do
-    ## get simulation paths
-    # the first column is the SUBDIR
-    SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 3)
-    # the second column is the SIMID
-    SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
-
-    ## run job ..
-    # if local, run on current machine with 'febio4'
-    if [ $BOOL_LOCAL -eq 1 ]; then
-        display_error "TODO :: implement running febio4 simulations locally"
-        exit $NONZEROEXITCODE
-    elif [ $BOOL_SLURM -eq 1 ]; then
-        # if slurm, generate the submission script and submit
-        if [ $BOOL_TRANSFER -eq 1 ]; then
-            # create a subdirectory corresponding to the simulation path in the local directory
-            mkdir -p ${TRANS_PATH}${JOB_PATH}${SUBDIR}
-            # copy any files in the local directory to the transfer directory
-            cp ${JOB_PATH}${SUBDIR}* ${TRANS_PATH}${JOB_PATH}${SUBDIR}
-            # generate the slurm script in the transfer directory
-            $SUB_SLURM -d ${TRANS_PATH}${JOB_PATH}${SUBDIR} -j ${SIMID}
-        else
-            # submit the script from the local directory
-            $SUB_SLURM -d ${JOB_PATH}${SUBDIR} -j ${SIMID}
-        fi
-    fi
-done
