@@ -251,10 +251,12 @@ submit () {
     elif [[ $BOOL_SLURM -eq 1 ]]; then
         # submit to slurm
         # check the host is hot2
-        if [[ ! "${HOSTNAME}" -eq "${SLURM_HOST}" ]]; then
-            display_error
+        if [[ ! "${HOSTNAME}" == "${SLURM_HOST}" ]]; then
+            display_error "login into ${SLURM_HOST} before submitting to slurm."
         fi
-        display_error "implement slurm submission"
+        # submit the script from the local directory
+        $SUB_SLURM -d ${simdirstack} -j ${SIMID}
+        return
     fi
     # 
 
