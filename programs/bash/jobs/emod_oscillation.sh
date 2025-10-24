@@ -317,7 +317,7 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
         declare -i BOOL_FEB=1
         FEB_FILE=${OPTARG};;
     n) # integer for specific job number
-        declare -e BOOL_INT=1
+        declare -i BOOL_INT=1
         SIM_INT=${OPTARG} ;;
     c) # specify check file
         declare -i BOOL_CHECKFILE=1

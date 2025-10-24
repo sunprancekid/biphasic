@@ -193,11 +193,6 @@ do
     ## extract results
     $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
 
-    # remove xplt files
-    if [[ -f $JOB_PATH$SUBDIR$SIMID.xplt ]]; then
-        rm $JOB_PATH$SUBDIR$SIMID.xplt
-    fi
-
     ## perform analysis as requested
     # hystersis analysis
     if [[ $BOOL_HYS -eq 1 ]]; then
