@@ -121,6 +121,7 @@ check () {
 
     ## SCRIPT
     # check that the job path exists
+    JOB_PATH=${JOB_PATH}${JOB}/ # update job name
     if [ $BOOL_PATH -eq 0 ]
     then
         # if the job path has not been specified
