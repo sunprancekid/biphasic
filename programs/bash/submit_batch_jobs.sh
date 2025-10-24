@@ -29,8 +29,10 @@ declare -i BOOL_JOB=0
 declare -i BOOL_LOCAL=0
 # boolean that determines if the jobs should be run via slurm
 declare -i BOOL_SLURM=0
-# boolean that determines if jobs should be transfered to another folder before execution
-declare -i BOOL_TRANSFER=0
+# boolean for running single job
+declare -i BOOL_SIMINT=0
+# boolean for specifying check file
+declare -i BOOL_CHECKFILE=0
 
 ## FUNCTIONS
 # display options, exit
@@ -53,9 +55,10 @@ help () {
     echo -e " -s\t\t| submit job via slurm (via 'sbatch' - see ${SUB_SLURM})."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory."
-    echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
-    echo -e " -t  << ARG >>\t| OPTIONAL:  transfer job files to another location before execution."
-#     echo -e " -f  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
+    echo -e " -j  << ARG >>\t| MANDATORY: job name."
+    # echo -e " -t  << ARG >>\t| OPTIONAL:  transfer job files to another location before execution."
+    echo -e " -c  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
+    echo -e " -n  << ARG >>\t| OPTIONAL: submit single job corresponding to integer in parameter file."
     echo -e ""
     # exit
     exit $exitcode
@@ -147,18 +150,78 @@ check () {
 #     fi
 
     # if a transfer pathwas specified, make sure that it exists
-    if [ $BOOL_TRANSFER -eq 1 ]; then
-        if [ ! -d $TRANS_PATH ]; then
-            # the transfer path does not exist
-            display_error "the transfer path ('${TRANS_PATH}') does not exist or cannot be found."
-            help $NONZEROEXITCODE
+    # if [ $BOOL_TRANSFER -eq 1 ]; then
+    #     if [ ! -d $TRANS_PATH ]; then
+    #         # the transfer path does not exist
+    #         display_error "the transfer path ('${TRANS_PATH}') does not exist or cannot be found."
+    #         help $NONZEROEXITCODE
+    #     fi
+    # fi
+}
+
+# submit job
+submit () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # first argument: line corresponding to job in parameter file
+    local -i l=$1
+
+    ## SCRIPT
+    # get the directory and simid from the parameter file
+    local simid=$($PARSE_CSV -f $PARM_FILE -l $l -c 2)
+    local simdir=$($PARSE_CSV -f $PARM_FILE -l $l -c 3)
+    # check that the directory exists
+    # check that the directory contains a feb file
+    
+}
+
+# submit single job
+submit_single () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # first argument: integer corresponding to the job in the parameter file
+    local -i simint=$1
+
+    ## SCRIPT
+    # find the job in the parameter file
+    declare -i lines=$($PARSE_CSV -f $PARM_FILE -l )
+    for l in $(seq 2 $lines); do
+        # find the line corresponding to the integer
+        if [[ $simint -eq $($PARSE_CSV -f $PARM_FILE -l $l -c 1) ]]; then
+            break
         fi
-    fi
+    done
+
+    # submit the job according the specifications
+    submit $l
+}
+
+# submit all jobs
+submit_batch () {
+
+    ## PARAMETERS 
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # loop through all lines in parameter file and submit
+    for l in $(seq 2 $($PARSE_CSV -f $PARM_FILE -l )); do
+        # pass line to submit
+        submit $l
+    done
 }
 
 ## OPTIONS
 # parse options
-while getopts "hlsd:j:t:" opt
+while getopts "hlsd:j:c:n:" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -173,13 +236,13 @@ do
         j) # specify job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
-        t) # transfer files to another directory before execution
-            declare -i BOOL_TRANSFER=1
-            TRANS_PATH=${OPTARG} ;;
+        n) # specify single job
+            declare -i BOOL_SIMINT=1
+            declare -i SIMINT=${OPTARG} ;;
         ?) # unknown option
             help $NONZEROEXITCODE
-    esac # case backwards ...
-done # not do backwards ...
+    esac 
+done 
 
 ## ARGUMENTS
 # none
@@ -192,6 +255,12 @@ done # not do backwards ...
 # check options specified by user
 check
 
+# submit jobs
+if [[ $BOOL_SIMINT -eq 0 ]]; then
+    submit_batch
+else # bool_simint is 1
+    submit_single $SIMINT
+fi
 # open csv parameter file, parse options from each row
 # get the number of lines
 declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l)

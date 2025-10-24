@@ -254,6 +254,7 @@ submit () {
 	# check host before submission
 	# for batch generation, add columns that contains the job number and the status
 	# run local, also serial
+	# check file
 
 }
 
