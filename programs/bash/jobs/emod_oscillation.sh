@@ -82,6 +82,10 @@ declare -i BOOL_FEB=0
 declare -i BOOL_GEN=0
 # boolean for submitting jobs
 declare -i BOOL_RUN=0
+# boolean for running jobs on linux cluster
+declare -i BOOL_SLURM=0
+# boolean for running jobs locally
+declare -i BOOL_LOCAL=0
 # boolean for analyzing jobs
 declare -i BOOL_ANAL=0
 # boolean for specifying job integer
@@ -110,6 +114,8 @@ help () {
     echo -e " -p\t\t| create PARAMETER and CONFIG files."
     echo -e " -g\t\t| GENERATE FEB files."
     echo -e " -r\t\t| RUN jobs."
+    echo -e " \t-s\t| SUBMIT JOBS to HPC cluster via slurm."
+    echo -e " \t-l\t| run jobs LOCALLY."
     echo -e " -a\t\t| ANALYZE results post-simulation."
     echo -e "\n ## SCRIPT PARAMETERS ##"
     echo -e " -d  << ARG >>\t| DIRECTORY path to generate jobs (default is ${DIR})"
@@ -241,13 +247,21 @@ run () {
 	# none
 
 	## SCRIPT
-	# run single or multiple jobs
-	if [[ $BOOL_INT -eq 0 ]]; then
-		$RUN -d $DIR -j $JOB -s
-	else # integer has been specified
-		$RUN -d $DIR -j $JOB -s -n $SIM_INT
+	RUN_FLAGS="-d ${DIR} -j ${JOB}"
+	# check for job specification
+	if [[ $BOOL_INT -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -n ${SIM_INT}"
 	fi
-
+	# check for running instructions
+	if [[ $BOOL_SLURM -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -s"
+	elif [[ $BOOL_LOCAL -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -l"
+	else
+		display_error "must specify running simulations locally (flag -l) or submitting to slurm cluster (flag -s) to run."
+	fi
+	# execute
+	echo $RUN $RUN_FLAGS
 
 	## TODO :: add these to submission script
 	# for batch generation, add columns that contains the job number and the status
@@ -270,7 +284,7 @@ analysis () {
 
 ## OPTIONS
 # parse options
-while getopts "hvVopgrad:j:f:n:c:" opt; do
+while getopts "hvVopgrslad:j:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -286,6 +300,10 @@ while getopts "hvVopgrad:j:f:n:c:" opt; do
         declare -i BOOL_GEN=1 ;;
     r) # RUN simulations
         declare -i BOOL_RUN=1 ;;
+    s) # submit jobs to SLURM
+    	declare -i BOOL_SLURM=1 ;;
+    l) # run jobs LOCALLY
+    	declare -i BOOL_LOCAL=1 ;;
     a) # analyze simulation results
         declare -i BOOL_ANAL=1 ;;
     d) # specify directory for job
