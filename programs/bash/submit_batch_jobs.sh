@@ -167,26 +167,6 @@ check () {
             help $NONZEROEXITCODE
         fi
     fi
-
-    # if the jobs should be run via slurm
-#     if [ $BOOL_SLURM -eq 1 ]; then
-#         # check if the sbatch command exists
-#         if ! command -v sbatch >/dev/null/ 2>&1
-#         then
-#             # if the sbatch does not exist, jobs cannot be submitted
-#             display_error "the command 'sbatch' cound not be found, please log onto computing cluster before exectuing jobs to submit to slurm"
-#             help $NONZEROEXITCODE
-#         fi
-#     fi
-
-    # if a transfer pathwas specified, make sure that it exists
-    # if [ $BOOL_TRANSFER -eq 1 ]; then
-    #     if [ ! -d $TRANS_PATH ]; then
-    #         # the transfer path does not exist
-    #         display_error "the transfer path ('${TRANS_PATH}') does not exist or cannot be found."
-    #         help $NONZEROEXITCODE
-    #     fi
-    # fi
 }
 
 # submit job
