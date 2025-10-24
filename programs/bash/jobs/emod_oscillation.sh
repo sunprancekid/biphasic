@@ -153,7 +153,7 @@ check () {
 
     ## SCRIPT
     # check that the main directory exists
-    if [[ ! -p $DIR ]]; then
+    if [[ ! -d $DIR ]]; then
     	# the directory doesnt exist
     	display_error "DIRECTORY '${DIR}' cannot be found"
     fi
@@ -161,13 +161,12 @@ check () {
     # parameter generation
     if [[ $BOOL_PARM -eq 1 ]]; then
         # check if the directory, and config and parm files already exist
-        if [[ -p ${DIR}${JOB} && $BOOL_OVERWRITE -eq 0 ]]; then
+        if [[ -d ${DIR}${JOB} && $BOOL_OVERWRITE -eq 0 ]]; then
         	# the job already exists but overwrite has not been called
         	display_error "the job parameters have already been generated and cannot be overwritten without an overwrite flag (-o)."
-      	elif [[ -p ${DIR}${JOB} && $BOOL_OVERWRITE -eq 1 ]]; then
+      	elif [[ -d ${DIR}${JOB} && $BOOL_OVERWRITE -eq 1 ]]; then
       		display_error "TODO :: implement overwrite routine."
       	fi
-        display_error "TODO :: implement check for job parameters"
     fi
 
     # directory generation and feb parameterization
@@ -244,7 +243,7 @@ submit () {
 	## SCRIPT
 	# submit single or multiple jobs to linux cluster
 	if [[ $BOOL_INT -eq 0 ]]; then
-		$SUB -d $DIR -j $JOB -s
+		$SUB -d $DIR${JOB}/ -j $JOB -s
 	else
 		display_error "TODO :: implement single job cluster submission"
 	fi
