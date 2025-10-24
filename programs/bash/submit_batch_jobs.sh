@@ -17,8 +17,17 @@ FILENAME="./programs/bash/submit_batch_jobs.sh"
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # path to script for slurm submission
 SUB_SLURM="./programs/bash/util/submit_febio_slurm.sh"
-# febio4 executable
+
+## HOSTNAME AND FEBIO EXECUTABLE INSTRUCTIONS
+# host name of mpikg lbox
+MPIKG_HOST="lbox181.mpikg.mpg.de"
+# febio4 executable for mpikg
+MPIKG_EXEC="/scratch/dorsey/FEBio-4.9/build-with-MKL/bin/febio4"
+# normal febio4 executable
 FEBIO4='febio4'
+# host for slurm submissino
+SLURM_HOST="hot2.mpikg.mpg.de"
+
 
 ## OPTION PARAMETERS
 # boolean for verbose execution
@@ -204,6 +213,8 @@ submit () {
         display_error "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
     elif [[ ${#feb_list[@]} -gt 1 ]]; then
         display_error "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
+    else
+        local feb_file=${feb_list[0]}
     fi
 
     # if there is a check file call, check for the file
@@ -219,8 +230,32 @@ submit () {
             return
         fi
     fi
-    
-    # run local, or on submit host
+
+    # run 
+    if [[ $BOOL_LOCAL -eq 1 ]]; then
+        # run locally
+        if [[ "$HOSTNAME" == "$MPIKG_HOST" ]]; then
+            # run using the local installation at mpikg
+            $MPIKG_EXEC $feb_file
+            return
+        else
+            # check that the febio4 command is installed
+            if command -v $FEBIO4 >/dev/null 2>&1
+            then
+                $FEBIO4 $feb_file
+                return
+            else
+                display_error "cannot run simulation '$simid' locally. $FEBIO4 command is not installed on ${HOSTNAME}"
+            fi
+        fi
+    elif [[ $BOOL_SLURM -eq 1 ]]; then
+        # submit to slurm
+        # check the host is hot2
+        if [[ ! "${HOSTNAME}" -eq "${SLURM_HOST}" ]]; then
+            display_error
+        fi
+        display_error "implement slurm submission"
+    fi
     # 
 
 }
