@@ -12,11 +12,11 @@ set -e
 # nonzero exit code
 declare -i NONZEROEXITCODE=120
 # file name
-FILENAME="./programs/bash/submit_batch_jobs.sh"
+FILENAME="./programs/bash/simulation/run.sh"
 # path to parse csv file
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # path to script for slurm submission
-SUB_SLURM="./programs/bash/util/submit_febio_slurm.sh"
+SUB_SLURM="./programs/bash/simulation/submit_slurm.sh"
 
 ## HOSTNAME AND FEBIO EXECUTABLE INSTRUCTIONS
 # host name of mpikg lbox

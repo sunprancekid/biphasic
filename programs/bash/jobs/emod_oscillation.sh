@@ -11,7 +11,7 @@
 # generate directory hirearchy and feb parameterization
 GEN="./programs/bash/simulation/generate.sh"
 # submit job to linux cluster en masse
-SUB="./programs/bash/submit_batch_jobs.sh"
+RUN="./programs/bash/simulation/run.sh"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -81,7 +81,7 @@ declare -i BOOL_FEB=0
 # boolean for generating files
 declare -i BOOL_GEN=0
 # boolean for submitting jobs
-declare -i BOOL_SUB=0
+declare -i BOOL_RUN=0
 # boolean for analyzing jobs
 declare -i BOOL_ANAL=0
 # boolean for specifying job integer
@@ -109,7 +109,7 @@ help () {
     echo -e " -o\t\t| overwrite existing simulation files."
     echo -e " -p\t\t| create PARAMETER and CONFIG files."
     echo -e " -g\t\t| GENERATE FEB files."
-    echo -e " -s\t\t| SUBMIT jobs to cluster."
+    echo -e " -r\t\t| RUN jobs."
     echo -e " -a\t\t| ANALYZE results post-simulation."
     echo -e "\n ## SCRIPT PARAMETERS ##"
     echo -e " -d  << ARG >>\t| DIRECTORY path to generate jobs (default is ${DIR})"
@@ -231,8 +231,8 @@ generate () {
 
 }
 
-# submit job to linux cluster
-submit () {
+# run simulations
+run () {
 
 	## PARAMETER
 	# none
@@ -241,20 +241,16 @@ submit () {
 	# none
 
 	## SCRIPT
-	# submit single or multiple jobs to linux cluster
+	# run single or multiple jobs
 	if [[ $BOOL_INT -eq 0 ]]; then
-		$SUB -d $DIR${JOB}/ -j $JOB -s
-	else
-		display_error "TODO :: implement single job cluster submission"
+		$RUN -d $DIR -j $JOB -s
+	else # integer has been specified
+		$RUN -d $DIR -j $JOB -s -n $SIM_INT
 	fi
 
 
 	## TODO :: add these to submission script
-	# submit single job
-	# check host before submission
 	# for batch generation, add columns that contains the job number and the status
-	# run local, also serial
-	# check file
 
 }
 
@@ -274,7 +270,7 @@ analysis () {
 
 ## OPTIONS
 # parse options
-while getopts "hvVopgsad:j:f:n:c:" opt; do
+while getopts "hvVopgrad:j:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -288,8 +284,8 @@ while getopts "hvVopgsad:j:f:n:c:" opt; do
         declare -i BOOL_PARM=1 ;;
     g) # generate FEB files
         declare -i BOOL_GEN=1 ;;
-    s) # SUBMIT simulations to cluster
-        declare -i BOOL_SUB=1 ;;
+    r) # RUN simulations
+        declare -i BOOL_RUN=1 ;;
     a) # analyze simulation results
         declare -i BOOL_ANAL=1 ;;
     d) # specify directory for job
@@ -325,8 +321,8 @@ fi
 if [[ $BOOL_GEN -eq 1 ]]; then
 	generate
 fi
-if [[ $BOOL_SUB	-eq 1 ]]; then
-	submit
+if [[ $BOOL_RUN	-eq 1 ]]; then
+	run
 fi
 if [[ $BOOL_ANAL -eq 1 ]]; then
 	analysis
