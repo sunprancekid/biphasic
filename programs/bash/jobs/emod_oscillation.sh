@@ -281,7 +281,7 @@ analysis () {
 
 	## SCRIPT
 	# run selected analysis routine
-	display_error "TODO :: implement analysis routines for ${JOB}"
+	$ANAL -d $DIR -j $JOB
 }
 
 ## OPTIONS
