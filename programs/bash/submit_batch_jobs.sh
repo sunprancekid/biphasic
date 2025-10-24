@@ -12,7 +12,7 @@ set -e
 # nonzero exit code
 declare -i NONZEROEXITCODE=120
 # file name
-FILENAME="submit_bash_jobs"
+FILENAME="./programs/bash/submit_batch_jobs.sh"
 # path to parse csv file
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # path to script for slurm submission
@@ -21,6 +21,8 @@ SUB_SLURM="./programs/bash/util/submit_febio_slurm.sh"
 FEBIO4='febio4'
 
 ## OPTION PARAMETERS
+# boolean for verbose execution
+declare -i BOOL_VERBOSE=0
 # boolean that determines if the job directory path has been specified
 declare -i BOOL_PATH=0
 # boolean that determines if the job name has been specified
@@ -50,6 +52,7 @@ help () {
     echo -e "\nFILE: \t ${FILENAME}.sh\nPURPOSE: submit jobs in batch to a user specified cluster.\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
+    echo -e " -v\t\t| verbose script execution."
 #     echo -e " -o\t\t| overwrite files and restart all simulations, even if they have already run."
     echo -e " -l\t\t| run job locally ('febio4' must be installed)."
     echo -e " -s\t\t| submit job via slurm (via 'sbatch' - see ${SUB_SLURM})."
@@ -78,6 +81,23 @@ display_error () {
     ## SCRIPT
     # display error message
     echo -e "\nERROR :: ${FILENAME} :: ${ERR_MSG}.\n"
+    help $NONZEROEXITCODE
+
+}
+
+# formatted verbose message
+display_verbose () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # first argument: message to display
+    VRB_MSG=$1
+
+    ## SCRIPT
+    # display message
+    echo -e "${FILENAME} :: ${VRB_MSG}."
 
 }
 
@@ -174,8 +194,35 @@ submit () {
     local simid=$($PARSE_CSV -f $PARM_FILE -l $l -c 2)
     local simdir=$($PARSE_CSV -f $PARM_FILE -l $l -c 3)
     # check that the directory exists
+    local simdirstack=$JOB_PATH$simdir
+    if [[ ! -d $simdirstack ]]; then
+        display_error "simulation directory '$simdirstack' does not exist. cannot submit simulation '$simid'"
+    fi
     # check that the directory contains a feb file
+    local feb_list=( ${simdirstack}*.feb )
+    if [[ ${#feb_list[@]} -eq 0 ]]; then
+        display_error "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
+    elif [[ ${#feb_list[@]} -gt 1 ]]; then
+        display_error "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
+    fi
+
+    # if there is a check file call, check for the file
+    if [[ $BOOL_CHECKFILE -eq 1 ]]; then
+        # check for regex
+        # if specific check file doesn't eist, check for regex
+        local check_list=( ${simdirstack}$checkfile )
+        if [[ ${#check_list[@]} -gt 0 ]]; then
+            # report if verbose
+            if [[ $BOOL_VERBOSE -eq 1 ]]; then
+                display_verbose "files found in '${simdirstack}' matching check file '${CHECKFILE}'. skipping .."
+            fi
+            return
+        fi
+    fi
     
+    # run local, or on submit host
+    # 
+
 }
 
 # submit single job
@@ -221,11 +268,13 @@ submit_batch () {
 
 ## OPTIONS
 # parse options
-while getopts "hlsd:j:c:n:" opt
+while getopts "hvlsd:j:c:n:" opt
 do
     case $opt in
         h) # display help options and exit zero
             help 0 ;;
+        v) # execute verbosly
+            declare -i BOOL_VERBOSE=1 ;;
         l) # run febio locally
             declare -i BOOL_LOCAL=1 ;;
         s) # run the jobs via slurm
@@ -236,6 +285,9 @@ do
         j) # specify job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
+        c) # check file
+            declare -i BOOL_CHECKFILE=1
+            CHECKFILE=${OPTARG} ;;
         n) # specify single job
             declare -i BOOL_SIMINT=1
             declare -i SIMINT=${OPTARG} ;;
@@ -261,6 +313,7 @@ if [[ $BOOL_SIMINT -eq 0 ]]; then
 else # bool_simint is 1
     submit_single $SIMINT
 fi
+exit
 # open csv parameter file, parse options from each row
 # get the number of lines
 declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l)
