@@ -61,8 +61,15 @@ for i in range(len(time)):
     # print(i, time[i], work[i])
     # accumulate the work done in each cycle
     if len(hys) < math.ceil(time[i] / period):
-        hys.append(0.)
-    hys[-1] += work[i]
+        # here, the system has transitioned from one cycle to the next
+        # split the work between the two cycles by averaging between time
+        time_prev = time[i - 1]
+        time_now = time[i]
+        time_period = period * math.ceil(time_prev / period)
+        hys[-1] += ((time_period - time_prev) / (time_now - time_prev)) * work[i]
+        hys.append(((time_now - time_period) / (time_now - time_prev)) * work[i])
+    else:
+        hys[-1] += work[i]
 
 # export the file as a csv
 # write header and cycle information
