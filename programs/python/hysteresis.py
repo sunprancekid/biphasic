@@ -53,7 +53,7 @@ df['t'] = df['t'] - 1000
 
 # parse data
 time = df['t'].to_list()
-work = df['dw_fvdt'].to_list()
+work = df['dw_fdx'].to_list()
 # determine the number of cycles which have occured
 n_cyc = math.floor(time[-1] / period)
 hys = [0.]
