@@ -73,7 +73,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean for declaring job name
 declare -i BOOL_JOB=0
 # job name
-JOB="osc_emod"
+JOB="osc_amp"
 # boolean for file overwriting
 declare -i BOOL_OVERWRITE=0
 # boolean for parameter and config file writing
