@@ -49,7 +49,7 @@ VOLUME_FRAC="0.2"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.05"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.025"
+VAL_OSCILLATION_AMPLITUDE="0.05"
 
 ## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
@@ -65,7 +65,7 @@ MIN_PERIOD="0.2"
 # maximum period to test (seconds)
 MAX_PERIOD="20000."
 # number of unique period values to test
-N_PERIOD="25"
+N_PERIOD="50"
 
 # OPTION PARAMETERS
 # directory which contains jobs
