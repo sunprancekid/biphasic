@@ -53,17 +53,17 @@ VAL_OSCILLATION_AMPLITUDE="0.05"
 
 ## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
-MIN_EMOD="0.005"
+MIN_EMOD="0.05"
 # maximum elastic modulus to test (MPa)
-MAX_EMOD="50."
+MAX_EMOD="500."
 # number of unique elastic modulus values to test
 N_EMOD="9"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="0.2"
+MIN_PERIOD="0.01"
 # maximum period to test (seconds)
-MAX_PERIOD="20000."
+MAX_PERIOD="1000."
 # number of unique period values to test
 N_PERIOD="50"
 
