@@ -37,7 +37,7 @@ declare -i NONZERO_EXITCODE=120
 # filename
 FILENAME="programs/bash/jobs/amp_dep_oscillation.sh"
 # file purpose
-PURPOSE="explore how the loading depth and oscillation amplitude effects the timscale of poroelastic materials."
+PURPOSE="explore how the loading depth effects the timscale of poroelastic materials."
 
 ## FEB PARAMETERIZATION CONSTANTS
 # permiability (mm^4 / N * s)
@@ -48,37 +48,24 @@ POISSON_RATIO="0.1"
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
 ELASTIC_MOD="0.5"
-
-# LOADING DEPTH (linscale)
-# minimum depth to test
-MIN_LOAD_DEPTH="0.005"
-# maximum loading depth
-MAX_LOAD_DEPTH="0.1"
-# number of loading depths to test
-N_LOAD="9"
-
-## OSCILLATION AMPLITUDE
-
-# loading depth (mm)
-VAL_LOAD_DEPTH="0.05"
 # oscillation amplitude (mm)
 VAL_OSCILLATION_AMPLITUDE="0.05"
 
-## ELASTIC MODULUS PARAMETERES (logscale)
-# minimum elastic modulus to test (MPa)
-MIN_EMOD="0.05"
-# maximum elastic modulus to test (MPa)
-MAX_EMOD="500."
-# number of unique elastic modulus values to test
-N_EMOD="9"
+# LOADING DEPTH (linscale)
+# minimum depth to test (mm)
+MIN_LOAD_DEPTH="0.05"
+# maximum loading depth (mm)
+MAX_LOAD_DEPTH="0.1"
+# number of loading depths to test
+N_LOAD="6"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="0.01"
+MIN_PERIOD="1."
 # maximum period to test (seconds)
 MAX_PERIOD="1000."
 # number of unique period values to test
-N_PERIOD="50"
+N_PERIOD="30"
 
 # OPTION PARAMETERS
 # directory which contains jobs
@@ -218,14 +205,14 @@ parameter () {
 	$MAT_PR -d $DIR -j $JOB -C $POISSON_RATIO
 	# constant permeability
 	$MAT_PERM -d $DIR -j $JOB -C $PERMEABILITY
-	# constant loading depth
-	$LOAD_DEPTH -d $DIR -j $JOB -C $VAL_LOAD_DEPTH
+	# elastic modulus
+	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
 	# constant oscillation amplitude 
 	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
 
 	## generate variable parameters
-	# elastic modulus
-	echo $MAT_EMOD -d $DIR -j $JOB -A $MIN_EMOD -B $MAX_EMOD -N $N_EMOD -L
+	# constant loading depth
+	echo $LOAD_DEPTH -d $DIR -j $JOB -A $MIN_LOAD_DEPTH -B $MAX_LOAD_DEPTH -N $N_LOAD
 	# oscillation period
 	echo $OSC_PER -d $DIR -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
 
