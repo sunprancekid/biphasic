@@ -57,7 +57,7 @@ MIN_LOAD_DEPTH="0.05"
 # maximum loading depth (mm)
 MAX_LOAD_DEPTH="0.1"
 # number of loading depths to test
-N_LOAD="6"
+N_LOAD="5"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
