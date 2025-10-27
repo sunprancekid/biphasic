@@ -208,7 +208,7 @@ parameter () {
 	# constant elastic modulus
 	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
 	# constant loading depth
-	$LOAD_DEPTH -d $DIR -j $JOB -C $LOAD_DEPTH
+	$LOAD_DEPTH -d $DIR -j $JOB -C $VAL_LOAD_DEPTH
 
 	## generate variable parameters
 	# oscillation amplitude
