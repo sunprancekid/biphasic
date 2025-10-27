@@ -35,9 +35,9 @@ OSC_PER="./programs/bash/parameter/oscillation/period.sh"
 # nonzero exit code
 declare -i NONZERO_EXITCODE=120
 # filename
-FILENAME="programs/bash/jobs/amp_dep_oscillation.sh"
+FILENAME="programs/bash/jobs/amp_oscillation.sh"
 # file purpose
-PURPOSE="explore how the loading depth effects the timscale of poroelastic materials."
+PURPOSE="explore how the osclliation amplitude effects the timscale of poroelastic materials."
 
 ## FEB PARAMETERIZATION CONSTANTS
 # permiability (mm^4 / N * s)
@@ -48,16 +48,16 @@ POISSON_RATIO="0.1"
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
 ELASTIC_MOD="0.5"
-# oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.05"
+# loading depth (mm)
+VAL_LOAD_DEPTH="0.05"
 
-# LOADING DEPTH (linscale)
-# minimum depth to test (mm)
-MIN_LOAD_DEPTH="0.05"
-# maximum loading depth (mm)
-MAX_LOAD_DEPTH="0.1"
-# number of loading depths to test
-N_LOAD="6"
+# OSCILLATION AMPLITUDE (linscale)
+# minimum amplitude to test (mm)
+MIN_AMPLITUDE="0.005"
+# maximum amplitude depth (mm)
+MAX_AMPLITUDE="0.05"
+# number of amplitudes to test
+N_AMPLITUDE="6"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
@@ -207,12 +207,12 @@ parameter () {
 	$MAT_PERM -d $DIR -j $JOB -C $PERMEABILITY
 	# constant elastic modulus
 	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
-	# constant oscillation amplitude 
-	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
+	# constant loading depth
+	$LOAD_DEPTH -d $DIR -j $JOB -C $LOAD_DEPTH
 
 	## generate variable parameters
-	# loading depth
-	echo $LOAD_DEPTH -d $DIR -j $JOB -A $MIN_LOAD_DEPTH -B $MAX_LOAD_DEPTH -N $N_LOAD
+	# oscillation amplitude
+	echo $OSC_AMP -d $DIR -j $JOB -A $MIN_AMPLITUDE -B $MAX_AMPLITUDE -N $N_AMPLITUDE
 	# oscillation period
 	echo $OSC_PER -d $DIR -j $JOB -A $MIN_PERIOD -B $MAX_PERIOD -N $N_PERIOD -L
 
