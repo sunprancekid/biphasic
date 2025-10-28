@@ -58,7 +58,7 @@ KEY_MATH="OTMa"
 
 ## PARAMETERS - SIMULATION LENGTH and NUMERICAL STEP SIZE OPTIONS
 # number of oscillation cycles
-declare -i N_CYCLES=5
+declare -i N_CYCLES=7
 # number of numerical time steps during each simulation
 declare -i N_STEPS=100
 # key for number of numerical steps 
