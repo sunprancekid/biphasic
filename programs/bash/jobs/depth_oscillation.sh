@@ -43,7 +43,7 @@ PURPOSE="explore how the loading depth effects the timscale of poroelastic mater
 # permiability (mm^4 / N * s)
 PERMEABILITY="0.001"
 # poissons ratio
-POISSON_RATIO="0.0"
+POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
@@ -61,9 +61,9 @@ N_LOAD="6"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="1."
+MIN_PERIOD="0.1"
 # maximum period to test (seconds)
-MAX_PERIOD="1000."
+MAX_PERIOD="100."
 # number of unique period values to test
 N_PERIOD="30"
 
