@@ -45,6 +45,8 @@ declare -i BOOL_MAXVAL=0
 declare -i BOOL_NVALS=0
 # boolean for logscale
 declare -i BOOL_LOGSCALE=0
+# boolean for the a constant value which is also a relationship
+declare -i BOOL_RELATIONSHIP=0
 
 
 ## METHODS
@@ -75,6 +77,7 @@ help () {
     echo -e " -D << ARG >>\t| single string DESCRIBING parameter, store in job config file (default is ${DESCRIPTION})."
     echo -e "\n ## GENERATING ONE VALUE ##"
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
+    echo -e " -R \t\t| the constant value is a RELATIONSHIP which depends on other values (as keys)."
     echo -e "\n ## GENERATING MULTIPLE VALUES ##"
     echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
@@ -146,8 +149,13 @@ gen () {
 	## SCRIPT
 	# execute feb paramterization script
 	if [[ $BOOL_CONSTANT -eq 1 ]]; then
-		# append constant value to job
-		$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE
+		if [[ $BOOL_RELATIONSHIP -eq 1 ]]; then
+			# append constant value to job
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE -R
+		else
+			# append constant value to job
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE
+		fi
 	else
 		# generate multiple values and append to job
 		if [[ $BOOL_LOGSCALE -eq 1 ]]; then
@@ -162,7 +170,7 @@ gen () {
 
 ## OPTIONS
 # prase options
-while getopts "hd:j:x:k:u:D:C:A:B:N:L" opt; do
+while getopts "hd:j:x:k:u:D:C:RA:B:N:L" opt; do
 	case $opt in
 		h) # display options
 			help 0 ;; 
@@ -182,6 +190,8 @@ while getopts "hd:j:x:k:u:D:C:A:B:N:L" opt; do
         C) # specify constant value
             declare -i BOOL_CONSTANT=1
             CONSTANT_VALUE=${OPTARG} ;;
+        R) # relationship
+        	declare -i BOOL_RELATIONSHIP=1 ;;
         A) # specify a minimum number to generate
             declare -i BOOL_MINVAL=1
             MINVAL=${OPTARG} ;;
