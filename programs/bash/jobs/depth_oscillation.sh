@@ -53,11 +53,11 @@ VAL_OSCILLATION_AMPLITUDE="0.05"
 
 # LOADING DEPTH (linscale)
 # minimum depth to test (mm)
-MIN_LOAD_DEPTH="0.05"
+MIN_LOAD_DEPTH="0.01"
 # maximum loading depth (mm)
 MAX_LOAD_DEPTH="0.1"
 # number of loading depths to test
-N_LOAD="6"
+N_LOAD="10"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
@@ -208,6 +208,8 @@ parameter () {
 	# constant elastic modulus
 	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
 	# constant oscillation amplitude 
+	# $OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
+	# the oscillation amplitude is the same as the depth
 	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
 
 	## generate variable parameters

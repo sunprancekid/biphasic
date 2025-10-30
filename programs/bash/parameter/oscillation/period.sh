@@ -179,7 +179,7 @@ gen () {
 	# period sin controller - cycle around mid point
 	SIN_CONTROL="0.5*sin((2*${PI}/${KEY_OT})*(t-1000))"
 	# period cos controller - cycle starts from bottom of oscillation
-	COS_CONTROL="0.5*cos((2*${PI}/${KEY_OT})*(t-1000))+0.5"
+	COS_CONTROL="0.5*cos((2*${PI}/${KEY_OT})*(t-1000-(${KEY_OT}/2)))+0.5"
 
 	## ARGUMENTS
 	# none
