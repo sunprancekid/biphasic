@@ -57,7 +57,7 @@ MIN_PERM="0.0001"
 # maximum elastic modulus to test (mm^4 / N * s)
 MAX_PERM="0.1"
 # number of unique elastic modulus values to test
-N_PERM="7"
+N_PERM="4"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)

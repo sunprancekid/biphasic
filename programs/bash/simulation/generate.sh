@@ -182,7 +182,7 @@ while getopts "hj:f:d:n:" opt; do
         d) # directory
             DIR=${OPTARG} ;;
         n) # integer number
-            declare -i BOOL_NUMBER=0
+            declare -i BOOL_NUMBER=1
             declare -i NUMBER=${OPTARG} ;;
         ?) # default, display options with nonzero exitcode
             help $NONZERO_EXITCODE

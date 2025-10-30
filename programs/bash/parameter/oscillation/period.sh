@@ -176,7 +176,10 @@ check () {
 gen () {
 
 	# PARAMTERS
-	# none
+	# period sin controller - cycle around mid point
+	SIN_CONTROL="0.5*sin((2*${PI}/${KEY_OT})*(t-1000))"
+	# period cos controller - cycle starts from bottom of oscillation
+	COS_CONTROL="0.5*cos((2*${PI}/${KEY_OT})*(t-1000))+0.5"
 
 	## ARGUMENTS
 	# none
@@ -199,7 +202,7 @@ gen () {
 	fi
 	## write dependencies
 	# write the math equation used for tip oscillation
-	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C "0.5*sin((2*${PI}/OT)*(t-1000))" -R -S
+	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C $COS_CONTROL -R -S
 	# TODO :: hold time is hard coded.
 	# write the total number of numerical steps (constant)
 	declare -i TOTAL_STEPS_MAX=$( echo "$N_CYCLES * $N_STEPS" | bc -l ) # based on max step size
