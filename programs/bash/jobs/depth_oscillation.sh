@@ -209,8 +209,8 @@ parameter () {
 	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
 	# constant oscillation amplitude 
 	# $OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
-	# the oscillation amplitude is the same as the depth
-	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSCILLATION_AMPLITUDE
+	# the oscillation amplitude is the same as the loading depth
+	$OSC_AMP -d $DIR -j $JOB -C "LD" -R
 
 	## generate variable parameters
 	# loading depth
