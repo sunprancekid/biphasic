@@ -24,6 +24,8 @@ declare -i BOOL_DIR=0
 declare -i BOOL_JOB=0
 # boolean determining if optional argument feb file has been specified
 declare -i BOOL_FEB=0
+# boolean determining if the simulation integer has been specified
+declare -i BOOL_INT=0
 
 
 ## FUNCTIONS
@@ -44,8 +46,9 @@ help () {
     echo -e " -h\t\t| display options, exit 0"
     echo -e " -r\t\t| replicate simulation, otherwise overwrite simulation data if job has already run."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
-    echo -e " -d  << ARG >>\t| MADATORY: path to job directory, contains '.feb' file."
-    echo -e " -j  << ARG >>\t| MADATORY: job name, corresponds to '.feb' file name in \$DIR."
+    echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
+    echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to '.feb' file name in \$DIR."
+    echo -e " -i  << ARG >>\t| OPTIONAL: integer that corresponds to job in parameter file. Used in job naming."
     echo -e " -f  << ARG >>\t| OPTIONAL: '.feb' file name, when it does not correspond to \$JOB."
     echo -e
 
@@ -114,6 +117,7 @@ check () {
     fi
     # the model file exists
 
+
 }
 
 # generate SLURM script
@@ -129,10 +133,9 @@ gen_slurm_script () {
     # none
 
     ## SCRIPT
-    # none
+    # if the integer has been specified, rename the job according to the integer
 
-#     echo "BASH" > $FILEPATH$FILENAME
-#     echo "" >> $FILEPATH$FILENAME
+    # submit the job to slurm
     echo "#!/bin/bash -l" > $FILEPATH$FILENAME
     echo "" >> $FILEPATH$FILENAME
     echo "#SBATCH --partition=cpu2" >> $FILEPATH$FILENAME
@@ -145,7 +148,6 @@ gen_slurm_script () {
     # echo "#SBATCH --mail-type=FAIL" >> $FILEPATH$FILENAME
     # echo "#SBATCH --mail-user=dorsey@ipfdd.de" >> $FILEPATH$FILENAME
     echo "" >> $FILEPATH$FILENAME
-    echo "" >> $FILEPATH$FILENAME
     echo " ### MODULES ### " >> $FILEPATH$FILENAME
     echo "module purge" >> $FILEPATH$FILENAME
     echo "module load FEBio/4.9" >> $FILEPATH$FILENAME
@@ -154,7 +156,7 @@ gen_slurm_script () {
     echo "### JOB ###" >> $FILEPATH$FILENAME
     echo "echo \"Running ${SIMID} on host \$(hostname) in \$(pwd)\"" >> $FILEPATH$FILENAME
     echo "echo \"Job start time is \$(date).\"" >> $FILEPATH$FILENAME
-    echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME #> /dev/null 2>&1
+    echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
     echo "rm *.xplt" >> $FILEPATH$FILENAME
 
@@ -176,7 +178,7 @@ sub_slurm_script () {
     cd $SIMDIR
     echo $pwd
 
-    # log into cluster and submit script
+    # log into cluster and submit script${SIMID}.slurm.sub
     sbatch ${SIMID}.slurm.sub
 
     # exit cluster, return to starting directory
@@ -187,7 +189,7 @@ sub_slurm_script () {
 
 ## OPTIONS
 # parse options
-while getopts "hrd:j:f:" option; do
+while getopts "hrd:j:f:i:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -202,6 +204,9 @@ while getopts "hrd:j:f:" option; do
         f) # specifiy the name of the feb file
             declare -i BOOL_FEB=1
             FEB_FILE="${OPTARG}" ;;
+        i) # simulation integer
+            declare -i BOOL_INT=1
+            declare -i SIMINT=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE

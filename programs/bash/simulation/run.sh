@@ -183,6 +183,7 @@ submit () {
     # get the directory and simid from the parameter file
     local simid=$($PARSE_CSV -f $PARM_FILE -l $l -c 2)
     local simdir=$($PARSE_CSV -f $PARM_FILE -l $l -c 3)
+    local simint=$($PARSE_CSV -f $PARM_FILE -l $l -c 1)
     # check that the directory exists
     local simdirstack=$JOB_PATH$simdir
     if [[ ! -d $simdirstack ]]; then
@@ -236,7 +237,7 @@ submit () {
             display_error "login into ${SLURM_HOST} before submitting to slurm."
         fi
         # submit the script from the local directory
-        $SUB_SLURM -d ${simdirstack} -j ${simid}
+        $SUB_SLURM -d ${simdirstack} -j ${simid} -i ${simint}
         return
     fi
     # 
