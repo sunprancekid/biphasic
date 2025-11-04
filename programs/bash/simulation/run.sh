@@ -8,6 +8,11 @@ set -e
 ## submits jobs in batch
 ## user can specify running jobs locally, or submitting jobs to a cluster
 
+## TODO
+# parse job status from squeue and append to parameter csv
+# rename jobs using simint
+# merge multiple simulations into one script to reduce listing on squeue (so I look less like an asshole)
+
 ## PARAMETERS
 # nonzero exit code
 declare -i NONZEROEXITCODE=120
