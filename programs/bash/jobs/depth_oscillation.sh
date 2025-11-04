@@ -314,7 +314,7 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
     	DIR=${OPTARG} ;;
     j) # job title
         declare -i BOOL_JOB=1
-        JOB=${OPT_ARG};;
+        JOB=${OPTARG};;
     f) # feb file specification
         declare -i BOOL_FEB=1
         FEB_FILE=${OPTARG};;
