@@ -55,11 +55,11 @@ VAL_OSC_AMP="0.05"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="1."
+MIN_PERIOD="0.1"
 # maximum period to test (seconds)
 MAX_PERIOD="1000."
 # number of unique period values to test
-N_PERIOD="30"
+N_PERIOD="40"
 
 # OPTION PARAMETERS
 # directory which contains jobs
