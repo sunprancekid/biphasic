@@ -20,6 +20,10 @@
 
 ## CLASSES
 # vtk reader class
+class Reader (object):
+    # TODO :: docstring
+    def __init__ (self, filename = None):
+        # open the file, parse the important constants
 
 ## ARGUMENTS
 # none
