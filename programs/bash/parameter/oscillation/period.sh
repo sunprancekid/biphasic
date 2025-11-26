@@ -60,7 +60,7 @@ KEY_MATH="OTMa"
 # number of oscillation cycles
 declare -i N_CYCLES=11
 # number of numerical time steps during each simulation
-declare -i N_STEPS=100
+declare -i N_STEPS=60
 # key for number of numerical steps 
 KEY_STEPS="ON"
 # description for number of time steps

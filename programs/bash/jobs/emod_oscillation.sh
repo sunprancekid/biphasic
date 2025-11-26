@@ -49,7 +49,7 @@ VOLUME_FRAC="0.2"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.1"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.1"
+VAL_OSCILLATION_AMPLITUDE="0.05"
 
 ## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
@@ -281,11 +281,13 @@ analysis () {
 
 	## SCRIPT
 	# run selected analysis routines
+	# TODO: move analysis file to the simulation directory
 	$ANAL -d $DIR -j $JOB -H
 
-	# generate graphs
-	# for each frequency sweep, plot the data
-	# get the maximum and minimum
+	# TODO: generate graphs
+	# for each frequency sweep, plot the data individually
+	# plot the frequency sweeps together
+	# plot model behavior against model parameters
 }
 
 ## OPTIONS

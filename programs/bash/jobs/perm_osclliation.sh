@@ -49,7 +49,7 @@ VOLUME_FRAC="0.2"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.1"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.1"
+VAL_OSCILLATION_AMPLITUDE="0.05"
 
 ## PERMEABILITY PARAMETERES (logscale)
 # minimum permeability to test (mm^4 / N * s)
