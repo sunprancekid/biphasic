@@ -43,7 +43,7 @@ PURPOSE="perform oscillation simulations where the permeability is a variable pa
 # elastic modulus (MPa)
 ELASTIC_MODULUS="0.5"
 # poissons ratio
-POISSON_RATIO="0.0"
+POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
@@ -53,11 +53,11 @@ VAL_OSCILLATION_AMPLITUDE="0.1"
 
 ## PERMEABILITY PARAMETERES (logscale)
 # minimum permeability to test (mm^4 / N * s)
-MIN_PERM="0.0001"
+MIN_PERM="0.00001"
 # maximum permeability to test (mm^4 / N * s)
 MAX_PERM="0.1"
 # number of unique permeability values to test
-N_PERM="4"
+N_PERM="9"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)

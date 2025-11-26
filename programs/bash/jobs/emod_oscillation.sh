@@ -43,7 +43,7 @@ PURPOSE="perform oscillation simulations where the elastic modulus is a variable
 # permiability (mm^4 / N * s)
 PERMEABILITY="0.001"
 # poissons ratio
-POISSON_RATIO="0.0"
+POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
@@ -53,11 +53,11 @@ VAL_OSCILLATION_AMPLITUDE="0.1"
 
 ## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
-MIN_EMOD="0.05"
+MIN_EMOD="0.005"
 # maximum elastic modulus to test (MPa)
 MAX_EMOD="50."
 # number of unique elastic modulus values to test
-N_EMOD="7"
+N_EMOD="9"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
@@ -280,8 +280,12 @@ analysis () {
 	# none
 
 	## SCRIPT
-	# run selected analysis routine
+	# run selected analysis routines
 	$ANAL -d $DIR -j $JOB -H
+
+	# generate graphs
+	# for each frequency sweep, plot the data
+	# get the maximum and minimum
 }
 
 ## OPTIONS
