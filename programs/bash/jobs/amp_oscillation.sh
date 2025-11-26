@@ -57,7 +57,7 @@ MIN_AMPLITUDE="0.02"
 # maximum amplitude depth (mm)
 MAX_AMPLITUDE="0.1"
 # number of amplitudes to test
-N_AMPLITUDE="3"
+N_AMPLITUDE="5"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
