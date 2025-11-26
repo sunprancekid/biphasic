@@ -52,11 +52,11 @@ VAL_LOAD_DEPTH="0.1"
 VAL_OSCILLATION_AMPLITUDE="0.1"
 
 ## PERMEABILITY PARAMETERES (logscale)
-# minimum elastic modulus to test (mm^4 / N * s)
+# minimum permeability to test (mm^4 / N * s)
 MIN_PERM="0.0001"
-# maximum elastic modulus to test (mm^4 / N * s)
+# maximum permeability to test (mm^4 / N * s)
 MAX_PERM="0.1"
-# number of unique elastic modulus values to test
+# number of unique permeability values to test
 N_PERM="4"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
