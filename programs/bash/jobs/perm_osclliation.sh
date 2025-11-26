@@ -53,9 +53,9 @@ VAL_OSCILLATION_AMPLITUDE="0.1"
 
 ## PERMEABILITY PARAMETERES (logscale)
 # minimum permeability to test (mm^4 / N * s)
-MIN_PERM="0.00001"
+MIN_PERM="0.0001"
 # maximum permeability to test (mm^4 / N * s)
-MAX_PERM="0.1"
+MAX_PERM="0.01"
 # number of unique permeability values to test
 N_PERM="9"
 
