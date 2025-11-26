@@ -58,7 +58,7 @@ KEY_MATH="OTMa"
 
 ## PARAMETERS - SIMULATION LENGTH and NUMERICAL STEP SIZE OPTIONS
 # number of oscillation cycles
-declare -i N_CYCLES=7
+declare -i N_CYCLES=11
 # number of numerical time steps during each simulation
 declare -i N_STEPS=100
 # key for number of numerical steps 
@@ -176,6 +176,7 @@ check () {
 gen () {
 
 	# PARAMTERS
+	# NOTE: oscillation controller equations assume time of equilibriation is 1000 seconds
 	# period sin controller - cycle around mid point
 	SIN_CONTROL="0.5*sin((2*${PI}/${KEY_OT})*(t-1000))"
 	# period cos controller - cycle starts from bottom of oscillation
