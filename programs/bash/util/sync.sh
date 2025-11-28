@@ -180,24 +180,7 @@ done
 
 ## ARGUMENTS
 # none
-# first argument: simulation path (expected format is 'conH/squ2c32/a*/h*')
-# SIM_DIR=$1
 
 ## SCRIPT
 # check script arguments
 check
-
-# check that the absolute path exists
-if [ ! -d $ABS_PATH$SIM_DIR ]; then
-	echo "Path '$ABS_PATH$SIM_DIR' does not exist."
-fi
-
-# sync local directory with PATh
-echo rsync -Pavz $PATh_PATH$SIM_DIR
-
-# clean and compress simulation files
-# sync hall NCSU with local simulation files
-echo ./zip.sh -r e* -p conH/squ2c32/a050/h00/ -e -u $NCSU_PATH
-
-# remove compressed directory
-echo rm $ABS_PATH$SIM_DIR
