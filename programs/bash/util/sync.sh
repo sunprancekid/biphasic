@@ -47,6 +47,8 @@ declare -i BOOL_ADDRESS=0
 declare -i BOOL_PORT=0
 # boolean determining if the script should execute verbosely
 declare -i BOOL_VERBOSE=0
+# boolea determining if the script should execute very verbosely
+declare -i BOOL_VERY_VERBOSE=0
 # boolean determining if the script should send files (local -> remote)
 declare -i BOOL_SEND=0
 # boolean determining if the script should get files (remote -> local)
@@ -74,7 +76,8 @@ help () {
     # display script options
     echo -e "\n ## SCRIPT EXECUTION ##"
     echo -e " -h\t\t| display HELP options, exit 0."
-    echo -e " -v\t\t| execute VERBOSELY."
+    echo -e " -v\t\t| execute script VERBOSELY."
+    echo -e " -V\t\t| execute script VERY VERBOSELY."
     echo -e " -s\t\t| SEND: sync remote directory with local directory."
     echo -e " -g\t\t| GET: sync local directory with remote directory."
     echo -e " -z\t\t| ZIP directory before sending or recieving."
@@ -106,6 +109,22 @@ display_error () {
     # display error message
     echo -e "\nERROR :: ${FILENAME} :: ${err_msg}.\n"
     help $NONZERO_EXITCODE
+
+}
+
+# formatted verbose message
+display_verbose () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # first argument: message to display
+    VRB_MSG=$1
+
+    ## SCRIPT
+    # display message
+    echo -e "${FILENAME} :: ${VRB_MSG}."
 
 }
 
@@ -142,16 +161,102 @@ check () {
         # must specify the login address
         display_error "must specify remote login address (option -a)"
     fi
+
+    if [[ $BOOL_SEND -eq 0 && $BOOL_GET -eq 0 ]]; then
+        # must specify either send or get
+        display_error "must specify either send (-s) or get (-g). neither were called"
+    elif [[ $BOOL_SEND -eq 1 && $BOOL_GET -eq 1 ]]; then
+        # must specify either send or get, not both
+        display_error "must specify either send (-s) or get (-g). both were called"
+    fi
+}
+
+# send files (local -> remote)
+send () {
+
+    ## PARAMETERS
+    # rsync flags
+    RSYNC_FLAGS="-Paz"
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    ## update rsync flags
+    # verbose rsync execution
+    if [ $BOOL_VERY_VERBOSE -eq 1 ]; then
+        RSYNC_FLAGS="${RSYNC_FLAGS}v"
+    fi
+    # ssh login with unique port number
+    if [ $BOOL_PORT -eq 1 ]; then
+        RSYNC_FLAGS="${RSYNC_FLAGS} -e 'ssh -p ${PORT_NUMBER}'"
+    fi
+
+    ## use regular expression to qualify which files are send
+    if [ $BOOL_REGEX -eq 1 ]; then
+        display_error "TODO :: implement code for script execution with regex (option -e)"
+    fi
+    ## zip files before sending
+    if [ $BOOL_ZIP -eq 1 ]; then
+        display_error "TODO :: implment code for zipping files before transfer (option -z)"
+    fi
+
+    ## send files
+    if [ $BOOL_VERBOSE -eq 1 ]; then
+        display_verbose "sending files from ${LOCAL_PATH} to ${REMOTE_ADDRESS}:${REMOTE_PATH}"
+    fi 
+    echo rsync $RSYNC_FLAGS $LOCAL_PATH ${REMOTE_ADDRESS}:${REMOTE_PATH}
+     
+}
+
+# get files (remote -> local)
+get () {
+
+    ## PARAMETERS
+    # rsync flags
+    RSYNC_FLAGS="-Paz"
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    ## update rsync flags
+    # verbose rsync execution
+    if [ $BOOL_VERY_VERBOSE -eq 1 ]; then
+        RSYNC_FLAGS="${RSYNC_FLAGS}v"
+    fi
+    # ssh login with unique port number
+    if [ $BOOL_PORT -eq 1 ]; then
+        RSYNC_FLAGS="${RSYNC_FLAGS} -e 'ssh -p ${PORT_NUMBER}'"
+    fi
+
+    ## use regular expression to qualify which files are send
+    if [ $BOOL_REGEX -eq 1 ]; then
+        display_error "TODO :: implement code for script execution with regex (option -e)"
+    fi
+    ## zip files before sending
+    if [ $BOOL_ZIP -eq 1 ]; then
+        display_error "TODO :: implment code for zipping files before transfer (option -z)"
+    fi
+
+    ## send files
+    if [ $BOOL_VERBOSE -eq 1 ]; then
+        display_verbose "getting files from ${REMOTE_ADDRESS}:${REMOTE_PATH} and moving to ${LOCAL_PATH}"
+    fi 
+    echo rsync $RSYNC_FLAGS ${REMOTE_ADDRESS}:${REMOTE_PATH} $LOCAL_PATH 
+
 }
 
 ## OPTIONS
 # parse options
-while getopts "hvsgzl:r:a:e:p:" opt; do
+while getopts "hvVsgzl:r:a:e:p:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
     v) # execute script verbosely
         declare -i BOOL_VERBOSE=1 ;;
+    V) # execute script very verbosely
+        declare -i BOOL_VERY_VERBOSE=1 ;;
     s) # send files (local -> remote)
         declare -i BOOL_SEND=1 ;;
     g) # get files (remote -> local)
@@ -184,3 +289,10 @@ done
 ## SCRIPT
 # check script arguments
 check
+
+# send files or get files based on script options
+if [[ $BOOL_SEND -eq 1 ]]; then
+    send
+elif [[ $BOOL_GET -eq 1 ]]; then
+    get
+fi
