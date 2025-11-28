@@ -149,7 +149,7 @@ done
 ## SCRIPT
 # initialize file names
 # PARM_FILE="${JOB_PATH}${JOB}.csv"
-SUM_FILE="${JOB_PATH}${JOB}.sum.csv"
+SUM_FILE="${JOB_PATH}${JOB}/${JOB}.sum.csv"
 
 # check options
 check
