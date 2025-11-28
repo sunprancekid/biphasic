@@ -78,8 +78,8 @@ help () {
     echo -e " -h\t\t| display HELP options, exit 0."
     echo -e " -v\t\t| execute script VERBOSELY."
     echo -e " -V\t\t| execute script VERY VERBOSELY."
-    echo -e " -s\t\t| SEND: sync remote directory with local directory."
-    echo -e " -g\t\t| GET: sync local directory with remote directory."
+    echo -e " -s\t\t| SEND: sync remote directory with local directory (local -> remote)."
+    echo -e " -g\t\t| GET: sync local directory with remote directory (remote -> local)."
     echo -e " -z\t\t| ZIP directory before sending or recieving."
     echo -e "\n ## SCRIPT PARAMETERS ##"
     echo -e " -l  << ARG >>\t| MADNDATORY: LOCAL path."
@@ -87,6 +87,7 @@ help () {
     echo -e " -a  << ARG >>\t| MADNDATORY: remote login ADDRESS."
     echo -e " -e  << ARG >>\t| include regular-EXPRESSION to qualify sync / zip operation(s) for files being transfered."
     echo -e " -p  << ARG >>\t| remote host PORT (default is 22)."
+    echo -e ""
 
     # exit with exit code
     exit $exitcode
@@ -243,7 +244,7 @@ get () {
     if [ $BOOL_VERBOSE -eq 1 ]; then
         display_verbose "getting files from ${REMOTE_ADDRESS}:${REMOTE_PATH} and moving to ${LOCAL_PATH}"
     fi 
-    echo rsync $RSYNC_FLAGS ${REMOTE_ADDRESS}:${REMOTE_PATH} $LOCAL_PATH 
+    rsync $RSYNC_FLAGS ${REMOTE_ADDRESS}:${REMOTE_PATH} $LOCAL_PATH 
 
 }
 

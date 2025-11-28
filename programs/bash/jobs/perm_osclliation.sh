@@ -14,6 +14,8 @@ GEN="./programs/bash/simulation/generate.sh"
 RUN="./programs/bash/simulation/run.sh"
 # contains analysis routines
 ANAL="./programs/bash/simulation/analysis.sh"
+# show results after analysis has been performed
+PLOT="./programs/python/plot.py"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -282,6 +284,8 @@ analysis () {
 	## SCRIPT
 	# run selected analysis routine
 	$ANAL -d $DIR -j $JOB -H
+	# plot results after analysis
+	$PLOT 
 }
 
 ## OPTIONS
