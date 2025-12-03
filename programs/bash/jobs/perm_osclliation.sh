@@ -285,7 +285,7 @@ analysis () {
 	# run selected analysis routine
 	$ANAL -d $DIR -j $JOB -H
 	# plot results after analysis
-	$PLOT 
+	$PLOT $DIR $JOB
 }
 
 ## OPTIONS
