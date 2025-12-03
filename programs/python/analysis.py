@@ -19,7 +19,7 @@ from plot.plot import gen_plot
 # local
 # none
 
-## PARAMETERES
+## PARAMETERS
 # assumed elastic modulus, unless specified (Pa)
 emod_base_val = 500000
 # assumed permeability, unless specified (mm^4 / N s)
@@ -62,7 +62,7 @@ for index, row in df_config.iterrows():
 df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'LD', 'Z'])
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
-	if row['OT'] < 1.0: continue
+	if row['OT'] < 0.5: continue
 
 	# parse the elastic modulus
 	if 'EM' in non_constant_col or 'EM' in constant_col:
@@ -88,7 +88,7 @@ for index, row in df_sum.iterrows():
 	else:
 		z = width_base_val
 
-	## TODO :: automate determining the final column which contains the amplitude (here, 'c9')
+	## TODO :: automate determining the final column which/ 1000000000 contains the amplitude (here, 'c9')
 	# get the normalizing parameters
 	# normalize the oscillation period, normalize the energy
 	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
@@ -125,10 +125,11 @@ for k in non_constant_col:
 		n = 0
 		df_parm = pd.DataFrame(columns = [k, 'T', 'A'])
 		for i in df_norm[k].unique():
-			print(i)
 			# collect the resonant amplitude and period
-			df_temp = df_norm[df_norm[k] == i]
-			df_parm.loc[n] = [i, df_temp['OT'].max(), df_norm['W'].max()]
+			df_temp = df_norm[df_norm[k] == i].reset_index()
+			# here, is there a better way to identify the maximum (with curve fitting)
+			mx_idx = df_temp.index[df_temp['W'] == df_temp['W'].max()].to_list()
+			df_parm.loc[n] = [i, df_temp.iloc[mx_idx[0]]['OT'], df_temp.iloc[mx_idx[0]]['W'] ]
 			n = n+1
 			continue
 			# plot, save the frequency sweep
@@ -144,12 +145,24 @@ for k in non_constant_col:
 			# exit()
 
 		# plot the resontant frequency against the model parameter
+		# TODO :: combine both figures with secondary y-axis
 		fig = Figure()
 		# TODO :: parse parameter description and and units from config file
+		# TODO :: include power fit
 		fig.load_data(df_parm, xcol = k, ycol = 'T')
 		fig.set_xaxis_label('Elastic Modulus ($MPa$)')
 		fig.set_yaxis_label('Resontant Period ($s$)')
 		fig.set_xaxis_scale(log = True)
+		fig.set_yaxis_scale(log = True)
+		gen_plot(fig, show = True, save = False)
+
+		# plot the resonant amplitude against the model parameter
+		fig = Figure()
+		fig.load_data(df_parm, xcol = k, ycol = 'A')
+		fig.set_xaxis_label('Elastic Modulus ($MPa$)')
+		fig.set_yaxis_label('Resonant Amplitude ($pJ$)')
+		fig.set_xaxis_scale(log = True)
+		# TODO :: adjust yaxis scale to handle constant values with log value (potentiall through a variance calcuation?)
 		fig.set_yaxis_scale(log = True)
 		gen_plot(fig, show = True, save = False)
 
