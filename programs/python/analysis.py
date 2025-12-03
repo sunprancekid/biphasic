@@ -20,7 +20,14 @@ from plot.plot import gen_plot
 # none
 
 ## PARAMETERES
-# none
+# assumed elastic modulus, unless specified (Pa)
+emod_base_val = 500000
+# assumed permeability, unless specified (mm^4 / N s)
+perm_base_val = 0.001
+# assumed beam width, unless specified (mm)
+width_base_val = 0.125
+# assumed oscillation amplitude, unless specified (mm)
+amp_base_val = 0.05
 
 ## METHODS
 # none
@@ -37,26 +44,56 @@ df_config = pd.read_csv("{0}/{1}/{1}.config.csv".format(jd, jn))
 df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
 df_sum = pd.read_csv("{0}/{1}/{1}.sum.csv".format(jd, jn))
 
-# get the non-constant parameters from the config file
+# parse the constant and non constant parameters from the config file
 non_constant_col = []
+constant_col = []
 for index, row in df_config.iterrows():
+	# skip the oscillation period
+	if row['key'] == 'OT': continue
+	# sort all other parameters by constant or non-constant
 	if row['constant'] == 0:
+		# the key is not constant
 		non_constant_col.append(row['key'])
+	else:
+		# the key is constant over the course of the simulations
+		constant_col.append(row['key'])
 
 # create normalized values based on model parameters
-df_norm = pd.DataFrame(columns=['OT', 'E', 'K'])
+df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'LD', 'Z'])
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
 	if row['OT'] < 1.0: continue
+
+	# parse the elastic modulus
+	if 'EM' in non_constant_col or 'EM' in constant_col:
+		e = df_sum.iloc[index]['EM']
+	else:
+		e = emod_base_val
+
+	# parse the permeability
+	if 'K' in non_constant_col or 'K' in constant_col:
+		k = df_sum.iloc[index]['K']
+	else:
+		k = perm_base_val
+
+	# parse the loading depth
+	if 'LD' in non_constant_col or 'LD' in constant_col:
+		a = df_sum.iloc[index]['LD']
+	else:
+		a = amp_base_val
+
+	# parse the beam width
+	if 'Z' in non_constant_col or 'Z' in constant_col:
+		z = df_sum.iloc[index]['Z']
+	else:
+		z = width_base_val
+
+	## TODO :: automate determining the final column which contains the amplitude (here, 'c9')
 	# get the normalizing parameters
-	e = df_sum.iloc[index]['EM']
-	k = df_sum.iloc[index]['K']
 	# normalize the oscillation period, normalize the energy
-	T = df_sum.iloc[index]['OT'] * (k * e)
-	E = df_sum.iloc[index]['c9'] / (e)
-	df_norm.loc[index] = [T, df_sum.iloc[index]['c9'], df_sum.iloc[index]['K']]
-	# print(df_norm.iloc[index]['OT'])
-	# print(k, e)
+	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
+	A = df_sum.iloc[index]['c9'] / (e * pow(z, 3))
+	df_norm.loc[index] = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
 
 
 # open the summary file, loop through all unique parameters
@@ -64,31 +101,39 @@ for k in non_constant_col:
 	if k != 'OT': # ignore the oscillation period
 		# plot normalized data
 		fig = Figure()
-		fig.load_data(df_norm, xcol = 'OT', ycol = 'E', icol = 'K')
-		fig.add_format("$K$ = {:.1e}")
-		fig.set_xaxis_label("Normalized Cycle Period ($T^{{*}} = T \\cdot (E \\cdot K \\cdot W^{{-2}}$))")
-		fig.set_yaxis_label("Normalized Energy Dissipated ($W^{{*}} = W \\cdot E^{{-1}}$)")
+		fig.load_data(df_norm, xcol = 'T', ycol = 'A', icol = k)
+		fig.add_format("${0}$ ".format(k) + "= {:.1e}")
+		fig.set_xaxis_label("Normalized Cycle Period ($T^{{*}} = T \\cdot (E \\cdot K \\cdot Z^{{-2}}$))")
+		fig.set_yaxis_label("Normalized Energy Dissipated ($A^{{*}} = A \\cdot (E^{{-1}} \\cdot Z^{{-3}})$)")
 		fig.set_xaxis_scale(log = True)
 		# fig.set_yaxis_scale(log = True)
 		gen_plot(fig, show = True, save = False)
-		exit()
 
 		# plot un-normalized data
 		fig = Figure()
-		fig.load_data(df_sum, xcol = 'OT', ycol = 'c9', icol = k)
-		fig.set_title_label("{0}".format(jn))
+		fig.load_data(df_norm, xcol = 'OT', ycol = 'W', icol = k)
+		fig.add_format("${0}$ ".format(k) + "= {:.1e}")
 		fig.set_xaxis_label("Cyclic Period ($s$)")
-		fig.set_yaxis_label("Dissipated Energy per Cycle ($kJ$)")
+		fig.set_yaxis_label("Dissipated Energy per Cycle ($pJ$)")
 		fig.set_cmap('Set2')
 		fig.set_xaxis_scale(log = True)
 		gen_plot(fig, show = True, save = False)
-		exit()
-		# plot normalized data
-		# plot work and period against model parameter, fit
-		# plot each unique frequency sweep, save to results
-		for i in df_sum[k].unique():
+		# exit()
+
+		# from each unique parameter
+		# plot frequency sweep, save to results
+		n = 0
+		df_parm = pd.DataFrame(columns = [k, 'T', 'A'])
+		for i in df_norm[k].unique():
+			print(i)
+			# collect the resonant amplitude and period
+			df_temp = df_norm[df_norm[k] == i]
+			df_parm.loc[n] = [i, df_temp['OT'].max(), df_norm['W'].max()]
+			n = n+1
+			continue
+			# plot, save the frequency sweep
 			fig = Figure()
-			fig.load_data(df_sum[df_sum[k] == i], xcol = 'OT', ycol = 'c9')
+			fig.load_data(df_temp, xcol = 'OT', ycol = 'c9')
 			fig.set_title_label("{0}".format(jn))
 			fig.set_subtitle_label("{0}".format(i))
 			fig.set_xaxis_label("Cyclic Period ($s$)")
@@ -97,3 +142,14 @@ for k in non_constant_col:
 			fig.set_xaxis_scale(log = True)
 			gen_plot(fig, show = True, save = False)
 			# exit()
+
+		# plot the resontant frequency against the model parameter
+		fig = Figure()
+		# TODO :: parse parameter description and and units from config file
+		fig.load_data(df_parm, xcol = k, ycol = 'T')
+		fig.set_xaxis_label('Elastic Modulus ($MPa$)')
+		fig.set_yaxis_label('Resontant Period ($s$)')
+		fig.set_xaxis_scale(log = True)
+		fig.set_yaxis_scale(log = True)
+		gen_plot(fig, show = True, save = False)
+
