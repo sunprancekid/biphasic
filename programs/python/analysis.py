@@ -16,6 +16,7 @@ import numpy as np
 # import matplotlib as mplt
 from plot.figure import Figure
 from plot.plot import gen_plot
+from plot.fit import Line, fit_line
 # local
 # none
 
@@ -59,7 +60,7 @@ for index, row in df_config.iterrows():
 		constant_col.append(row['key'])
 
 # create normalized values based on model parameters
-df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'LD', 'Z'])
+df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'OA', 'Z'])
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
 	if row['OT'] < 0.5: continue
@@ -77,8 +78,8 @@ for index, row in df_sum.iterrows():
 		k = perm_base_val
 
 	# parse the loading depth
-	if 'LD' in non_constant_col or 'LD' in constant_col:
-		a = df_sum.iloc[index]['LD']
+	if 'OA' in non_constant_col or 'OA' in constant_col:
+		a = df_sum.iloc[index]['OA']
 	else:
 		a = amp_base_val
 
@@ -92,7 +93,7 @@ for index, row in df_sum.iterrows():
 	# get the normalizing parameters
 	# normalize the oscillation period, normalize the energy
 	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
-	A = df_sum.iloc[index]['c9'] / (e * pow(z, 3))
+	A = df_sum.iloc[index]['c9'] / (e * pow(a, 2) * pow(z, 3))
 	df_norm.loc[index] = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
 
 
@@ -144,25 +145,41 @@ for k in non_constant_col:
 			gen_plot(fig, show = True, save = False)
 			# exit()
 
-		# plot the resontant frequency against the model parameter
+		# fit power law to resonant period
+		# TODO :: add power fit (rather than just a linear fit on a log scale)
+		# TODO :: include R^2 value with fit label (automatically)
+		fit = fit_line(x = df_parm[k].to_list(), y = df_parm['T'].to_list(), log = True)
+		fit_parms = fit.get_parameters()
+		fit.set_label("${0} \\propto T^{{{1:.02f}}}$".format(k, fit_parms[0]))
+		fit.set_linecolor("k")
+		fit.set_linestyle(":")
+
+		# plot the resontant frequency against the model parameter with fit
 		# TODO :: combine both figures with secondary y-axis
+		df_key = df_config.loc[df_config['key'] == k].reset_index()
 		fig = Figure()
-		# TODO :: parse parameter description and and units from config file
-		# TODO :: include power fit
+		xax_str = "{0} (${1}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
 		fig.load_data(df_parm, xcol = k, ycol = 'T')
-		fig.set_xaxis_label('Elastic Modulus ($MPa$)')
+		fig.set_xaxis_label(xax_str)
 		fig.set_yaxis_label('Resontant Period ($s$)')
 		fig.set_xaxis_scale(log = True)
 		fig.set_yaxis_scale(log = True)
-		gen_plot(fig, show = True, save = False)
+		gen_plot(fig, linewidth = 0, markersize = 8, show = True, save = False, fit = fit)
 
-		# plot the resonant amplitude against the model parameter
+		# fit power law to resonant amplitude
+		fit = fit_line(x = df_parm[k].to_list(), y = df_parm['A'].to_list(), log = True)
+		fit_parms = fit.get_parameters()
+		fit.set_label("${0} \\propto A^{{{1:.02f}}}$".format(k, fit_parms[0]))
+		fit.set_linecolor("k")
+		fit.set_linestyle(":")
+
+		# plot the resonant amplitude against the model parameter with fit
 		fig = Figure()
 		fig.load_data(df_parm, xcol = k, ycol = 'A')
-		fig.set_xaxis_label('Elastic Modulus ($MPa$)')
+		fig.set_xaxis_label(xax_str)
 		fig.set_yaxis_label('Resonant Amplitude ($pJ$)')
 		fig.set_xaxis_scale(log = True)
-		# TODO :: adjust yaxis scale to handle constant values with log value (potentiall through a variance calcuation?)
+		# TODO :: adjust yaxis scale to handle constant values with log value (potentially through a variance calcuation?)
 		fig.set_yaxis_scale(log = True)
-		gen_plot(fig, show = True, save = False)
+		gen_plot(fig, linewidth = 0, markersize = 8, show = True, save = False, fit = fit)
 

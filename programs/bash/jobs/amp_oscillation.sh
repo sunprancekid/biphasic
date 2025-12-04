@@ -14,6 +14,8 @@ GEN="./programs/bash/simulation/generate.sh"
 RUN="./programs/bash/simulation/run.sh"
 # contains analysis routines
 ANAL="./programs/bash/simulation/analysis.sh"
+# show results after analysis has been performed
+PLOT="python ./programs/python/analysis.py"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -274,14 +276,21 @@ run () {
 analysis () {
 
 	## PARAMETER
-	# none
+	# file which contains job analysis
+	ANAL_FILE="${DIR}/${JOB}/${JOB}.sum.csv"
 
 	## ARGUMENT
 	# none
 
 	## SCRIPT
 	# run selected analysis routine
-	$ANAL -d $DIR -j $JOB -H
+	if [[ ! -f $ANAL_FILE || $BOOL_OVERWRITE -eq 1 ]]; then
+		# perform analysis if the analysis file does not already exist,
+		# or if overwrite has been called
+		$ANAL -d $DIR -j $JOB -H
+	fi
+	# plot results after analysis
+	$PLOT $DIR $JOB
 }
 
 ## OPTIONS
