@@ -16,6 +16,8 @@ RUN="./programs/bash/simulation/run.sh"
 ANAL="./programs/bash/simulation/analysis.sh"
 # show results after analysis has been performed
 PLOT="python ./programs/python/analysis.py"
+# instructions for syncing local and remote directories
+SYNC="./programs/bash/util/sync.sh"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
