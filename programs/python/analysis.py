@@ -41,6 +41,7 @@ jn = sys.argv[2]
 
 ## SCRIPT
 # open the file
+savedir = "{0}/{1}/results/".format(jd, jn)
 df_config = pd.read_csv("{0}/{1}/{1}.config.csv".format(jd, jn))
 df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
 df_sum = pd.read_csv("{0}/{1}/{1}.sum.csv".format(jd, jn))
@@ -63,7 +64,7 @@ for index, row in df_config.iterrows():
 df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'OA', 'Z'])
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
-	if row['OT'] < 0.5: continue
+	if row['OT'] < 1.0: continue
 
 	# parse the elastic modulus
 	if 'EM' in non_constant_col or 'EM' in constant_col:
@@ -108,7 +109,8 @@ for k in non_constant_col:
 		fig.set_yaxis_label("Normalized Energy Dissipated ($A^{{*}} = A \\cdot (E^{{-1}} \\cdot Z^{{-3}})$)")
 		fig.set_xaxis_scale(log = True)
 		# fig.set_yaxis_scale(log = True)
-		gen_plot(fig, show = True, save = False)
+		fig.set_saveas(savedir = savedir, filename = 'sweep_norm')
+		gen_plot(fig, show = False, save = True)
 
 		# plot un-normalized data
 		fig = Figure()
@@ -118,7 +120,8 @@ for k in non_constant_col:
 		fig.set_yaxis_label("Dissipated Energy per Cycle ($pJ$)")
 		fig.set_cmap('Set2')
 		fig.set_xaxis_scale(log = True)
-		gen_plot(fig, show = True, save = False)
+		fig.set_saveas(savedir = savedir, filename = 'sweep')
+		gen_plot(fig, show = False, save = True)
 		# exit()
 
 		# from each unique parameter
@@ -146,7 +149,7 @@ for k in non_constant_col:
 			# exit()
 
 		# fit power law to resonant period
-		# TODO :: add power fit (rather than just a linear fit on a log scale)
+		# TODO :: add power fit (rather than just a"{0}/{1}/{1}.config.csv" linear fit on a log scale)
 		# TODO :: include R^2 value with fit label (automatically)
 		fit = fit_line(x = df_parm[k].to_list(), y = df_parm['T'].to_list(), log = True)
 		fit_parms = fit.get_parameters()
@@ -164,7 +167,8 @@ for k in non_constant_col:
 		fig.set_yaxis_label('Resontant Period ($s$)')
 		fig.set_xaxis_scale(log = True)
 		fig.set_yaxis_scale(log = True)
-		gen_plot(fig, linewidth = 0, markersize = 8, show = True, save = False, fit = fit)
+		fig.set_saveas(savedir = savedir, filename = 'Tv{0}'.format(k))
+		gen_plot(fig, linewidth = 0, markersize = 8, show = False, save = True, fit = fit)
 
 		# fit power law to resonant amplitude
 		fit = fit_line(x = df_parm[k].to_list(), y = df_parm['A'].to_list(), log = True)
@@ -181,5 +185,11 @@ for k in non_constant_col:
 		fig.set_xaxis_scale(log = True)
 		# TODO :: adjust yaxis scale to handle constant values with log value (potentially through a variance calcuation?)
 		fig.set_yaxis_scale(log = True)
-		gen_plot(fig, linewidth = 0, markersize = 8, show = True, save = False, fit = fit)
+		fig.set_saveas(savedir = savedir, filename = 'Av{0}'.format(k))
+		gen_plot(fig, linewidth = 0, markersize = 8, show = False, save = True, fit = fit)
+
+		# save the data frame
+		if not os.path.exists("{0}/{1}/results".format(jd, jn)):
+			os.makedirs("{0}/{1}/results".format(jd, jn))
+		df_norm.to_csv("{0}/{1}/results/normalized.csv".format(jd, jn), index = False)
 

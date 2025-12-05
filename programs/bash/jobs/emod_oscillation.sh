@@ -40,6 +40,10 @@ declare -i NONZERO_EXITCODE=120
 FILENAME="programs/bash/jobs/emod_oscillation.sh"
 # file purpose
 PURPOSE="perform oscillation simulations where the elastic modulus is a variable parameter."
+# host name for personal computer
+PERSONAL_HOST="MacBook-Pro-404.local"
+# mpikg login address
+MPIKG_HOST="dorsey@ssh.mpikg.mpg.de"
 
 ## FEB PARAMETERIZATION CONSTANTS
 # permiability (mm^4 / N * s)
@@ -94,6 +98,8 @@ declare -i BOOL_LOCAL=0
 declare -i BOOL_ANAL=0
 # boolean for specifying job integer
 declare -i BOOL_INT=0
+# boolean for updating job directory
+declare -i BOOL_UPDATE=0
 
 ## METHODS
 # display options, exit with exit code
@@ -121,6 +127,7 @@ help () {
     echo -e " \t-s\t| SUBMIT JOBS to HPC cluster via slurm."
     echo -e " \t-l\t| run jobs LOCALLY."
     echo -e " -a\t\t| ANALYZE results post-simulation."
+    echo -e " -u\t\t| UPDATE local job dir with jobs on cloud cluster."
     echo -e "\n ## SCRIPT PARAMETERS ##"
     echo -e " -d  << ARG >>\t| DIRECTORY path to generate jobs (default is ${DIR})"
     echo -e " -j  << ARG >>\t| JOB name (default is ${JOB})"
@@ -272,6 +279,26 @@ run () {
 
 }
 
+# sync local directories with jobs on remote cluster
+update () {
+
+	## PARAMETERS
+	# none
+
+	## ARGUMENTS
+	# none
+
+	## SCRIPT
+	# if on person computer, sync with remote MPIKG cluster
+	if [[ "${HOSTNAME}" == "${PERSONAL_HOST}" ]]; then
+		$SYNC -g -l "~/professional/MPIKG/biphasic/projects/" -r ${DIR} -a ${MPIKG_HOST}
+	else
+		# report error
+		display_error "no sync instructions listed for ${HOSTNAME}"
+	fi
+
+}
+
 # run analysis routine
 analysis () {
 
@@ -295,7 +322,7 @@ analysis () {
 
 ## OPTIONS
 # parse options
-while getopts "hvVopgrslad:j:f:n:c:" opt; do
+while getopts "hvVopgrslaud:j:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -317,6 +344,8 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
     	declare -i BOOL_LOCAL=1 ;;
     a) # analyze simulation results
         declare -i BOOL_ANAL=1 ;;
+	u) # update job directories
+		declare -i BOOL_UPDATE=1 ;;
     d) # specify directory for job
     	DIR=${OPTARG} ;;
     j) # job title
@@ -352,6 +381,9 @@ if [[ $BOOL_GEN -eq 1 ]]; then
 fi
 if [[ $BOOL_RUN	-eq 1 ]]; then
 	run
+fi
+if [[ $BOOL_UPDATE -eq 1 ]]; then
+	update
 fi
 if [[ $BOOL_ANAL -eq 1 ]]; then
 	analysis
