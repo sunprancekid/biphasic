@@ -16,6 +16,8 @@ RUN="./programs/bash/simulation/run.sh"
 ANAL="./programs/bash/simulation/analysis.sh"
 # show results after analysis has been performed
 PLOT="python ./programs/python/analysis.py"
+# instructions for syncing local and remote directories
+SYNC="./programs/bash/util/sync.sh"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -40,6 +42,10 @@ declare -i NONZERO_EXITCODE=120
 FILENAME="programs/bash/jobs/perm_oscillation.sh"
 # file purpose
 PURPOSE="perform oscillation simulations where the permeability is a variable parameter."
+# host name for personal computer
+PERSONAL_HOST="MacBook-Pro-404.local"
+# mpikg login address
+MPIKG_HOST="dorsey@ssh.mpikg.mpg.de"
 
 ## FEB PARAMETERIZATION CONSTANTS
 # elastic modulus (MPa)
@@ -94,6 +100,8 @@ declare -i BOOL_LOCAL=0
 declare -i BOOL_ANAL=0
 # boolean for specifying job integer
 declare -i BOOL_INT=0
+# boolean for updating job directory
+declare -i BOOL_UPDATE=0
 
 ## METHODS
 # display options, exit with exit code
@@ -272,6 +280,26 @@ run () {
 
 }
 
+# sync local directories with jobs on remote cluster
+update () {
+
+	## PARAMETERS
+	# none
+
+	## ARGUMENTS
+	# none
+
+	## SCRIPT
+	# if on person computer, sync with remote MPIKG cluster
+	if [[ "${HOSTNAME}" == "${PERSONAL_HOST}" ]]; then
+		$SYNC -g -l ${DIR} -r "/mnt/data/bgfs1/dorsey/biphasic_simulations/${JOB}" -a ${MPIKG_HOST}
+	else
+		# report error
+		display_error "no sync instructions listed for ${HOSTNAME}"
+	fi
+
+}
+
 # run analysis routine
 analysis () {
 
@@ -295,7 +323,7 @@ analysis () {
 
 ## OPTIONS
 # parse options
-while getopts "hvVopgrslad:j:f:n:c:" opt; do
+while getopts "hvVopgrslaud:j:f:n:c:" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -317,6 +345,8 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
     	declare -i BOOL_LOCAL=1 ;;
     a) # analyze simulation results
         declare -i BOOL_ANAL=1 ;;
+	u) # update job directories
+		declare -i BOOL_UPDATE=1 ;;
     d) # specify directory for job
     	DIR=${OPTARG} ;;
     j) # job title
@@ -352,6 +382,9 @@ if [[ $BOOL_GEN -eq 1 ]]; then
 fi
 if [[ $BOOL_RUN	-eq 1 ]]; then
 	run
+fi
+if [[ $BOOL_UPDATE -eq 1 ]]; then
+	update
 fi
 if [[ $BOOL_ANAL -eq 1 ]]; then
 	analysis
