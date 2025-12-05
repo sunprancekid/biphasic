@@ -293,7 +293,7 @@ update () {
 	## SCRIPT
 	# if on person computer, sync with remote MPIKG cluster
 	if [[ "${HOSTNAME}" == "${PERSONAL_HOST}" ]]; then
-		$SYNC -g -l ${DIR} -r "/mnt/data/bgfs1/dorsey/biphasic_simulations/" -a ${MPIKG_HOST}
+		$SYNC -g -l ${DIR} -r "/mnt/data/bgfs1/dorsey/biphasic_simulations/${JOB}" -a ${MPIKG_HOST}
 	else
 		# report error
 		display_error "no sync instructions listed for ${HOSTNAME}"
