@@ -158,7 +158,7 @@ gen_slurm_script () {
     echo "echo \"Job start time is \$(date).\"" >> $FILEPATH$FILENAME
     echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
-    echo "rm *.xplt" >> $FILEPATH$FILENAME
+#     echo "rm *.xplt" >> $FILEPATH$FILENAME
 
 }
 
