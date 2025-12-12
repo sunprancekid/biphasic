@@ -20,6 +20,8 @@ from fbs import post
 # dictionary which relates tensor component to MAT3DS data structure
 TENS_COMP_DICT = {
     'EFFECTIVE': post.MAT3DS.EFFECTIVE,
+    'XX': post.MAT3DS.XX,
+    'YY': post.MAT3DS.YY,
     'ZZ': post.MAT3DS.ZZ}
 
 ## METHODS
