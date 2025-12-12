@@ -61,7 +61,13 @@ for index, row in df_config.iterrows():
 		constant_col.append(row['key'])
 
 # create normalized values based on model parameters
-df_norm = pd.DataFrame(columns=['T', 'A', 'OT', 'W', 'EM', 'K', 'OA', 'Z'])
+norm_col_init =['T', 'A', 'OT', 'W', 'EM', 'K', 'OA', 'Z'] # initial parameters
+norm_cols = norm_col_init.copy() # columns eventually used with data frame
+for k in non_constant_col:
+	# for any other tested parameters which aren't in the initial set
+	if k not in norm_cols:
+		norm_cols.append(k)
+df_norm = pd.DataFrame(columns=norm_cols)
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
 	if row['OT'] < 1.0: continue
@@ -95,7 +101,12 @@ for index, row in df_sum.iterrows():
 	# normalize the oscillation period, normalize the energy
 	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
 	A = df_sum.iloc[index]['c9'] / (e * pow(a, 2) * pow(z, 3))
-	df_norm.loc[index] = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
+	row = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
+	for k in non_constant_col:
+		if k not in norm_col_init:
+			# append any additional data which has not be included with the initial data set
+			row.append(df_sum.loc[index][k])
+	df_norm.loc[index] = row
 
 
 # open the summary file, loop through all unique parameters
@@ -149,6 +160,8 @@ for k in non_constant_col:
 			# exit()
 
 		# fit power law to resonant period
+		# TODO :: move the plot variables above the figure (for plot, as well as scatter)
+		# TODO :: adjust plot dimensions as method argument
 		# TODO :: add power fit (rather than just a"{0}/{1}/{1}.config.csv" linear fit on a log scale)
 		# TODO :: include R^2 value with fit label (automatically)
 		fit = fit_line(x = df_parm[k].to_list(), y = df_parm['T'].to_list(), log = True)

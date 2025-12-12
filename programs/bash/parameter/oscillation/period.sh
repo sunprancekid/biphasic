@@ -203,7 +203,7 @@ gen () {
 	fi
 	## write dependencies
 	# write the math equation used for tip oscillation
-	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C $COS_CONTROL -R -S
+	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C $SIN_CONTROL -R -S
 	# TODO :: hold time is hard coded.
 	# write the total number of numerical steps (constant)
 	declare -i TOTAL_STEPS_MAX=$( echo "$N_CYCLES * $N_STEPS" | bc -l ) # based on max step size
