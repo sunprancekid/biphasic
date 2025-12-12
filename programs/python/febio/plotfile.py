@@ -17,7 +17,10 @@ import pandas as pd
 from fbs import post
 
 ## PARAMETERS
-# none
+# dictionary which relates tensor component to MAT3DS data structure
+TENS_COMP_DICT = {
+    'EFFECTIVE': post.MAT3DS.EFFECTIVE,
+    'ZZ': post.MAT3DS.ZZ}
 
 ## METHODS
 # none
@@ -124,17 +127,19 @@ class XPLT (object):
         # check if field is in data manager
         return field in self.f
 
-    def get_field_values (self, field, state, element):
+    def get_field_values (self, field, tensor_component = 'EFFECTIVE', state = None, element = None):
         """ get field values corresponding to element(s) at specified state(s).
 
         Parameters
         ----------
         field : str
             string representation of field
+        tensor_component : str
+            (optional) used to select MAT3DS via TENS_COMP_DICT, default is 'EFFECTIVE'
         state : int or list(int)
-            integer(s) specifying state(s) to get field values
+            (optional) integer(s) specifying state(s) to get field values
         element : int or list(int)
-            integer(s) specifying elements(s) in post model
+            (optional) integer(s) specifying elements(s) in post model
 
         Returns
         -------
@@ -147,8 +152,15 @@ class XPLT (object):
             print("ERROR :: XPLT.get_field_values() :: '{0}' is not a field in post model.".format(field))
             return
 
+        # check 'tensor_component'
+        if tensor_component not in TENS_COMP_DICT.keys():
+            print("ERROR :: XPLT.get_field_values() :: '{0}' is not a valid tensor component.".format(tensor_component))
+
         # check 'state'
-        if not isinstance(state, list) and isinstance(state, int):
+        if state is None:
+            # if state is not specified, return all states
+            state = range(0, self.s)
+        elif not isinstance(state, list) and isinstance(state, int):
             # if state is not a list and is a integer
             if state >= self.s or state < 0:
                 # state provided to method does not exist in post model
@@ -171,7 +183,11 @@ class XPLT (object):
             return
 
         # check 'element'
-        if not isinstance(element, list) and isinstance(element, int):
+        if element is None:
+            # TODO :: if element is none, return for all elements
+            print("ERROR :: XPLT.get_field_values() :: 'element' cannot be 'None' type.")
+            return
+        elif not isinstance(element, list) and isinstance(element, int):
             # if element is not a list and is an integer
             # TODO :: check element against list of elements stored in object
             if element <= 0:
@@ -207,7 +223,7 @@ class XPLT (object):
             # get the time corresponding to the state
             row.append(self.post.State(state[i]).time)
             # evalue model at state
-            fieldState = self.post.Evaluate(dataField, post.MAT3DS.EFFECTIVE, state[i])
+            fieldState = self.post.Evaluate(dataField, TENS_COMP_DICT[tensor_component], state[i])
             # loop through elements
             for j in range(len(element)):
                 # parse field data corresponding to element at specified state, append to df row
