@@ -94,8 +94,8 @@ for index, row in df_sum.iterrows():
 	# get the normalizing parameters
 	# normalize the oscillation period, normalize the energy
 	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
-	A = df_sum.iloc[index]['c9'] / (e * pow(a, 2) * pow(z, 3))
-	df_norm.loc[index] = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
+	A = df_sum.iloc[index]['c6'] / (e * pow(z, 3))
+	df_norm.loc[index] = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c6'] * 1000000000, e, k, a, z]
 
 
 # open the summary file, loop through all unique parameters
