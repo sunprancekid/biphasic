@@ -35,7 +35,7 @@ OSC_PER="./programs/bash/parameter/oscillation/period.sh"
 # nonzero exit code
 declare -i NONZERO_EXITCODE=120
 # filename
-FILENAME="programs/bash/jobs/amp_oscillation.sh"
+FILENAME="programs/bash/jobs/frequency_sweep.sh"
 # file purpose
 PURPOSE="explore how the osclliation amplitude effects the timscale of poroelastic materials."
 
@@ -67,7 +67,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean for declaring job name
 declare -i BOOL_JOB=0
 # job name
-JOB="osc_amp"
+JOB="freq"
 # boolean for file overwriting
 declare -i BOOL_OVERWRITE=0
 # boolean for parameter and config file writing
