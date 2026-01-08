@@ -70,6 +70,7 @@ def extract_febio_out (d = None, f = None, s = None):
 		n_step = 0 # count the number of data points collected
 		n_total = 0
 		has_header = False # boolean determining if header has been parsed
+		has_end = False # boolean determining if the end of the simulation was reached
 		header = None # contains header, once parsed
 		time = [] # array contianing increments
 		data = []
@@ -78,18 +79,20 @@ def extract_febio_out (d = None, f = None, s = None):
 
 			# loop through file until the end
 			l = f_io.readline()
+			# check for the end of the file
 			if not l:
 				break
 			l = l.strip()
 
 			# if the line matched for the format for the data entry
 			if l == "Step = {}".format(n_step) or l == "Step = 1":
+				# parse the information from the step
 				if l == "Step = 1": 
 					n_step = 1
 					
 				# parse the time
-				l = f_io.readline().strip()
-				l = l.split(" ")
+				l = f_io.readline().strip() # remove leading and trailing spaces
+				l = l.split(" ") # split line into array seperated by spaces
 				time.append(l[2])
 
 				# if n is 0 / has_header is false, parse the header
@@ -112,8 +115,52 @@ def extract_febio_out (d = None, f = None, s = None):
 				# print("{},{}{}".format(n,time[-1],data[-1]))
 				n_step += 1
 				n_total += 1
+			elif "N O N L I N E A R   I T E R A T I O N   S U M M A R Y" in l:
+				# end of the simulation
+				# parse the final statistics
+
+				# number of time steps completed
+				f_io.readline() # skip the filler line
+				l = f_io.readline().strip() # parse the line from the file
+				l = l.split(" ") # break into an array
+				n_steps = l[7] # the eigth string has the number of steps
+
+				# total number of equilibrium iterations
+				f_io.readline()
+				l = f_io.readline().strip()
+				l = l.split(" ")
+				n_equil_it = l[7]
+
+				# total number of right hand evaluations
+				f_io.readline() # skip the filler line
+				l = f_io.readline().strip()
+				l = l.split(" ")
+				n_rh_eval = l[7]
+
+				# total number of stiffness reformations
+				f_io.readline() # skip the filler line
+				l = f_io.readline().strip()
+				l = l.split(" ")
+				n_stiff_ref = l[7]
+
+				# time in linear solver
+				f_io.readline() # skip the filler line
+				l = f_io.readline().strip()
+				l = l.split(" ")
+				time_linear = l[4]
+
+				# elapsed time
+				f_io.readline() # skip the filler line
+				f_io.readline() # skip the filler line
+				l = f_io.readline().strip()
+				l = l.split(" ")
+				time_total = l[3]
+
+				# if this point was reached, the simulation ended properly
+				has_end = True
 
 	## write io to formatted file within same directory
+	# write the out information
 	if s is None:
 		# overwrite the file, if none has been previded
 		s = f
@@ -122,6 +169,18 @@ def extract_febio_out (d = None, f = None, s = None):
 		s_io.writelines("n,t,{}\n".format(header))
 		for i in range(len(time)):
 			s_io.writelines("{},{}{}\n".format(i,time[i],data[i]))
+
+	# write the cpu information
+	with open(d + 'febio.cpu.csv', 'w') as s_io:
+		s_io.writelines("steps,time_linear,time_total\n")
+		if has_end:
+			# if the end was reached, write the job performance
+			s_io.writelines("{},{},{}\n".format(n_steps, time_linear, time_total))
+		else:
+			# write 'na' to indicate that the end of the job was not reached
+			s_io.writelines("na,na,na\n".format(n_steps, time_linear, time_total))
+
+
 
 # calculate material displacement
 def calculate_force (d = None, f = None, s = None, z = False, y = False, x = False):
