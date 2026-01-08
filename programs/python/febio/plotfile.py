@@ -24,6 +24,10 @@ TENS_COMP_DICT = {
     'YY': post.MAT3DS.YY,
     'ZZ': post.MAT3DS.ZZ}
 
+# dictonary of additional properties that can be calculated
+ADD_PROP_DICT = {
+    'total stress': ['fluid pressure', 'solid stress']}
+
 ## METHODS
 # none
 
@@ -150,7 +154,16 @@ class XPLT (object):
         """
 
         # check 'field'
-        if not self.has_field(field):
+        add_prop = False
+        if field in list(ADD_PROP_DICT.keys()):
+            # check if file has the additional properties that need to be calculated for the special property
+            for p in (ADD_PROP_DICT[field]):
+                if not self.has_field(p):
+                    # the post file does not have the field required for the additional property
+                    print("ERROR :: XPLT.get_field_values() :: field '{0}' is required to calculate property '{1}', but does not exist in post file.".format(p, field))
+                    return
+                add_prop = True
+        elif not self.has_field(field):
             print("ERROR :: XPLT.get_field_values() :: '{0}' is not a field in post model.".format(field))
             return
 
@@ -217,20 +230,33 @@ class XPLT (object):
         # initialize pandas data frame
         df = pd.DataFrame(columns = (['state', 'time'] + element))
 
+        # get fields from post
+        dataFields = []
+        if not add_prop:
+            dataFields.append(self.post.GetDataField(field))
+        else:
+            # additional property is true
+            for f in ADD_PROP_DICT[field]:
+                dataFields.append(self.post.GetDataField(f))
+
         # loop through states
-        dataField = self.post.GetDataField(field)
         for i in range(len(state)):
             # intitialize the row, with the state number
             row = [state[i]]
             # get the time corresponding to the state
             row.append(self.post.State(state[i]).time)
-            # evalue model at state
-            fieldState = self.post.Evaluate(dataField, TENS_COMP_DICT[tensor_component], state[i])
             # loop through elements
             for j in range(len(element)):
-                # parse field data corresponding to element at specified state, append to df row
-                row.append(fieldState.elemData[element[j]].val)
-            # add the row to the data frame
+                elm_val = 0
+                # evalue model at state for each datafield
+                for k in range(len(dataFields)):
+                    # get the values for field k at state i
+                    fieldState = self.post.Evaluate(dataFields[k], TENS_COMP_DICT[tensor_component], state[i])
+                    # sum the field value at element j
+                    elm_val += fieldState.elemData[element[j]].val
+                # append, repeat for each element
+                row.append(elm_val)
+            # add the row to the data frame, repeat for each state
             df.loc[i] = row
 
         # return the dataframe
