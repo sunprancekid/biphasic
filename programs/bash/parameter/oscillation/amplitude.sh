@@ -28,7 +28,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean determining if the job name has been specified
 declare -i BOOL_JOB=0
 # default xml path
-XML_PATH="Step/step[@id='2']/Rigid/rigid_bc[@name='tip_oscillation']/value[@lc='2']"
+XML_PATH="Step/step[@id='2']/Rigid/rigid_bc[@name='tip_oscillation']/value"
 # default key 
 KEY="OA"
 # default units

@@ -50,7 +50,7 @@ declare -i BOOL_LOGSCALE=0
 
 ## PARAMETERS - PERIOD TIP OSCILLATION EQUATION
 # xml path for equation
-XML_MATH="LoadData/load_controller[@id='2']/math"
+XML_MATH="LoadData/load_controller[@name='tip_oscillation_controller']/math"
 # description of maths
 DESCRIP_MATH="tip_oscillation_equation"
 # key used for the math equation
