@@ -49,9 +49,9 @@ VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
 ELASTIC_MOD="0.5"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.05"
-# oscillation amplitude
-VAL_OSC_AMP="0.05"
+VAL_LOAD_DEPTH="0.01"
+# oscillation amplitude (mm)
+VAL_OSC_AMP="0.005"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
