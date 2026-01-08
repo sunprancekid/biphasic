@@ -19,6 +19,8 @@ HYSTERESIS="python ./programs/python/hysteresis.py"
 FEBIO_OUT="febio4.job.out"
 # file that contains information for hysteresis in each simulation directory
 HYS_OUT="hys.out.csv"
+# file name that contains information about simulation CPI performance
+CPU_OUT="febio.cpu.out"
 
 ## PARAMATERS
 # exit code indicating error
@@ -29,6 +31,8 @@ FILENAME="analysis.sh"
 PURPOSE="extract and compile results from febio simulations"
 # boolean for hysteresis analysis
 declare -i BOOL_HYS=0
+# boolean for extracting job performance on CPU
+declare -i BOOL_CPU=0
 # boolean for performing relaxation analysis
 declare -i BOOL_RELAX=0
 
@@ -48,8 +52,9 @@ help () {
     echo -e "\nFILE: ${FILENAME}\nPURPOSE: ${PURPOSE}\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
-    echo -e " -H\t\t| perform hystersis analysis."
-    echo -e " -R\t\t| perform relaxation analysis."
+    echo -e " -H\t\t| perform HYSTERSIS analysis."
+    echo -e " -C\t\t| parse the simulation performance on the CPU."
+    echo -e " -R\t\t| perform RELAXATION analysis."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.csv' file with job parameters."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
@@ -124,12 +129,14 @@ check () {
 
 ## OPTIONS
 # parse options, if any
-while getopts "hHRd:j:" opt; do
+while getopts "hHcRd:j:" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
         H) # perform hystersis analysis
             declare -i BOOL_HYS=1 ;;
+        C) # parse simulation performance
+            declare -i BOOL_CPU=1 ;;
         R) # perform relaxation analysis
             declare -i BOOL_RELAX=1 ;;
         d) # path to job directory
@@ -181,6 +188,7 @@ if [[ $BOOL_HYS -eq 1 ]]; then
     fi
 fi
 
+
 # loop through each line, line 1 is the header ..
 for n in $(seq 2 $N_LINES)
 do
@@ -191,26 +199,54 @@ do
     SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
 
     ## extract results
+    # parse results from febio.out which automatically includes CPU
     $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
+    # perform hystersis analysis if requested
+    if [[ $BOOL_HYS -eq 1 ]]; then
+        # pass the path to the analysis file and simulation period
+        # to the hystersis analysis program
+        $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
+    fi
+
+    ## for the first iteration, parse the headers while performing the analysis
+    CPU_FILE=$JOB_PATH$SUBDIR$CPU_OUT # path to default CPU file
+    HYS_FILE=$JOB_PATH$SUBDIR$HYS_OUT # path to default HYS file
+    if [[ $HAS_SUM_HEADER -eq 0 ]]; then
+        # parse the header from the summary file
+        SUM_HEADER="$($PARSE_CSV -f $PARM_FILE -l 1 )"
+
+        # parse the CPU header if requested
+        if [[ $BOOL_CPU -eq 1 ]]; then
+            CPU_HEADER="$($PARSE_CSV -f $CPU_FILE -l 1 )"
+            SUM_HEADER="${SUM_HEADER},${CPU_HEADER}"
+        fi
+
+        # parse the HYS header if requested
+        if [[ $BOOL_HYS -eq 1 ]]; then
+            HYS_HEADER="$($PARSE_CSV -f $HYS_FILE -l 1 )"
+            SUM_HEADER="${SUM_HEADER},${HYS_HEADER}"
+        fi
+
+        # write the header to the summary file
+        echo "${SUM_HEADER}" > $SUM_FILE
+        # the header has been parsed
+        declare -i HAS_SUM_HEADER=1
+    fi
 
     ## perform analysis as requested
-    # hystersis analysis
-    if [[ $BOOL_HYS -eq 1 ]]; then
-        # for now, just determine hystersis
-        # determine the column which contains the period
-        $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
-
-        ## get the information from the save file, append to the parameter file
-        # get the header for the summary file, if not already
-        if [ $HAS_SUM_HEADER -eq 0 ]; then
-            PARM_HEADER=$($PARSE_CSV -f $PARM_FILE -l 1)
-            HYS_HEADER=$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 1)
-            SUM_HEADER="${PARM_HEADER},${HYS_HEADER}"
-            echo "$SUM_HEADER" > $SUM_FILE
-            declare -i HAS_SUM_HEADER=1
-        fi
-        # write the hysterseis information to the summary file
-        echo "$($PARSE_CSV -f $PARM_FILE -l $n),$($PARSE_CSV -f $JOB_PATH$SUBDIR$HYS_OUT -l 2)" >> $SUM_FILE
+    # get the simulation parameters
+    SIM_PARM="$($PARSE_CSV -f $PARM_FILE -l $n )"
+    SIM_DAT="${SIM_PARM}"
+    # get the cpu information if requested
+    if [[ $BOOL_CPU -eq 1 ]]; then
+        CPU_DAT="$($PARSE_CSV -f $CPU_FILE -l 2 )"
+        SIM_DAT="${SIM_DAT},${CPU_DAT}"
     fi
+    # get the hystersis information if requested
+    if [[ $BOOL_HYS -eq 1 ]]; then
+        HYS_DAT="$($PARSE_CSV -f $HYS_FILE -l 2 )"
+        SIM_DAT="${SIM_DAT},${HYS_DAT}"
+    fi
+    echo "${SIM_DAT}" >> $SUM_FILE
 
 done
