@@ -129,7 +129,7 @@ check () {
 
 ## OPTIONS
 # parse options, if any
-while getopts "hHcRd:j:" opt; do
+while getopts "hHCRd:j:" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
