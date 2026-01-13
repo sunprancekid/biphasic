@@ -47,9 +47,9 @@ if not os.path.exists(path + febio_out):
 # open the file, get the time and the work
 df = pd.read_csv(path + febio_out)
 
-# drop the first 1000 seconds of simulation data
-df.drop(df[df['t'] <= 1000].index, inplace = True)
-df['t'] = df['t'] - 1000
+# drop the first 10000 seconds of simulation data
+df.drop(df[df['t'] <= 10000].index, inplace = True)
+df['t'] = df['t'] - 10000
 
 # parse data
 time = df['t'].to_list()
