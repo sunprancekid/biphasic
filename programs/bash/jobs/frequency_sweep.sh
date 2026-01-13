@@ -275,7 +275,7 @@ analysis () {
 
 	## SCRIPT
 	# run selected analysis routine
-	$ANAL -d $DIR -j $JOB -H
+	$ANAL -d $DIR -j $JOB -H -C
 }
 
 ## OPTIONS
