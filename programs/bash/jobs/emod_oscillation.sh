@@ -65,15 +65,15 @@ MIN_EMOD="0.05"
 # maximum elastic modulus to test (MPa)
 MAX_EMOD="5."
 # number of unique elastic modulus values to test
-N_EMOD="9"
+N_EMOD="5"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="0.1"
+MIN_PERIOD="10"
 # maximum period to test (seconds)
-MAX_PERIOD="1000."
+MAX_PERIOD="100000."
 # number of unique period values to test
-N_PERIOD="40"
+N_PERIOD="50"
 
 # OPTION PARAMETERS
 # directory which contains jobs
