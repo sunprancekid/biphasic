@@ -20,7 +20,7 @@ FEBIO_OUT="febio4.job.out"
 # file that contains information for hysteresis in each simulation directory
 HYS_OUT="hys.out.csv"
 # file name that contains information about simulation CPI performance
-CPU_OUT="febio.cpu.out"
+CPU_OUT="febio.cpu.csv"
 
 ## PARAMATERS
 # exit code indicating error
@@ -208,6 +208,7 @@ do
         $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
     fi
 
+
     ## for the first iteration, parse the headers while performing the analysis
     CPU_FILE=$JOB_PATH$SUBDIR$CPU_OUT # path to default CPU file
     HYS_FILE=$JOB_PATH$SUBDIR$HYS_OUT # path to default HYS file
@@ -233,6 +234,7 @@ do
         declare -i HAS_SUM_HEADER=1
     fi
 
+
     ## perform analysis as requested
     # get the simulation parameters
     SIM_PARM="$($PARSE_CSV -f $PARM_FILE -l $n )"
@@ -247,6 +249,6 @@ do
         HYS_DAT="$($PARSE_CSV -f $HYS_FILE -l 2 )"
         SIM_DAT="${SIM_DAT},${HYS_DAT}"
     fi
-    echo "${SIM_DAT}" >> $SUM_FILE
+    echo echo "${SIM_DAT}" >> $SUM_FILE
 
 done
