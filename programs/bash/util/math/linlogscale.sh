@@ -218,7 +218,7 @@ linscale () {
     # generate the parameter along the linear scale
     scale=$( echo "(($NUM - 1 ) / ( ${NVALS} - 1 ))" | bc -l )
     scale=$( echo "(${scale} * (${MAX_VAL_LIN} - ${MIN_VAL_LIN}) + ${MIN_VAL_LIN})" | bc -l )
-    echo $(printf "%${FORMAT}f\n" "${scale}")
+    echo $(printf "%${FORMAT}\n" "${scale}")
 }
 
 ## OPTIONS
