@@ -8,6 +8,8 @@ set -e
 ## 2026.01.14
 
 ## MODULES
+# used to parse and write information to csv files
+PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # generate directory hirearchy and feb parameterization
 GEN="./programs/bash/simulation/generate.sh"
 # submit job to linux cluster en masseHOSTNAME
@@ -20,6 +22,8 @@ PLOT="python ./programs/python/analysis.py"
 SYNC="./programs/bash/util/sync.sh"
 
 ## MODULES - FEB PARAMETERIZATION
+# custom FEB parameter
+FEB_PARM="./programs/bash/parameter/feb_parameter.sh"
 # material property - permeability
 MAT_PERM="./programs/bash/parameter/material/permeability.sh"
 # material property - poissons ratio
@@ -45,7 +49,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean for declaring job name
 declare -i BOOL_JOB=0
 # job name
-JOB="freq"
+JOB="mesh"
 # boolean for file overwriting
 declare -i BOOL_OVERWRITE=0
 # boolean for parameter and config file writing
@@ -203,16 +207,48 @@ parameter () {
 	$OSC_PER -d $DIR -j $JOB -C $VAL_OSCILLATION_PERIOD
 
 	# vary the meshing integer N, calculate NE, append if mesh file exists
+	declare -i HAS_START=0
+	declare -i N_START=0
+	declare -i HAS_END=0
+	declare -i N_END=0
 	for n in $(seq 1 20); do
-        FEB_MESH=${FEB_DIR}/mesh/${JOB}/${JOB}_${n}.feb
+        FEB_MESH=${FEB_DIR}mesh/${JOB}/${JOB}_n${n}.feb
         if [[ -f ${FEB_MESH} ]]; then
-            # let the user know
-            echo "FEB ${FEB_MESH} exists."
+            # the mesh file exists, record the integer
+            if [[ $HAS_START -eq 0 ]]; then
+                declare -i N_START=$n
+                declare -i HAS_START=1
+            fi
+        else
+            # the meshing integer does not exist
+            # check if the start has already been found
+            if [[ $HAS_START -eq 1 && $HAS_END -eq 0 ]]; then
+                # the meshing file sequence has started, but not ended
+                # the last file is the previous integer
+                declare -i HAS_END=1
+                declare -i N_END=$(($n-1))
+            fi
         fi
-        # use the naming hirearchy to identify the feb file corresponding
-        # to the mesh
-
 	done
+	# if the end has not been identified yet,
+	# the last meshing file is the final integer
+	if [[ $HAS_START -eq 1 && $HAS_END -eq 0 ]]; then
+        declare -i HAS_END=1
+        declare -i N_END=$n
+	fi
+	# if the start was never identified, through an error
+	if [[ $HAS_START -eq 0 ]]; then
+        display_error "no meshing files were identified in '${FEB_DIR}/mesh/${JOB}/'."
+	fi
+
+	## generate parameters corresponding to the meshing integer N
+	## and the number of elements NE
+	# number of elements (symbolic relationship) - NE
+	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NE' -D 'number_meshing_elements' -C '2*(NM)*(NM^2)' -R
+	# meshing integer - N
+	N_DIFF=$(($N_END-$N_START+1))
+	## TODO :: add format integer
+	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NM' -D 'meshing_integer' -A $N_START -B $N_END -N $N_DIFF
 
 }
 
@@ -220,14 +256,32 @@ parameter () {
 generate () {
 
 	## PARAMETER
-	# none
+	# job parameter file
+	PARM_FILE=${DIR}${JOB}/${JOB}.parm.csv
 
 	## ARGUMENT
 	# none
 
 	## SCRIPT
-	# none
-	return
+	# identify the head column that contains NM parameter
+	declare -i N_COL=$( $PARSE_CSV -f $PARM_FILE -l 1 -c)
+	declare -i MESH_COL=0
+	for i in $(seq 1 $N_COL); do
+        if [ "$($PARSE_CSV -f $PARM_FILE -l 1 -c $i )" = "NM" ]; then
+            declare -i MESH_COL=$i
+        fi
+	done
+	# loop through the parameter file
+	declare -i N_LINES=$( $PARSE_CSV -f $PARM_FILE -l)
+	for i in $(seq 2 $N_LINES); do
+        # get the meshing integer
+        declare -i SIM_INT=$($PARSE_CSV -f $PARM_FILE -l $i -c 1)
+        declare -i MESH_INT=$($PARSE_CSV -f $PARM_FILE -l $i -c $MESH_COL)
+        echo $MESH_INT
+        FEB_FILE=${FEB_DIR}mesh/${JOB}/${JOB}_n${MESH_INT}.feb
+        # generate the feb file iteratively
+        $GEN -d $DIR -j $JOB -f $FEB_FILE -n $SIM_INT
+	done
 
 }
 
@@ -241,7 +295,7 @@ run () {
 	# none
 
 	## SCRIPT
-	# none
+	# normal
 	return
 
 }
@@ -301,7 +355,7 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
         JOB=${OPTARG};;
     f) # feb file specification
         declare -i BOOL_FEB=1
-        FEB_FILE=${OPTARG};;
+        FEB_DIR=${OPTARG};;
     n) # integer for specific job number
         declare -i BOOL_INT=1
         SIM_INT=${OPTARG} ;;
