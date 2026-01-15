@@ -204,6 +204,11 @@ parameter () {
 
 	# vary the meshing integer N, calculate NE, append if mesh file exists
 	for n in $(seq 1 20); do
+        FEB_MESH=${FEB_DIR}/mesh/${JOB}/${JOB}_${n}.feb
+        if [[ -f ${FEB_MESH} ]]; then
+            # let the user know
+            echo "FEB ${FEB_MESH} exists."
+        fi
         # use the naming hirearchy to identify the feb file corresponding
         # to the mesh
 
