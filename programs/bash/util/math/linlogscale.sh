@@ -243,7 +243,7 @@ while getopts "hA:B:N:I:Lf:" opt; do
             declare -i BOOL_LOG=1 ;;
         f) # specify format string
             declare -i BOOL_FORMAT=1
-            FORMAT=${OPTARG}
+            FORMAT=${OPTARG} ;;
         ?) # unspecified flag
             help $NONZERO_EXITCODE
     esac

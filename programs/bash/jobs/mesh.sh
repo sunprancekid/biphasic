@@ -248,7 +248,7 @@ parameter () {
 	# meshing integer - N
 	N_DIFF=$(($N_END-$N_START+1))
 	## TODO :: add format integer
-	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NM' -D 'meshing_integer' -A $N_START -B $N_END -N $N_DIFF
+	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NM' -D 'meshing_integer' -A $N_START -B $N_END -N $N_DIFF -i
 
 }
 
