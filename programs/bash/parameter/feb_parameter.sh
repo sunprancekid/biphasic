@@ -27,6 +27,8 @@ PURPOSE="generate values along a scale which correspond with augmenting of '.feb
 PARM_HEADER="n,id,path"
 # default header used for the config file
 CONFIG_HEADER="key,xml,description,units,constant,related,symbolic"
+# default format string
+FORMAT_STRING="8.5f"
 
 ## options
 # default directory path for storing parameters
@@ -58,6 +60,8 @@ declare -i BOOL_NVALS=0
 declare -i BOOL_RELATED=0
 # boolean for flagging constant valued parameters as related to one another
 declare -i BOOL_SYMBOLIC=0
+# boolean used to determing if numbers should be generated as integer
+declare -i BOOL_INT=0
 
 
 ## FUNCTIONS
@@ -281,10 +285,10 @@ gen () {
                     # determine the new value
                     if [[ $BOOL_LOGSCALE -eq 1 ]]; then
                         # generate along a log scale
-                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n -L )
+                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n -L -f $FORMAT_STRING)
                     else
                         # generate along a lin scale
-                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n )
+                        VAL=$( $LINLOGSCALE -A $MINVAL -B $MAXVAL -N $NVALS -I $n -f $FORMAT_STRING)
                     fi
                     # append to the new file
                     echo "${count},${simid},${simdir},${parms}${VAL}" >> $PARM_FILE
@@ -299,7 +303,7 @@ gen () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:x:k:u:D:C:A:B:LN:RS" opt; do
+while getopts "hd:j:x:k:u:D:C:A:B:LN:RSi" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;
@@ -339,6 +343,9 @@ while getopts "hd:j:x:k:u:D:C:A:B:LN:RS" opt; do
             declare -i BOOL_RELATED=1 ;;
         S) # flag parameter is being a symbolic equation
             declare -i BOOL_SYMBOLIC=1 ;;
+        i) # generate numbers as integer
+            declare -i BOOL_INT=1
+            FORMAT_STRING="0.0f";;
         ?) # default, display options with nonzero exitcode
             help $NONZERO_EXITCODE
     esac
