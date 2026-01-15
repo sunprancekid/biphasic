@@ -141,15 +141,13 @@ gen_batch () {
         local simid=$( $PARSE_CSV -f $PARM_FILE -l $l -c 2 )
         local simdir=$SUBDIR/$( $PARSE_CSV -f $PARM_FILE -l $l -c 3 )
         if [[ ! -d $simdir ]]; then
-            mkdir -p $simdir # That seems terrible for the
+            mkdir -p $simdir
         fi
         # copy feb to simulation directory
         cp $FEB $simdir$simid.feb
         # augment feb locally (python call)
         $AUGMENT_FEB $FEB $DIR $JOB $((${l}-1))
-#         display_error "TODO :: implement feb augmentation"
     done
-#     display_error "TODO :: implement batch job generation"
 }
 
 # generate single simulation
@@ -163,8 +161,22 @@ gen_single () {
     local n=$1
 
     ## SCRIPT
-    # none
-    display_error "TODO :: implement single job generation"
+    # check that the integer passed to the method exists
+    declare -i N_LINES=$($PARSE_CSV -f $PARM_FILE -l )
+    if [[ $n -gt $(($N_LINES-1)) ]]; then
+        # the simulation integer is to great
+        display_error "the integer passed to the program '$n' does not exist within '${JOB}'."
+    fi
+    # get the simulation information from the parameter file
+    local simid=$($PARSE_CSV -f $PARM_FILE -l $((n+1)) -c 2)
+    local simdir=$($PARSE_CSV -f $PARM_FILE -l $((n+1)) -c 3)
+    if [[ ! -d $simdir ]]; then
+        mkdir -p $simdir
+    fi
+    # copy feb to simulation directory
+    cp $FEB $simdir$simid.feb
+    # augment feb locally (python call)
+    $AUGMENT_FEB $FEB $DIR $JOB $n
 }
 
 # OPTIONS
