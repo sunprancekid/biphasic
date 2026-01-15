@@ -20,6 +20,8 @@ declare -i NONZERO_EXITCODE=120
 FILENAME="progams/bash/util/math/linlogscale.sh"
 # purpose
 PURPOSE="generate one value (n) corresponding to range of number (N) between (A) and (B) along either linear or logscale"
+# default format string
+DEFAULT_FORMAT_STRING="8.5f"
 
 ## OPTION PARAMETERS
 # boolean for generating along a logarithmic vs a linear scale
@@ -32,6 +34,8 @@ declare -i BOOL_MAXVAL=0
 declare -i BOOL_NVALS=0
 # boolean determining if the current integer has been specified
 declare -i BOOL_CURRINT=0
+# boolean determining if a format string has been specified
+declare -i BOOL_FORMAT=0
 
 
 ## METHODS
@@ -134,6 +138,12 @@ check () {
             display_error "if LOG is called, MAX VAL ($MAXVAL) cannot be less than zero"
         fi
     fi
+
+    if [[ $BOOL_FORMAT -eq 0 ]]; then
+        # if a format string has not been specified
+        # use the default
+        FORMAT=${DEFAULT_FORMAT_STRING}
+    fi
 }
 
 # log10 function, echos log10 of first argument passed to method
@@ -187,7 +197,7 @@ logscale () {
      scale=$( echo "(( $NUM - 1 ) / ( ${NVALS} - 1 ))" | bc -l )
      scale=$( echo "(${scale} * (${MAX_VAL_LOG10} - ${MIN_VAL_LOG10}) + ${MIN_VAL_LOG10})" | bc -l )
      scale=$( pow10 "$scale" )
-     echo $(printf "%8.5f\n" "${scale}")
+     echo $(printf "%${FORMAT}\n" "${scale}")
 }
 
 # generate number along a linear scale, echo
@@ -208,12 +218,12 @@ linscale () {
     # generate the parameter along the linear scale
     scale=$( echo "(($NUM - 1 ) / ( ${NVALS} - 1 ))" | bc -l )
     scale=$( echo "(${scale} * (${MAX_VAL_LIN} - ${MIN_VAL_LIN}) + ${MIN_VAL_LIN})" | bc -l )
-    echo $(printf "%8.5f\n" "${scale}")
+    echo $(printf "%${FORMAT}f\n" "${scale}")
 }
 
 ## OPTIONS
 # parse options
-while getopts "hA:B:N:I:L" opt; do
+while getopts "hA:B:N:I:Lf:" opt; do
     case $opt in
         h) # call help
             help 0 ;;
@@ -231,6 +241,9 @@ while getopts "hA:B:N:I:L" opt; do
             declare -i CURRINT=${OPTARG} ;;
         L) # log vs. linear scale
             declare -i BOOL_LOG=1 ;;
+        f) # specify format string
+            declare -i BOOL_FORMAT=1
+            FORMAT=${OPTARG}
         ?) # unspecified flag
             help $NONZERO_EXITCODE
     esac
