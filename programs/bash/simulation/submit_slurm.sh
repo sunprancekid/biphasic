@@ -84,7 +84,7 @@ check () {
     if [[ $BOOL_FEB -eq 1 ]]; then
         # a feb file has been specified by the user
         # check that it exists
-        if [[ ! -f "${DIR}${FEB_FILE}" ]]; then
+        if [[ ! -f ${FEB_FILE} ]]; then
             # the feb file does not exist in the specified directory
             # inform the user and exit nonzero
             echo -e "\nERROR :: model file '${DIR}${FEB_FILE}' cannot be found.\n"
@@ -174,16 +174,16 @@ sub_slurm_script () {
 
     ## SCRIPT
     # navigate to the job directory
-    echo $currdir
+    # echo $currdir
     cd $SIMDIR
-    echo $pwd
+    # echo $pwd
 
     # log into cluster and submit script${SIMID}.slurm.sub
     sbatch ${SIMID}.slurm.sub
 
     # exit cluster, return to starting directory
     cd $currdir
-    echo $pwd
+    # echo $pwd
 
 }
 
