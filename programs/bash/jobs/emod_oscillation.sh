@@ -55,9 +55,9 @@ POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.1"
+VAL_LOAD_DEPTH="0.01"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.05"
+VAL_OSCILLATION_AMPLITUDE="0.005"
 
 ## ELASTIC MODULUS PARAMETERES (logscale)
 # minimum elastic modulus to test (MPa)
@@ -270,6 +270,8 @@ run () {
 		RUN_FLAGS="${RUN_FLAGS} -s"
 	elif [[ $BOOL_LOCAL -eq 1 ]]; then
 		RUN_FLAGS="${RUN_FLAGS} -l"
+	# none
+	return
 	else
 		display_error "must specify running simulations locally (flag -l) or submitting to slurm cluster (flag -s) to run."
 	fi

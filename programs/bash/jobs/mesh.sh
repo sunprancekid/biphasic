@@ -77,9 +77,9 @@ POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.1"
+VAL_LOAD_DEPTH="0.01"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.05"
+VAL_OSCILLATION_AMPLITUDE="0.005"
 # elastic modulus (MPa)
 ELASTIC_MODULUS="0.5"
 # oscillation period
@@ -295,8 +295,21 @@ run () {
 	# none
 
 	## SCRIPT
-	# normal
-	return
+	RUN_FLAGS="-d ${DIR} -j ${JOB}"
+	# check for job specification
+	if [[ $BOOL_INT -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -n ${SIM_INT}"
+	fi
+	# check for running instructions
+	if [[ $BOOL_SLURM -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -s"
+	elif [[ $BOOL_LOCAL -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -l"
+	else
+		display_error "must specify running simulations locally (flag -l) or submitting to slurm cluster (flag -s) to run."
+	fi
+	# execute
+	$RUN $RUN_FLAGS
 
 }
 
@@ -319,8 +332,21 @@ update () {
 analysis () {
 
 	## PARAMETER
+	# file which contains job analysis
+	ANAL_FILE="${DIR}/${JOB}/${JOB}.sum.csv"
+
+	## ARGUMENT
 	# none
-	return
+
+	## SCRIPT
+	# run selected analysis routine
+	if [[ ! -f $ANAL_FILE || $BOOL_OVERWRITE -eq 1 ]]; then
+		# perform analysis if the analysis file does not already exist,
+		# or if overwrite has been called
+		$ANAL -d $DIR -j $JOB -H
+	fi
+	# plot results after analysis
+	$PLOT $DIR $JOB
 }
 
 

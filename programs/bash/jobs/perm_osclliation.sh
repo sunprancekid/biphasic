@@ -55,9 +55,9 @@ POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.1"
+VAL_LOAD_DEPTH="0.01"
 # oscillation amplitude (mm)
-VAL_OSCILLATION_AMPLITUDE="0.05"
+VAL_OSCILLATION_AMPLITUDE="0.005"
 
 ## PERMEABILITY PARAMETERES (logscale)
 # minimum permeability to test (mm^4 / N * s)
@@ -65,15 +65,15 @@ MIN_PERM="0.0001"
 # maximum permeability to test (mm^4 / N * s)
 MAX_PERM="0.01"
 # number of unique permeability values to test
-N_PERM="9"
+N_PERM="5"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
-MIN_PERIOD="0.1"
+MIN_PERIOD="10."
 # maximum period to test (seconds)
-MAX_PERIOD="1000."
+MAX_PERIOD="100000."
 # number of unique period values to test
-N_PERIOD="40"
+N_PERIOD="50"
 
 # OPTION PARAMETERS
 # directory which contains jobs

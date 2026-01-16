@@ -249,6 +249,6 @@ do
         HYS_DAT="$($PARSE_CSV -f $HYS_FILE -l 2 )"
         SIM_DAT="${SIM_DAT},${HYS_DAT}"
     fi
-    echo echo "${SIM_DAT}" >> $SUM_FILE
+    echo "${SIM_DAT}" >> $SUM_FILE
 
 done
