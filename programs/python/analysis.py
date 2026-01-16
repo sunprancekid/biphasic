@@ -100,7 +100,7 @@ for index, row in df_sum.iterrows():
 	# get the normalizing parameters
 	# normalize the oscillation period, normalize the energy
 	T = df_sum.iloc[index]['OT'] * (k * e / pow(z, 2))
-	A = df_sum.iloc[index]['c9'] / (e * pow(a, 2) * pow(z, 3))
+	A = df_sum.iloc[index]['c9'] / (e * pow(z, 3))
 	row = [T, A, df_sum.iloc[index]['OT'], df_sum.iloc[index]['c9'] * 1000000000, e, k, a, z]
 	for k in non_constant_col:
 		if k not in norm_col_init:
@@ -119,6 +119,7 @@ for k in non_constant_col:
 		fig.set_xaxis_label("Normalized Cycle Period ($T^{{*}} = T \\cdot (E \\cdot K \\cdot Z^{{-2}}$))")
 		fig.set_yaxis_label("Normalized Energy Dissipated ($A^{{*}} = A \\cdot (E^{{-1}} \\cdot Z^{{-3}})$)")
 		fig.set_xaxis_scale(log = True)
+# instructions for syncing local and remote directories
 		# fig.set_yaxis_scale(log = True)
 		fig.set_saveas(savedir = savedir, filename = 'sweep_norm')
 		gen_plot(fig, show = False, save = True)
