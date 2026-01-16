@@ -14,7 +14,7 @@ set -e
 # used to parse and write information to csv files
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # used to augment feb files
-AUGMENT_FEB="python programs/python/febio/augment_feb_batch.py"
+AUGMENT_FEB="python programs/python/febio/feb/augment_feb_batch.py"
 
 ## CONSTANTS
 # nonzero exit code
