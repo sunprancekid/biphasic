@@ -15,7 +15,7 @@ RUN="./programs/bash/simulation/run.sh"
 # contains analysis routines
 ANAL="./programs/bash/simulation/analysis.sh"
 # show results after analysis has been performed
-PLOT="python ./programs/python/analysis.py"
+PLOT="python ./programs/python/febio/analysis/scaling.py"
 # instructions for syncing local and remote directories
 SYNC="./programs/bash/util/sync.sh"
 
