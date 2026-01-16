@@ -47,19 +47,19 @@ POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
-ELASTIC_MOD="0.5"
+ELASTIC_MOD="0.005"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.01"
+VAL_LOAD_DEPTH="0.05"
 # oscillation amplitude (mm)
-VAL_OSC_AMP="0.005"
+VAL_OSC_AMP="0.05"
 
 ## OSCILLATION PERIOD PARAMETERS (logscale)
 # minimum period to test (seconds)
 MIN_PERIOD="1."
 # maximum period to test (seconds)
-MAX_PERIOD="100000."
+MAX_PERIOD="10000."
 # number of unique period values to test
-N_PERIOD="50"
+N_PERIOD="40"
 
 # OPTION PARAMETERS
 # directory which contains jobs

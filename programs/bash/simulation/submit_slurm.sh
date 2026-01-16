@@ -137,7 +137,7 @@ gen_slurm_script () {
     echo "#!/bin/bash -l" > $FILEPATH$FILENAME
     echo "" >> $FILEPATH$FILENAME
     echo "#SBATCH --partition=cpu2" >> $FILEPATH$FILENAME
-    echo "#SBATCH -J ${SIMID}.%j.slurm" >> $FILEPATH$FILENAME
+    echo "#SBATCH -J ${SIMID}" >> $FILEPATH$FILENAME
     echo "#SBATCH --nodes=1" >> $FILEPATH$FILENAME  # number of nodes
     echo "#SBATCH --ntasks=1" >> $FILEPATH$FILENAME   # number of processor cores (i.e. tasks)
     echo "#SBATCH --cpus-per-task=16" >> $FILEPATH$FILENAME
