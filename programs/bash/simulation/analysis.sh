@@ -12,7 +12,7 @@ set -e
 # path to parse csv file
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # extract results from custom outfile
-EXTRACT="python ./programs/python/extract.py"
+EXTRACT="python ./programs/python/febio/io/extract.py"
 # hysteresis analysis
 HYSTERESIS="python ./programs/python/hysteresis.py"
 # outfile
