@@ -24,8 +24,7 @@ declare -i BOOL_DIR=0
 declare -i BOOL_JOB=0
 # boolean determining if optional argument feb file has been specified
 declare -i BOOL_FEB=0
-# boolean determining if the simulation integer has been specified
-declare -i BOOL_INT=0
+# boolean determining if the slurm batch if will be returned
 
 
 ## FUNCTIONS
@@ -44,11 +43,10 @@ help () {
     echo -e "\nFILE: \t submit_febio_slurm.sh\nPURPOSE: submit febio jobs to MPIKG compute cluster via slurm.\n"
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
-    echo -e " -r\t\t| replicate simulation, otherwise overwrite simulation data if job has already run."
+    echo -e " -r\t\t| return the simulation batch id."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to '.feb' file name in \$DIR."
-    echo -e " -i  << ARG >>\t| OPTIONAL: integer that corresponds to job in parameter file. Used in job naming."
     echo -e " -f  << ARG >>\t| OPTIONAL: '.feb' file name, when it does not correspond to \$JOB."
     echo -e
 
@@ -179,7 +177,11 @@ sub_slurm_script () {
     # echo $pwd
 
     # log into cluster and submit script${SIMID}.slurm.sub
-    sbatch ${SIMID}.slurm.sub
+    local slurm_out="$(sbatch ${SIMID}.slurm.sub)"
+    local out_arr=($slurm_out)
+    if [[ $BOOL_RETURN -eq 1 ]]; then
+        echo ${out_arr[3]}
+    fi
 
     # exit cluster, return to starting directory
     cd $currdir
@@ -189,12 +191,10 @@ sub_slurm_script () {
 
 ## OPTIONS
 # parse options
-while getopts "hrd:j:f:i:" option; do
+while getopts "hd:j:f:r" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
-        r) # replicate simulation if simulation data already exists
-            declare -i BOOL_REPLICATE=1 ;;
         d) # specify the path to the job directory
             declare -i BOOL_DIR=1
             DIR="${OPTARG}" ;;
@@ -204,9 +204,8 @@ while getopts "hrd:j:f:i:" option; do
         f) # specifiy the name of the feb file
             declare -i BOOL_FEB=1
             FEB_FILE="${OPTARG}" ;;
-        i) # simulation integer
-            declare -i BOOL_INT=1
-            declare -i SIMINT=${OPTARG} ;;
+        r) # return slurm batch id to cml
+            declare -i BOOL_RETURN=1 ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE

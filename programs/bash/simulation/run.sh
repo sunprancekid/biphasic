@@ -242,7 +242,8 @@ submit () {
             display_error "login into ${SLURM_HOST} before submitting to slurm."
         fi
         # submit the script from the local directory
-        $SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}${simint}
+        declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}${simint} -r)"
+        echo "${JOB}${simint} (slurm id: ${simid}): $slurmid"
         return
     fi
     # 
