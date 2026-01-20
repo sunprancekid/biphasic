@@ -53,10 +53,10 @@ def parse_io (d = None, f = None, s = None):
 			for i in range(len(temp) - 1):
 				d += "{}/".format(temp[i])
 
-	# elif not os.path.exists(d + f):
-	# 	# the directory and the file were supplied seperately by the user but the path does not exist
-	# 	print(" ERROR :: parse_febio_out :: path {}{} does not exist.".format(d, f))
-	# 	exit(nonzero_exitcode)
+	elif not os.path.exists(d + f):
+		# the directory and the file were supplied seperately by the user but the path does not exist
+		print(" ERROR :: parse_febio_out :: path {}{} does not exist.".format(d, f))
+		exit(nonzero_exitcode)
 
 	return d, f, s
 
