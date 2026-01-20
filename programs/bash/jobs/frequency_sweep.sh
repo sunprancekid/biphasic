@@ -41,13 +41,13 @@ PURPOSE="explore how the osclliation amplitude effects the timscale of poroelast
 
 ## FEB PARAMETERIZATION CONSTANTS
 # permiability (mm^4 / N * s)
-PERMEABILITY="0.1"
+PERMEABILITY="0.001"
 # poissons ratio
 POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
-ELASTIC_MOD="0.005"
+ELASTIC_MOD="0.05"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.01"
 # oscillation amplitude (mm)
