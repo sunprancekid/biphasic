@@ -25,6 +25,9 @@ declare -i BOOL_JOB=0
 # boolean determining if optional argument feb file has been specified
 declare -i BOOL_FEB=0
 # boolean determining if the slurm batch if will be returned
+declare -i BOOL_RETURN=0
+# boolean determining if the xplt file should be deleted post-run
+declare -i BOOL_XPLT=0
 
 
 ## FUNCTIONS
@@ -44,6 +47,7 @@ help () {
     echo -e "\n ## SCRIPT PROTOCOL ## \n"
     echo -e " -h\t\t| display options, exit 0"
     echo -e " -r\t\t| return the simulation batch id."
+    echo -e " -x\t\t| remove '.xplt' file after simulation is done."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to '.feb' file name in \$DIR."
@@ -156,7 +160,9 @@ gen_slurm_script () {
     echo "echo \"Job start time is \$(date).\"" >> $FILEPATH$FILENAME
     echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
-#     echo "rm *.xplt" >> $FILEPATH$FILENAME
+    if [[ $BOOL_XPLT -eq 1 ]]; then
+        echo "rm *.xplt" >> $FILEPATH$FILENAME
+    fi
 
 }
 
@@ -191,7 +197,7 @@ sub_slurm_script () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:f:r" option; do
+while getopts "hd:j:f:rx" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -206,6 +212,8 @@ while getopts "hd:j:f:r" option; do
             FEB_FILE="${OPTARG}" ;;
         r) # return slurm batch id to cml
             declare -i BOOL_RETURN=1 ;;
+        x) # delete xplt file after running
+            declare -i BOOL_XPLT=1 ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
