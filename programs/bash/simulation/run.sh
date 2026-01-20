@@ -244,8 +244,12 @@ submit () {
         if [[ ! "${HOSTNAME}" == "${SLURM_HOST}" ]]; then
             display_error "login into ${SLURM_HOST} before submitting to slurm."
         fi
+        SLURM_FLAGS=""
+        if [[ $BOOL_XPLT -eq 1 ]]; then
+            SLURM_FLAGS="-x"
+        fi
         # submit the script from the local directory
-        declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}${simint} -r)"
+        declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}${simint} -r $SLURM_FLAGS )"
         echo "${JOB}${simint} (slurm id: ${simid}): $slurmid"
         return
     fi
