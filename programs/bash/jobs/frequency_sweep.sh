@@ -86,6 +86,8 @@ declare -i BOOL_LOCAL=0
 declare -i BOOL_ANAL=0
 # boolean for specifying job integer
 declare -i BOOL_INT=0
+# boolean for deleting xplt files
+declare -i BOOL_XPLT=0
 
 ## METHODS
 # display options, exit with exit code
@@ -113,6 +115,7 @@ help () {
     echo -e " \t-s\t| SUBMIT JOBS to HPC cluster via slurm."
     echo -e " \t-l\t| run jobs LOCALLY."
     echo -e " -a\t\t| ANALYZE results post-simulation."
+    echo -e " \t-x\t| delete XPLT files if the exist."
     echo -e "\n ## SCRIPT PARAMETERS ##"
     echo -e " -d  << ARG >>\t| DIRECTORY path to generate jobs (default is ${DIR})"
     echo -e " -j  << ARG >>\t| JOB name (default is ${JOB})"
@@ -275,12 +278,16 @@ analysis () {
 
 	## SCRIPT
 	# run selected analysis routine
-	$ANAL -d $DIR -j $JOB -H -C
+	if [[ $BOOL_XPLT -eq 0 ]]; then
+		$ANAL -d $DIR -j $JOB -H -C
+	else
+		$ANAL -d $DIR -j $JOB -H -C -x
+	fi
 }
 
 ## OPTIONS
 # parse options
-while getopts "hvVopgrslad:j:f:n:c:" opt; do
+while getopts "hvVopgrslad:j:f:n:c:x" opt; do
  case $opt in
     h) # display options, exit 0
         help 0 ;;
@@ -316,6 +323,8 @@ while getopts "hvVopgrslad:j:f:n:c:" opt; do
     c) # specify check file
         declare -i BOOL_CHECKFILE=1
         CHECKFILE=${OPTARG} ;;
+    x) # delete xplt files
+    	declare -i BOOL_XPLT=1 ;;
     ?) # default option
         help $NONZERO_EXITCODE
     esac
