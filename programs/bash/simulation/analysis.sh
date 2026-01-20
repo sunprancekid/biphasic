@@ -35,6 +35,8 @@ declare -i BOOL_HYS=0
 declare -i BOOL_CPU=0
 # boolean for performing relaxation analysis
 declare -i BOOL_RELAX=0
+# boolean for deleting XPLT files
+declare -i BOOL_XPLT=0
 
 ## FUNCTIONS
 # display options, exit
@@ -55,6 +57,7 @@ help () {
     echo -e " -H\t\t| perform HYSTERSIS analysis."
     echo -e " -C\t\t| parse the simulation performance on the CPU."
     echo -e " -R\t\t| perform RELAXATION analysis."
+    echo -e " -x\t\t| delete xplt files post-analysis."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.csv' file with job parameters."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to a '.csv' file name in \$DIR, which contains job parameters."
@@ -129,7 +132,7 @@ check () {
 
 ## OPTIONS
 # parse options, if any
-while getopts "hHCRd:j:" opt; do
+while getopts "hHCRd:j:x" opt; do
     case $opt in
         h) # display help, exit zero
             help 0 ;;
@@ -145,6 +148,8 @@ while getopts "hHCRd:j:" opt; do
         j) # specify job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
+        x) # boolean for deleting xplt files
+            declare -i BOOL_XPLT=1 ;;
         ?) # default case for unknown option
             help $NONZEROEXITCODE
     esac
@@ -234,6 +239,13 @@ do
         declare -i HAS_SUM_HEADER=1
     fi
 
+    ## delete the xplt file, if it exists
+    XPLT_FILE="${JOB_PATH}${SUBDIR}${SIMID}.xplt"
+    if [[ $BOOL_XPLT -eq 0 && -f $XPLT_FILE ]]; then
+        # remove the xplt file if it exists and the option
+        # has been called
+        rm $XPLT_FILE
+    fi
 
     ## perform analysis as requested
     # get the simulation parameters
