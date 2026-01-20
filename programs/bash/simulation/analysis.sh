@@ -12,9 +12,9 @@ set -e
 # path to parse csv file
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # extract results from custom outfile
-EXTRACT="python ./programs/python/febio/io/extract.py"
+EXTRACT="python programs/python/febio/io/logfile.py"
 # hysteresis analysis
-HYSTERESIS="python ./programs/python/feibo/analysis/hysteresis.py"
+HYSTERESIS="python programs/python/febio/analysis/hysteresis.py"
 # outfile
 FEBIO_OUT="febio4.job.out"
 # file that contains information for hysteresis in each simulation directory
