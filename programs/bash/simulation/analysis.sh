@@ -203,6 +203,18 @@ do
     # the second column is the SIMID
     SIMID=$($PARSE_CSV -f $PARM_FILE -l $n -c 2)
 
+    ## delete the xplt file, if it exists
+    XPLT_FILE="${JOB_PATH}${SUBDIR}${SIMID}.xplt"
+    if [[ $BOOL_XPLT -eq 0 && -f $XPLT_FILE ]]; then
+        echo "Removing ${XPLT_FILE}"
+        # remove the xplt file if it exists and the option
+        # has been called
+        rm $XPLT_FILE
+    else
+        echo "Cannot find ${XPLT_FILE}"
+    fi
+    continue
+
     ## extract results
     # parse results from febio.out which automatically includes CPU
     $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
@@ -237,14 +249,6 @@ do
         echo "${SUM_HEADER}" > $SUM_FILE
         # the header has been parsed
         declare -i HAS_SUM_HEADER=1
-    fi
-
-    ## delete the xplt file, if it exists
-    XPLT_FILE="${JOB_PATH}${SUBDIR}${SIMID}.xplt"
-    if [[ $BOOL_XPLT -eq 0 && -f $XPLT_FILE ]]; then
-        # remove the xplt file if it exists and the option
-        # has been called
-        rm $XPLT_FILE
     fi
 
     ## perform analysis as requested
