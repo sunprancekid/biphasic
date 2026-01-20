@@ -14,6 +14,8 @@ import numpy as np
 # none
 
 ## PARAMETERS
+# boolean that prints debugging statements
+DEBUG = True
 # nonzero exit code for faulty method execution
 nonzero_exitcode = 120
 # default name for saving files
@@ -22,6 +24,10 @@ default_savefile = "febio4.out.csv"
 ## METHODS
 # from d (directory), f (file), and s (save file), return the directory and file name
 def parse_io (d = None, f = None, s = None):
+
+	## debugging statement
+	if DEBUG:
+		print("parse_io")
 
 	## check that the correct information was passed to the method
 	# check that a file name was specified
@@ -56,6 +62,10 @@ def parse_io (d = None, f = None, s = None):
 
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):
+	
+	## debugging statement
+	if DEBUG:
+		print("extract_febio_out")
 
 	## check that the correct information was passed to the method
 	d, f, s = parse_io (d, f, s)
@@ -184,6 +194,10 @@ def extract_febio_out (d = None, f = None, s = None):
 
 # calculate material displacement
 def calculate_force (d = None, f = None, s = None, z = False, y = False, x = False):
+	
+	## debugging statement
+	if DEBUG:
+		print("calculate_force")
 
 	## parse the load file, save file
 	d, f, s = parse_io(d, f, s)
@@ -216,6 +230,10 @@ def calculate_force (d = None, f = None, s = None, z = False, y = False, x = Fal
 
 # calculate force magnitude
 def calculate_displacement	(d = None, f = None, s = None, x = False, y = False, z = False):
+	
+	## debugging statement
+	if DEBUG:
+		print("calculate_displacement")
 
 	## parse the load, save file
 	d, f, s = parse_io (d, f, s)
@@ -256,6 +274,10 @@ def calculate_displacement	(d = None, f = None, s = None, x = False, y = False, 
 
 # calculate hysteresis from force and displacement
 def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_col = None, t_col = None):
+	
+	## debugging statement
+	if DEBUG:
+		print("calculate_work")
 
 	## parse the load, save file
 	d, f, s = parse_io (d, f, s)
