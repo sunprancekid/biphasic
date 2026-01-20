@@ -49,6 +49,8 @@ declare -i BOOL_SLURM=0
 declare -i BOOL_SIMINT=0
 # boolean for specifying check file
 declare -i BOOL_CHECKFILE=0
+# boolean determining if the xplt file should be removed
+declare -i BOOL_XPLT=0
 
 ## FUNCTIONS
 # display options, exit
@@ -70,6 +72,7 @@ help () {
 #     echo -e " -o\t\t| overwrite files and restart all simulations, even if they have already run."
     echo -e " -l\t\t| run job locally ('febio4' must be installed)."
     echo -e " -s\t\t| submit job via slurm (via 'sbatch' - see ${SUB_SLURM})."
+    echo -e " -x\t\t| delete xplt file after running."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory."
     echo -e " -j  << ARG >>\t| MANDATORY: job name."
@@ -293,7 +296,7 @@ submit_batch () {
 
 ## OPTIONS
 # parse options
-while getopts "hvlsd:j:c:n:" opt
+while getopts "hvlsd:j:c:n:x" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -316,6 +319,8 @@ do
         n) # specify single job
             declare -i BOOL_SIMINT=1
             declare -i SIMINT=${OPTARG} ;;
+        x) # boolean for xplt file removal
+            declare -i BOOL_XPLT=1 ;;
         ?) # unknown option
             help $NONZEROEXITCODE
     esac 

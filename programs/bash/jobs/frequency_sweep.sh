@@ -251,6 +251,10 @@ run () {
 	if [[ $BOOL_INT -eq 1 ]]; then
 		RUN_FLAGS="${RUN_FLAGS} -n ${SIM_INT}"
 	fi
+	# check if xplt deletion has been specified
+	if [[ $BOOL_XPLT -eq 1 ]]; then
+		RUN_FLAGS="${RUN_FLAGS} -x"
+	fi
 	# check for running instructions
 	if [[ $BOOL_SLURM -eq 1 ]]; then
 		RUN_FLAGS="${RUN_FLAGS} -s"
