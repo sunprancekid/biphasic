@@ -15,7 +15,7 @@ import numpy as np
 
 ## PARAMETERS
 # boolean that prints debugging statements
-DEBUG = True
+DEBUG = False
 # nonzero exit code for faulty method execution
 nonzero_exitcode = 120
 # default name for saving files
