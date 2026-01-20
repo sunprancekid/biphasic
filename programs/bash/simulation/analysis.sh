@@ -205,7 +205,7 @@ do
 
     ## delete the xplt file, if it exists
     XPLT_FILE="${JOB_PATH}${SUBDIR}${SIMID}.xplt"
-    if [[ $BOOL_XPLT -eq 0 && -f $XPLT_FILE ]]; then
+    if [[ $BOOL_XPLT -eq 1 && -f $XPLT_FILE ]]; then
         echo "Removing ${XPLT_FILE}"
         # remove the xplt file if it exists and the option
         # has been called
