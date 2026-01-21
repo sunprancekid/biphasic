@@ -47,7 +47,7 @@ POISSON_RATIO="0.3"
 # solid volume fraction
 VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
-ELASTIC_MOD="0.05"
+ELASTIC_MOD="0.5"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.01"
 # oscillation amplitude (mm)
