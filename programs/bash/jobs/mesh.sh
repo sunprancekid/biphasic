@@ -45,7 +45,7 @@ FILENAME="programs/bash/jobs/mesh.sh"
 # purpose
 PURPOSE="scaling effect of FEB meshing on model properties and performance"
 # directory which contains jobs
-DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
+DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/mesh/"
 # boolean for declaring job name
 declare -i BOOL_JOB=0
 # job name
@@ -211,7 +211,7 @@ parameter () {
 	declare -i N_START=0
 	declare -i HAS_END=0
 	declare -i N_END=0
-	for n in $(seq 1 20); do
+	for n in $(seq 1 25); do
         FEB_MESH=${FEB_DIR}mesh/${JOB}/${JOB}_n${n}.feb
         if [[ -f ${FEB_MESH} ]]; then
             # the mesh file exists, record the integer
@@ -244,7 +244,7 @@ parameter () {
 	## generate parameters corresponding to the meshing integer N
 	## and the number of elements NE
 	# number of elements (symbolic relationship) - NE
-	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NE' -D 'number_meshing_elements' -C '2*(NM)*(NM^2)' -R
+	$FEB_PARM -d $DIR -j $JOB -x 'na' -k 'NE' -D 'number_meshing_elements' -C '2*(NM)*(NM**2)' -R
 	# meshing integer - N
 	N_DIFF=$(($N_END-$N_START+1))
 	## TODO :: add format integer
@@ -343,10 +343,10 @@ analysis () {
 	if [[ ! -f $ANAL_FILE || $BOOL_OVERWRITE -eq 1 ]]; then
 		# perform analysis if the analysis file does not already exist,
 		# or if overwrite has been called
-		$ANAL -d $DIR -j $JOB -H
+		$ANAL -d $DIR -j $JOB -H -C
 	fi
 	# plot results after analysis
-	$PLOT $DIR $JOB
+# 	$PLOT $DIR $JOB
 }
 
 
