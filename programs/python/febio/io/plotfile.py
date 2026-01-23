@@ -45,6 +45,8 @@ class XPLT (object):
         fbs data manager, stores the attributes (name and type) of the different data fields.
     s : int
         number of states in post model
+    e : int
+        number of elements in post model
     f : list(str)
         list of strings corresponding to fields contained within post model
 
@@ -63,7 +65,7 @@ class XPLT (object):
         self.post = post.ReadPlotFile(filename)
         self.manager = self.post.GetDataManager()
         self.set_states()
-        # self.e = self.get_elements() # TODO parse number of elements from 0th state
+        self.set_elements()
         self.set_fields()
 
     ## STATES ##
@@ -81,6 +83,22 @@ class XPLT (object):
         """
 
         self.s = self.post.States()
+
+    ## ELEMENTS ##
+
+    def set_elements (self):
+        """ initialize the number of elements in the post model.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+
+        """
+        # get the element data from the first state
+        self.e = len(self.post.Evaluate(self.post.GetDataField('initial position'), TENS_COMP_DICT['EFFECTIVE'], 0).elemData) - 1
 
     ## FIELDS ##
 
