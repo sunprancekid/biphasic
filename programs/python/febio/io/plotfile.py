@@ -98,7 +98,20 @@ class XPLT (object):
         """
         return list(range(0, self.s))
 
-    def get_states_from_time (self, min_time = None, max_time = None):
+    def get_states_at_time (self, time = None):
+        """ returns state that closest matches time.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        pass
+
+    def get_states_from_time_period (self, min_time = None, max_time = None):
         """ returns a list of states that correspond to a time period within the post model.
 
         Parameters
