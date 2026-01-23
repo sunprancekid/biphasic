@@ -84,6 +84,36 @@ class XPLT (object):
 
         self.s = self.post.States()
 
+    def get_states (self):
+        """ returns a list of all states in post model.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        List[int]
+            integer list of all possible states in post model.
+        """
+        return list(range(0, self.s))
+
+    def get_states_from_time (self, min_time = None, max_time = None):
+        """ returns a list of states that correspond to a time period within the post model.
+
+        Parameters
+        ----------
+        min_time : float
+            (Optional) real number greater than or equal to zero
+        max_time : float
+            (Optional) real number less than or equal to the maximum time
+        Returns
+        -------
+        List[int]
+            integer list of all states in post model which match the time constraints.
+        """
+        pass
+
     ## ELEMENTS ##
 
     def set_elements (self):
@@ -99,6 +129,39 @@ class XPLT (object):
         """
         # get the element data from the first state
         self.e = len(self.post.Evaluate(self.post.GetDataField('initial position'), TENS_COMP_DICT['EFFECTIVE'], 0).elemData) - 1
+
+    def get_elements (self):
+        """ returns a list of all possible elements in post model.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        List[int]
+            integer list of all possible elements in model
+        """
+        return list(range(1, self.e + 1))
+
+    def get_elements_from_initial_position (self, x = None, y = None, z = None):
+        """ returns elements that match a described initial position.
+
+        Parameters
+        ----------
+        x : float
+            x-coordinate
+        y : float
+            y-coordinate
+        z : float
+            z-coordinate
+
+        Returns
+        -------
+        List[int]
+            integer last of elements whose initial position match the coordinates
+        """
+        pass
 
     ## FIELDS ##
 
@@ -194,7 +257,7 @@ class XPLT (object):
         # check 'state'
         if state is None:
             # if state is not specified, return all states
-            state = range(0, self.s)
+            state = self.get_states()
         elif not isinstance(state, list) and isinstance(state, int):
             # if state is not a list and is a integer
             if state >= self.s or state < 0:
@@ -219,7 +282,7 @@ class XPLT (object):
 
         # check 'element'
         if element is None:
-            element = range(1, self.e + 1)
+            element = self.get_elements()
         elif not isinstance(element, list) and isinstance(element, int):
             # if element is not a list and is an integer
             if element <= 0 or element > self.e:
