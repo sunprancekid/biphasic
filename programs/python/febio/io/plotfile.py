@@ -157,13 +157,15 @@ class XPLT (object):
         Parameters
         ----------
         field : str
-            string representation of field
+            string representation of field, must be within self.f
         tensor_component : str
             (optional) used to select MAT3DS via TENS_COMP_DICT, default is 'EFFECTIVE'
         state : int or list(int)
-            (optional) integer(s) specifying state(s) to get field values
+            (optional) integer(s) specifying state(s) to get field values, default is
+            all states
         element : int or list(int)
-            (optional) integer(s) specifying elements(s) in post model
+            (optional) integer(s) specifying elements(s) in post model, default is
+            all elements
 
         Returns
         -------
@@ -217,13 +219,10 @@ class XPLT (object):
 
         # check 'element'
         if element is None:
-            # TODO :: if element is none, return for all elements
-            print("ERROR :: XPLT.get_field_values() :: 'element' cannot be 'None' type.")
-            return
+            element = range(1, self.e + 1)
         elif not isinstance(element, list) and isinstance(element, int):
             # if element is not a list and is an integer
-            # TODO :: check element against list of elements stored in object
-            if element <= 0:
+            if element <= 0 or element > self.e:
                 # element provided to method does not exist in post model
                 print("ERROR :: XPLT.get_field_values() :: 'element' number {0} does not exist in model.".format(element))
                 return
@@ -234,7 +233,7 @@ class XPLT (object):
             # element is a list
             # check whether each element within the list is accepted
             for i, e in reversed(list(enumerate(element))):
-                if not isinstance(e, int) or e <= 0:
+                if not isinstance(e, int) or e <= 0 or e > self.e:
                     print("ERROR :: XPLT.get_field_values() :: 'element' {0} at index {1} not accepted type, removing from list.".format(element.pop(i), i))
             # check that the element list is greater than 0
             if len(element) == 0:
