@@ -98,18 +98,37 @@ class XPLT (object):
         """
         return list(range(0, self.s))
 
-    def get_states_at_time (self, time = None):
+    def get_state_at_time (self, time = None):
         """ returns state that closest matches time.
 
         Parameters
         ----------
-        None
+        time : float
+            real number greater than zero
 
         Returns
         -------
-        None
+        int
+            integer that corresponds to desired state
         """
-        pass
+        # get all time and states points in post model
+        init = self.get_field_values('initial position', element = 1)
+        state_list = init['state'].tolist()
+        time_list = init['time'].tolist()
+        # find the state that is closest to the time passed to the method
+        idx_time = 0
+        err_time = []
+        for i in range(1, len(time_list)):
+            # print("{0} : ({1} - {2} = {3})".format(i, time_list[i], time, time_list[i] - time))
+            if abs(time_list[i] - time) < abs(time_list[idx_time] - time):
+                # if the current time is closer than the previous, update the index
+                idx_time = i
+            else:
+                # time is linear. if the index is not being update,
+                # the desired time point has been found
+                break
+        # print("Time {0} corresponds to state {1} when simulation time is {2}.".format(time, state_list[idx_time], time_list[idx_time]))
+        return int(state_list[idx_time])
 
     def get_states_from_time_period (self, min_time = None, max_time = None):
         """ returns a list of states that correspond to a time period within the post model.
