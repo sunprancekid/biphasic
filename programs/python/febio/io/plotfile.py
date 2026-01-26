@@ -365,7 +365,8 @@ class XPLT (object):
                     # get the values for field k at state i
                     fieldState = self.post.Evaluate(dataFields[k], TENS_COMP_DICT[tensor_component], state[i])
                     # sum the field value at element j
-                    elm_val += fieldState.elemData[element[j]].val
+                    # NOTE : elements are stored in xplt as 0 -> e - 1, but in FEStudio are listed as 1 -> e
+                    elm_val += fieldState.elemData[element[j] - 1].val
                 # append, repeat for each element
                 row.append(elm_val)
             # add the row to the data frame, repeat for each state
