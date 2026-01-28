@@ -57,7 +57,7 @@ VAL_OSC_AMP="0.05"
 # minimum period to test (seconds)
 MIN_PERIOD=".1"
 # maximum period to test (seconds)
-MAX_PERIOD="10."
+MAX_PERIOD="1000."
 # number of unique period values to test
 N_PERIOD="40"
 
