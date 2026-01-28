@@ -207,10 +207,80 @@ gen_parm () {
 
     ## SCRIPT
     # determine the files that match the hirearchy
-    MODELS=( ${SCALE_DIR} )
+    MODELS=( ${SCALE_DIR}*.feb )
+
     # parse the scaling integers, create a list
-    # loop through each integer, append to existing parameters
+    SCALE=( )
+    for i in "${!MODELS[@]}"; do
+        # get the integer from the file name
+        file=$(basename  "${MODELS[i]}")
+        scale="${file%.*}"
+        # append to array
+        SCALE=( "${SCALE[@]}" $scale)
+    done
+    # printf '%s\n' "${SCALE[@]}"
+
+    # append key to parameter file header
+    local head=$( $PARSE_CSV -f $PARM_FILE -l 1 )
+    sed -i "s/$head/$head,$KEY/" $PARM_FILE
+
+    ## loop through each integer, append to existing parameters
+    local len="${#SCALE[@]}"
+    local lines=$( $PARSE_CSV -f $PARM_FILE -l )
+    # for constant values, add constant value to find row
+    if [[ $len -eq 1 ]]; then
+        if [[ $lines -eq 1 ]]; then
+            # if there is only one line, no parameters have been written
+            echo "0,${KEY}0,${KEY}0/,$CONSTANT_VALUE" >> $PARM_FILE
+        else
+            # otherwise, loop through all lines and append the constant value
+            for n in $( seq 2 $lines ); do
+                local l=$( $PARSE_CSV -f $PARM_FILE -l $n )
+                sed -i "${n}c${l},${SCALE[0]}" $PARM_FILE
+            done
+        fi
+    else
+        # otherwise, multiple parameters will be written
+        if [[ $lines -eq 1 ]]; then
+            # if there is only one line in the parameter file
+            # then only the header has been written and no paraemeters have been generated for the job
+            for n in "${!SCALE[@]}"; do
+                # append to file
+                echo "${n},${KEY}${n},${KEY}${n}/,${SCALE[n]}" >> $PARM_FILE
+            done
+        else
+            # multiple values have already been specified
+            # loop through each line in parameter file, and replicate all values
+            OLD_PARM_FILE="${PARM_FILE}~"
+            cp $PARM_FILE $OLD_PARM_FILE # create copy of the parameter file
+            echo $( $PARSE_CSV -f $OLD_PARM_FILE -l 1 ) > $PARM_FILE # copy the header, overwrite the original
+            # loop through each new parameter
+            declare -i count=1
+            for n in $( seq 0 $(($len-1)) ); do
+                # loop through each line of the old file
+                for l in $( seq 2 $lines ); do
+                    # update the id
+                    local simid="$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c 2 )${KEY}${n}"
+                    # update the directory
+                    local simdir="$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c 3)${KEY}${n}/"
+                    # parse the parameters
+                    local columns=$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c )
+                    local parms=""
+                    for c in $( seq 4 $columns ); do
+                        parms="${parms}$( $PARSE_CSV -f $OLD_PARM_FILE -l $l -c $c ),"
+                    done
+                    # append to the new file
+                    echo "${count},${simid},${simdir},${parms}${SCALE[n]}" >> $PARM_FILE
+                    # update the count
+                    ((count++))
+                done
+            done
+            # delete the old file
+        fi
+    fi
+
     # write to config file
+    echo "$KEY,$XML,$DESCRIPT,$UNITS,0,1,1" >> $CONFIG_FILE
 
     return
 
@@ -259,4 +329,4 @@ done
 check
 
 # generate parameters
-# gen_parm
+gen_parm
