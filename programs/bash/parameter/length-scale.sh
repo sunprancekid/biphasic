@@ -23,6 +23,32 @@ PARM_HEADER="n,id,path"
 # default header used for the config file
 CONFIG_HEADER="key,xml,description,units,constant,related,symbolic"
 
+## options
+# default directory path for storing parameters
+declare -i BOOL_DIR=0
+DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
+# default job name
+# boolean for job name
+declare -i BOOL_JOB=0
+JOB="biphasic_job"
+# boolean for XML path
+declare -i BOOL_XML=0
+# default xml
+DEFAULT_XML='na'
+# boolean corresponding to parameter KEY
+declare -i BOOL_KEY=0
+# default key
+DEFAULT_KEY='Z'
+# boolean corresponding to parameter DESCRIPTION
+declare -i BOOL_DESCRIPT=0
+# default description
+DEFAULT_DESCRIPT='length_scale'
+# boolean corresponding to parameter UNITS
+declare -i BOOL_UNITS=0
+# default units
+DEFAULT_UNITS='mm'
+
+
 ## FUNCTIONS
 # display options, exit
 help () {
@@ -51,14 +77,34 @@ help () {
     echo -e " -j << ARG >>\t| MANDATORY: named assgined to JOB, contains simulation directories."
     echo -e " -f << ARG >>\t| MANDATORY: path to FEB directory which contains scaled models."
     echo -e " -m << ARG >>\t| MADNATORY: name of scaled MODEL."
-    echo -e " -k << ARG >>\t| OPTIONAL: shortcut KEY used to identify parameter (default is ...)."
-    echo -e " -x << ARG >>\t| OPTIONAL: XML path specifiying parameter in '.feb' file (default is ...)."
-    echo -e " -u << ARG >>\t| OPTIONAL: units corresponding to parameter, stored in config file (default is ...)."
-    echo -e " -D << ARG >>\t| OPTIONAL: single string describing parameter, store in config file (default is ...)."
+    echo -e " -k << ARG >>\t| OPTIONAL: shortcut KEY used to identify parameter (default is ${DEFAULT_KEY})."
+    echo -e " -x << ARG >>\t| OPTIONAL: XML path specifiying parameter in '.feb' file (default is ${DEFAULT_XML})."
+    echo -e " -u << ARG >>\t| OPTIONAL: UNITS corresponding to parameter, stored in config file (default is ${DEFAULT_UNITS})."
+    echo -e " -D << ARG >>\t| OPTIONAL: single string DESCRIBING parameter, store in config file (default is ${DEFAULT_DESCRIPT})."
     echo -e ""
 
     # exit with exit code
     exit $exitcode
+
+}
+
+# display error message, exit with nonzero exitcode
+display_error () {
+
+    # PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # first argument: error message to display
+    local err_msg=$1
+
+    ## SCRIPT
+    # display error message
+    echo -e "\nERROR :: ${FILENAME} :: ${err_msg}.\n"
+    help $NONZERO_EXITCODE
 
 }
 
