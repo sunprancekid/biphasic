@@ -143,10 +143,10 @@ check () {
     if [[ $BOOL_MODEL -eq 0 ]]; then
         display_error "must specify the MODEL name (option -m)"
     fi
-    MODEL_DIR=${FEB}scale/${MODEL}/
-    if [[ ! -d $DIR ]]; then
+    SCALE_DIR=${FEB}scale/${MODEL}/
+    if [[ ! -d $SCALE_DIR ]]; then
         # if the directory does not exist, throw an error
-        display_error "FEB directory which contains scaling MODELS '${MODEL_DIR}' does not exist. Directory hirearchy must match pattern '\${FEB}/scale/\${MODEL}/'."
+        display_error "FEB directory which contains scaling MODELS '${SCALE_DIR}' does not exist. Directory hirearchy must match pattern '\${FEB}/scale/\${MODEL}/'."
     fi
 
     # check the key
@@ -206,7 +206,11 @@ gen_parm () {
     # none
 
     ## SCRIPT
-    # none
+    # determine the files that match the hirearchy
+    MODELS=( ${SCALE_DIR} )
+    # parse the scaling integers, create a list
+    # loop through each integer, append to existing parameters
+    # write to config file
 
     return
 
