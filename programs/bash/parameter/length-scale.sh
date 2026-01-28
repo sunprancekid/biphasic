@@ -119,7 +119,80 @@ check () {
     # none
 
     ## SCRIPT
-    # none
+    # check that the path to the directory exists
+    if [[ $BOOL_DIR -eq 0 ]]; then
+        display_error "must specify job DIRECTORY (option -d)"
+    elif [[ ! -d $DIR ]]; then
+        # if the path does not exist, thow an error
+        display_error "unable to find path '$DIR'"
+    fi
+
+    # check if the job exist
+    SUBDIR="$DIR/$JOB/"
+    if [[ $BOOL_JOB -eq 0 ]]; then
+        display_error "must specify JOB name (option -j)"
+    elif [[ ! -d $SUBDIR ]]; then
+        # if the directory does not exist, make it
+        mkdir -p $SUBDIR
+    fi
+
+    # check the model directory and name
+    if [[ $BOOL_FEB -eq 0 ]]; then
+        display_error "must specify path to FEB models (option -f)"
+    fi
+    if [[ $BOOL_MODEL -eq 0 ]]; then
+        display_error "must specify the MODEL name (option -m)"
+    fi
+    MODEL_DIR=${FEB}scale/${MODEL}/
+    if [[ ! -d $DIR ]]; then
+        # if the directory does not exist, throw an error
+        display_error "FEB directory which contains scaling MODELS '${MODEL_DIR}' does not exist. Directory hirearchy must match pattern '\${FEB}/scale/\${MODEL}/'."
+    fi
+
+    # check the key
+    if [[ $BOOL_KEY -eq 0 ]]; then
+        KEY=${DEFAULT_KEY}
+    fi
+
+    # check the xml path
+    if [[ $BOOL_XML -eq 0 ]]; then
+        XML=${DEFAULT_XML}
+    fi
+
+    # check the units
+    if [[ $BOOL_UNITS -eq 0 ]]; then
+        UNITS=$DEFAULT_UNITS
+    fi
+
+    # check the description
+    if [[ $BOOL_DESCRIPT -eq 0 ]]; then
+        DESCRIPT=$DEFAULT_DESCRIPT
+    fi
+
+    # check if the parameter file already exists
+    PARM_FILE="$SUBDIR$JOB.parm.csv"
+    if [[ ! -f $PARM_FILE ]]; then
+        # if the file does not exist, write a default header to the parameter file
+        echo "$PARM_HEADER" > $PARM_FILE
+    else
+        # if the file does exist, check if the key has already been specified for another parameter
+        local c=$( $PARSE_CSV -f $PARM_FILE -l 1 -c) # number of columns in file header
+        for n in $( seq 1 $c ); do
+            # check if KEY already exists in the header
+            local head=$( $PARSE_CSV -f $PARM_FILE -l 1 -c $n )
+            if [[ "$head" == "$KEY" ]]; then
+                display_error "key '$KEY' already has been defined for job '$JOB' in '$DIR'"
+            fi
+        done
+    fi
+
+    # check if the config file exists
+    CONFIG_FILE="$SUBDIR$JOB.config.csv"
+    if [[ ! -f $CONFIG_FILE ]]; then
+        # if the file does not exist, write the header
+        echo $CONFIG_HEADER > $CONFIG_FILE
+    fi
+
 
 }
 
@@ -134,6 +207,8 @@ gen_parm () {
 
     ## SCRIPT
     # none
+
+    return
 
 }
 
@@ -180,4 +255,4 @@ done
 check
 
 # generate parameters
-gen_parm
+# gen_parm
