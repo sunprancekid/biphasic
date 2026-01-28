@@ -50,8 +50,6 @@ df_sum = pd.read_csv("{0}/{1}/{1}.sum.csv".format(jd, jn))
 non_constant_col = []
 constant_col = []
 for index, row in df_config.iterrows():
-	# skip the oscillation period
-	if row['key'] == 'OT': continue
 	# sort all other parameters by constant or non-constant
 	if row['constant'] == 0:
 		# the key is not constant
@@ -70,7 +68,7 @@ for k in non_constant_col:
 df_norm = pd.DataFrame(columns=norm_cols)
 for index, row in df_sum.iterrows():
 	# ignore data when the time scale is less than 1.
-	if row['OT'] < 1.0: continue
+	# if row['OT'] < 1.0: continue
 
 	# parse the elastic modulus
 	if 'EM' in non_constant_col or 'EM' in constant_col:
@@ -109,9 +107,36 @@ for index, row in df_sum.iterrows():
 	df_norm.loc[index] = row
 
 
+## if the only non-constant column is the OT, then show the show the results without scaling
+if len(non_constant_col) == 1 and non_constant_col[0] == 'OT':
+
+	# plot the normailzed data
+	fig = Figure()
+	fig.load_data(df_norm, xcol = 'T', ycol = 'A')
+	fig.set_xaxis_label("Normalized Cycle Period ($T^{{*}} = T \\cdot (E \\cdot K \\cdot Z^{{-2}}$))")
+	fig.set_yaxis_label("Normalized Energy Dissipated ($A^{{*}} = A \\cdot (E^{{-1}} \\cdot Z^{{-3}})$)")
+	fig.set_xaxis_scale(log = True)
+	fig.set_saveas(savedir = savedir, filename = 'norm')
+	fig.save_data()
+	gen_plot(fig, show = False, save = True)
+
+	# plot the unnormalized data
+	fig = Figure()
+	fig.load_data(df_norm, xcol = 'OT', ycol = 'W')
+	fig.set_xaxis_label("Cyclic Period ($s$)")
+	fig.set_yaxis_label("Dissipated Energy per Cycle ($pJ$)")
+	fig.set_xaxis_scale(log = True)
+	fig.set_saveas(savedir = savedir, filename = 'unnorm')
+	fig.save_data()
+	gen_plot(fig, show = False, save = True)
+
+	# exit the program
+	exit()
+
 # open the summary file, loop through all unique parameters
 for k in non_constant_col:
 	if k != 'OT': # ignore the oscillation period
+
 		# plot normalized data
 		fig = Figure()
 		fig.load_data(df_norm, xcol = 'T', ycol = 'A', icol = k)
@@ -119,7 +144,6 @@ for k in non_constant_col:
 		fig.set_xaxis_label("Normalized Cycle Period ($T^{{*}} = T \\cdot (E \\cdot K \\cdot Z^{{-2}}$))")
 		fig.set_yaxis_label("Normalized Energy Dissipated ($A^{{*}} = A \\cdot (E^{{-1}} \\cdot Z^{{-3}})$)")
 		fig.set_xaxis_scale(log = True)
-# instructions for syncing local and remote directories
 		# fig.set_yaxis_scale(log = True)
 		fig.set_saveas(savedir = savedir, filename = 'sweep_norm')
 		gen_plot(fig, show = False, save = True)
@@ -206,4 +230,3 @@ for k in non_constant_col:
 		if not os.path.exists("{0}/{1}/results".format(jd, jn)):
 			os.makedirs("{0}/{1}/results".format(jd, jn))
 		df_norm.to_csv("{0}/{1}/results/normalized.csv".format(jd, jn), index = False)
-
