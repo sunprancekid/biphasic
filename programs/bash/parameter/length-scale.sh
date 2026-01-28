@@ -24,13 +24,14 @@ PARM_HEADER="n,id,path"
 CONFIG_HEADER="key,xml,description,units,constant,related,symbolic"
 
 ## options
-# default directory path for storing parameters
+# boolean for directory
 declare -i BOOL_DIR=0
-DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
-# default job name
 # boolean for job name
 declare -i BOOL_JOB=0
-JOB="biphasic_job"
+# boolean for feb model path
+declare -i BOOL_FEB=0
+# boolean for model name
+declare -i BOOL_MODEL=0
 # boolean for XML path
 declare -i BOOL_XML=0
 # default xml
@@ -108,12 +109,64 @@ display_error () {
 
 }
 
+# check that the options arguments are correct
+check () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # none
+
+}
+
+# generate parameter based on the model parameters
+gen_parm () {
+
+    ## PARAMETERS
+    # none
+
+    ## ARGUMENTS
+    # none
+
+    ## SCRIPT
+    # none
+
+}
+
 ## OPTIONS
 # parse options
-while getopts "h" opt; do
+while getopts "hd:j:f:m:k:x:u:D:" opt; do
     case $opt in
         h) # display options exit zero
             help 0 ;;
+        d) # specify directory
+            declare -i BOOL_DIR=1
+            DIR=${OPTARG} ;;
+        j) # specify job name
+            declare -i BOOL_JOB=1
+            JOB=${OPTARG} ;;
+        f) # specify path to model directory
+            declare -i BOOL_FEB=1
+            FEB=${OPTARG} ;;
+        m) # specify model name
+            declare -i BOOL_MODEL=1
+            MODEL=${OPTARG} ;;
+        k) # specify key
+            declare -i BOOL_KEY=1
+            KEY=${OPTARG} ;;
+        x) # specify xml path
+            declare -i BOOL_XML=1
+            XML=${OPTARG} ;;
+        u) # specify units
+            declare -i BOOL_UNITS=1
+            UNITS=${OPTARG} ;;
+        D) # specify description
+            declare -i BOOL_DESCRIPT=1
+            DESCRIPT=${OPTARG} ;;
         ?) # default, display options with nonzero exitcode
             help $NONZERO_EXITCODE
     esac
@@ -123,4 +176,8 @@ done
 # none
 
 ## SCRIPT
-# none
+# check script arguments
+check
+
+# generate parameters
+gen_parm
