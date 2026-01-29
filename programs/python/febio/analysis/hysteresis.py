@@ -37,6 +37,7 @@ period = float(sys.argv[2])
 
 ## SCRIPT
 ## TODO :: plot the force-displacement data as hysteresis loops
+## TODO :: get relaxation time from feb file
 
 # check if the file exists
 if not os.path.exists(path + febio_out):
