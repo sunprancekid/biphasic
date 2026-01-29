@@ -49,7 +49,7 @@ VOLUME_FRAC="0.2"
 # elastic modulus (MPa)
 ELASTIC_MOD="0.5"
 # loading depth (mm)
-VAL_LOAD_DEPTH="0.1"
+VAL_LOAD_DEPTH="0.05"
 # oscillation amplitude (mm)
 VAL_OSC_AMP="0.05"
 
