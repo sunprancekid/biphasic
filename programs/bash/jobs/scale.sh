@@ -77,7 +77,7 @@ declare -i BOOL_XPLT=0
 
 ## FEB PARAMETERS - CONSTANTS
 # permiability (mm^4 / N * s)
-PERMEABILITY="0.01"
+PERMEABILITY="0.0001"
 # poissons ratio
 POISSON_RATIO="0.3"
 # solid volume fraction

@@ -239,7 +239,7 @@ gen_parm () {
                 sed -i "${n}c${l},${SCALE[0]}" $PARM_FILE
             done
         fi
-    r) # RUN simulations
+#     r) # RUN simulations
     else
         # otherwise, multiple parameters will be written
         if [[ $lines -eq 1 ]]; then

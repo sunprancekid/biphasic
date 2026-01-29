@@ -217,6 +217,7 @@ gen () {
 
 ## OPTIONS
 # prase options
+# TODO :: FIX BUG!
 while getopts "hd:j:x:k:u:D:C:A:B:N:LC:T:" opt; do
 	case $opt in
 		h) # display options
