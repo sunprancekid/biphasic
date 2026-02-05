@@ -28,7 +28,7 @@ DIR="/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # boolean determining if the job name has been specified
 declare -i BOOL_JOB=0
 # default xml path
-XML_PATH="Step/step[@id='1']/Control/time_steps"
+XML_PATH="na"
 # default key
 KEY="RT"
 # default units
@@ -62,6 +62,16 @@ UNITS_STEP_SIZE='na'
 # step size description
 DESCRIPTION_STEP_SIZE='loading_step_size'
 
+## PARAMETERS - NUMERICAL STEPS
+# number steps xml path
+XML_STEP_NUMBER="Step/step[@id='1']/Control/time_steps"
+# numer steps key
+KEY_STEP_NUMBER='RTn'
+# number steps units
+UNITS_STEP_NUMBER='na'
+# number steps description
+DESCRIPTION_STEP_NUMBER='loading_number_steps'
+
 
 ## METHODS
 # display options, exit with exit code
@@ -85,7 +95,7 @@ help () {
     echo -e "\n ## LOADING DEPTH PARAMETER OPTIONS ##"
     echo -e " -j << ARG >>\t| MANDATORY: named assgined to JOB, contains simulation directories."
     echo -e " -d << ARG >>\t| path to DIRECTORY to which contains directory hirearchy (default is ${DIR})."
-    echo -e " -x << ARG >>\t| XML path specifiying parameter in '.feb' file (default is ${XML_PATH})."
+#     echo -e " -x << ARG >>\t| XML path specifiying parameter in '.feb' file (default is ${XML_PATH})."
     echo -e " -k << ARG >>\t| shortcut KEY used to identify parameter (default is ${KEY})."
     echo -e " -u << ARG >>\t| UNITS corresponding to parameter, stored in job config file (default is ${UNITS})."
     echo -e " -D << ARG >>\t| single string DESCRIBING parameter, store in job config file (default is ${DESCRIPTION})."
@@ -165,7 +175,13 @@ gen_parm () {
     # none
 
     ## SCRIPT
-    ## TODO :: determine the number of steps from the step size and the hold time
+    ## constant values
+    # write the loading step size
+    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_SIZE -k $KEY_STEP_SIZE -u $UNITS_STEP_SIZE -D $DESCRIPTION_STEP_SIZE -C $STEP_SIZE
+    # the number of steps during the loading phase is the loading time times the step size
+    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_NUMBER -k $KEY_STEP_NUMBER -u $UNITS_STEP_NUMBER -D $DESCRIPTION_STEP_NUMBER -C "${KEY} / ${KEY_STEP_SIZE}" -R -i # format as integer
+
+    ## constant / variable values
     # write the loading time
 	# execute feb paramterization script
 	if [[ $BOOL_CONSTANT -eq 1 ]]; then
@@ -185,12 +201,9 @@ gen_parm () {
 		fi
 	fi
 
-    # write the loading step size
-    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_SIZE -k $KEY_STEP_SIZE -u $UNITS_STEP_SIZE -D $DESCRIPTION_STEP_SIZE -C $STEP_SIZE
-
     return
-
 }
+
 
 
 ## OPTIONS
