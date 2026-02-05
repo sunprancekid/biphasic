@@ -14,6 +14,8 @@ GEN="./programs/bash/simulation/generate.sh"
 RUN="./programs/bash/simulation/run.sh"
 # contains analysis routines
 ANAL="./programs/bash/simulation/analysis.sh"
+# show results after analysis has been performed
+PLOT="python ./programs/python/febio/analysis/scaling.py"
 
 ## MODULES - FEB PARAMETERIZATION
 # material property - permeability
@@ -287,6 +289,8 @@ analysis () {
 	else
 		$ANAL -d $DIR -j $JOB -H -C -x
 	fi
+	# plot results after analysis
+	$PLOT $DIR $JOB
 }
 
 ## OPTIONS

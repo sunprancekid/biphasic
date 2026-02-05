@@ -32,7 +32,7 @@ XML_PATH="Step/step[@id='1']/Control/time_steps"
 # default key
 KEY="RT"
 # default units
-UNITS="mm"
+UNITS="seconds"
 # default description
 DESCRIPTION="loading_hold_time"
 # boolean for a constant value
@@ -49,6 +49,18 @@ declare -i BOOL_LOGSCALE=0
 declare -i BOOL_RELATED=0
 # boolean for flagging constant valued parameters as related to one another
 declare -i BOOL_SYMBOLIC=0
+
+## PARAMETERS - NUMERICAL STEP SIZE
+# default step size
+STEP_SIZE='0.1'
+# step size xml path
+XML_STEP_SIZE="Step/step[@id='1']/Control/step_size"
+# step size key
+KEY_STEP_SIZE='RTss'
+# step size units
+UNITS_STEP_SIZE='na'
+# step size description
+DESCRIPTION_STEP_SIZE='loading_step_size'
 
 
 ## METHODS
@@ -80,14 +92,14 @@ help () {
     echo -e "\n ## GENERATING ONE VALUE ##"
     echo -e " -C << ARG >>\t| assign one CONSTANT value to property."
     echo -e " -R\t\t| flag parameter as being related to other parameters (constant value contains KEY of other parameters)."
-    echo -e " -S\t\t| flag parameter as symbolic (i.e. is a maths equation, which should not be evaulated)."
+#     echo -e " -S\t\t| flag parameter as symbolic (i.e. is a maths equation, which should not be evaulated)."
     echo -e "\n ## GENERATING MULTIPLE VALUES ##"
     echo -e " -L \t\t| generate parameters along LOG scale (default is LINEAR)."
     echo -e " -A << ARG >>\t| MINIMUM value assigned to parameter."
     echo -e " -B << ARG >>\t| MAX value assigned to parameter."
     echo -e " -N << ARG >>\t| NUMBER of unique parameters to generate between A and B."
     echo -e " \n ## SIMULATION LENGTH AND NUMERICAL STEP SIZE ##"
-    echo -e " -T << ARG >>\t number of TIME integration steps per cycle (default is ${N_STEPS})"
+    echo -e " -T << ARG >>\t number of TIME integration step size (default is ${STEP_SIZE})"
     echo -e ""
 
     # exit with exit code
@@ -124,7 +136,22 @@ check () {
     # none
 
     ## SCRIPT
-    # none
+	# check that the job name was specified
+	if [[ $BOOL_JOB -eq 0 ]]; then
+		display_error "must specify job name (option -j)"
+	fi
+
+	# if a constant value was not specified
+	if [[ $BOOL_CONSTANT -eq 0 ]]; then
+		# check that the parameters for multiple value generate were specified
+		if [[ $BOOL_MINVAL -eq 0 ]]; then
+			display_error "for multiple values, must specify minimum in range (option -A)"
+		elif [[ $BOOL_MAXVAL -eq 0 ]]; then
+			display_error "for multiple values, must specify maxmimum in range (option -B)"
+		elif [[ $BOOL_NVALS -eq 0 ]]; then
+			display_error "for multiple values, must specify the total number of values to generate (option -N)"
+		fi
+	fi
 
 }
 
@@ -138,14 +165,37 @@ gen_parm () {
     # none
 
     ## SCRIPT
-    # none
+    ## TODO :: determine the number of steps from the step size and the hold time
+    # write the loading time
+	# execute feb paramterization script
+	if [[ $BOOL_CONSTANT -eq 1 ]]; then
+		if [[ $BOOL_RELATED -eq 1 ]]; then
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE -R
+		else
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -C $CONSTANT_VALUE
+		fi
+	else
+		# generate multiple values and append to job
+		if [[ $BOOL_LOGSCALE -eq 1 ]]; then
+			# generate values on logscale
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -A $MINVAL -B $MAXVAL -N $NVALS -L
+		else
+			# generate values on linear scale
+			$FEB_PARAMETER -j $JOB -d $DIR -x $XML_PATH -k $KEY -u $UNITS -D $DESCRIPTION -A $MINVAL -B $MAXVAL -N $NVALS
+		fi
+	fi
+
+    # write the loading step size
+    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_SIZE -k $KEY_STEP_SIZE -u $UNITS_STEP_SIZE -D $DESCRIPTION_STEP_SIZE -C $STEP_SIZE
+
+    return
 
 }
 
 
 ## OPTIONS
 # prase options
-while getopts "hd:j:x:k:u:D:C:RSA:B:N:L" opt; do
+while getopts "hd:j:x:k:u:D:C:RA:B:N:L" opt; do
 	case $opt in
 		h) # display options
 			help 0 ;;
@@ -167,8 +217,6 @@ while getopts "hd:j:x:k:u:D:C:RSA:B:N:L" opt; do
             CONSTANT_VALUE=${OPTARG} ;;
         R) # relationship
         	declare -i BOOL_RELATED=1 ;;
-		S) # symbolic
-			declare -i BOOL_SYMBOLIC=1 ;;
         A) # specify a minimum number to generate
             declare -i BOOL_MINVAL=1
             MINVAL=${OPTARG} ;;
