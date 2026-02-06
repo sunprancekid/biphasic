@@ -12,6 +12,9 @@
 # native / conda
 import sys, os
 import pandas as pd
+import xml.etree.ElementTree as ET
+# local
+# none
 
 ## PARAMETERS
 # none
@@ -54,7 +57,7 @@ class Simulation (object):
         df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
         self.parm = df_parm.iloc[si - 1]
         # files
-        self.file_feb = None
+        self.file_feb = "{0}/{1}/{2}.feb".format(jd, jn, self.parm['id'])
         self.file_xplt = None
         self.file_log = None
         # open parameter file, get parameters
@@ -91,6 +94,42 @@ class Simulation (object):
         """
         return self.parm[k]
 
+    def feb_has_path (self, xml_path):
+        """ determines if xml path exists in feb file.
+
+        Parameters
+        ----------
+        xlm_path : str
+            string in xml format
+
+        Returns
+        -------
+        bool
+            True if path exists in feb file, otherwise false.
+        """
+        tree = ET.parse(self.file_feb)
+        root = tree.getroot()
+        elm = root.findall(xml_path)
+        return (len(elm) > 0)
+
+    def get_feb_path_value (self, xml_path):
+        """ get value stored in feb file from xml path.
+
+        Parameters
+        ----------
+        xml_path : str
+            string in xml format
+
+        Returns
+        -------
+        str
+            value stored in xml path as string
+        """
+        tree = ET.parse(self.file_feb)
+        root = tree.getroot()
+        elm = root.findall(xml_path)
+        return elm[0].text
+
     def has_logfile (self):
         pass
 
@@ -104,9 +143,6 @@ class Simulation (object):
         pass
 
     def show_hystersis (self):
-        pass
-
-    def feb_has_path (self):
         pass
 
 ## ARGUMENTS
