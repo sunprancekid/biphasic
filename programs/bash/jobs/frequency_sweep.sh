@@ -28,6 +28,8 @@ MAT_EMOD="./programs/bash/parameter/material/elastic-modulus.sh"
 MAT_VF="./programs/bash/parameter/material/solid-volume-fraction.sh"
 # loading - depth of prestress displacement
 LOAD_DEPTH="./programs/bash/parameter/loading/depth.sh"
+# loading - relaxation time of prestress holding
+LOAD_HOLD="./programs/bash/parameter/loading/relaxation-time.sh"
 # oscillation - amplitude
 OSC_AMP="./programs/bash/parameter/oscillation/amplitude.sh"
 # oscillation - period
@@ -52,6 +54,8 @@ VOLUME_FRAC="0.2"
 ELASTIC_MOD="0.5"
 # loading depth (mm)
 VAL_LOAD_DEPTH="0.05"
+# loading hold time (s)
+VAL_HOLD_TIME="10000"
 # oscillation amplitude (mm)
 VAL_OSC_AMP="0.05"
 
@@ -208,6 +212,8 @@ parameter () {
 	$MAT_EMOD -d $DIR -j $JOB -C $ELASTIC_MOD
 	# constant loading depth
 	$LOAD_DEPTH -d $DIR -j $JOB -C $VAL_LOAD_DEPTH
+	# constant loading hold time
+	$LOAD_HOLD -d $DIR -j $JOB -C $VAL_HOLD_TIME
 	# constant oscillation amplitude
 	$OSC_AMP -d $DIR -j $JOB -C $VAL_OSC_AMP
 

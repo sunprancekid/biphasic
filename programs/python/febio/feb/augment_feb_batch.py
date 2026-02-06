@@ -53,7 +53,7 @@ def augment_feb_single (feb, path, job, simint):
 
     # parse information from parameter file, config file
     # open the feb file
-    print("opening feb files")
+    # print("opening feb files")
     tree = ET.parse(feb_file)
     root = tree.getroot()
     # parse each path way from the config file, check that it exists
@@ -100,7 +100,7 @@ def augment_feb_single (feb, path, job, simint):
                 if row['symbolic'] == 0:
                     # if the relationship is not symbolic, evaluate it
                     relationship = eval(relationship)
-                    print(relationship)
+                    # print(relationship)
 
                 # print("AFTER: {:s}".format(relationship)) 
                 for e in elm:

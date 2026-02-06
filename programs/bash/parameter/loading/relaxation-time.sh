@@ -177,9 +177,9 @@ gen_parm () {
     ## SCRIPT
     ## constant values
     # write the loading step size
-    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_SIZE -k $KEY_STEP_SIZE -u $UNITS_STEP_SIZE -D $DESCRIPTION_STEP_SIZE -C $STEP_SIZE
+    $FEB_PARAMETER -j $JOB -d $DIR -x $XML_STEP_SIZE -k $KEY_STEP_SIZE -u $UNITS_STEP_SIZE -D $DESCRIPTION_STEP_SIZE -C $STEP_SIZE
     # the number of steps during the loading phase is the loading time times the step size
-    $FEB_PARAMETER -j $JOB -f $DIR -x $XML_STEP_NUMBER -k $KEY_STEP_NUMBER -u $UNITS_STEP_NUMBER -D $DESCRIPTION_STEP_NUMBER -C "${KEY} / ${KEY_STEP_SIZE}" -R -i # format as integer
+    $FEB_PARAMETER -j $JOB -d $DIR -x $XML_STEP_NUMBER -k $KEY_STEP_NUMBER -u $UNITS_STEP_NUMBER -D $DESCRIPTION_STEP_NUMBER -C "${KEY} / ${KEY_STEP_SIZE}" -R -i # format as integer
 
     ## constant / variable values
     # write the loading time
