@@ -11,8 +11,9 @@
 import sys, os, math
 import pandas as pd
 import numpy as np
+import xml.etree.ElementTree as ET
 # local
-# none
+from febio.simulation import Simulation
 
 
 ## PARAMETERS
@@ -22,6 +23,10 @@ nonzero_exitcode = 120
 febio_out = "febio4.out.csv"
 # name of file used to store work information
 hys_out = "hys.out.csv"
+# prestress relaxation step size - xml path
+xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
+# prestress relaxation number of steps - xml path
+xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 
 
 ## METHODS
@@ -29,28 +34,59 @@ hys_out = "hys.out.csv"
 
 
 ## ARGUMENTS
-# first argment: path to directory containing febio output and displacement information
-path = sys.argv[1]
-# second argument: cycle period (in seconds)
-period = float(sys.argv[2])
+# first argment: path to job directory
+jd = sys.argv[1]
+# second argument: job directory
+jn = sys.argv[2]
+# third argument: simulation integer
+simint = int(sys.argv[3])
 
 
 ## SCRIPT
+# open config, parameter files
+df_config = pd.read_csv("{0}/{1}/{1}.config.csv".format(jd, jn))
+df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
+sim = Simulation(jd, jn, simint)
+
+# estalish the path to the simulation directory
+sd = "{0}/{1}/{2}".format(jd, jn,  df_parm.iloc[simint]['path'])
+# get the cycle period
+period = float(df_parm.iloc[simint]['OT'])
+# get the relaxation time
+if sim.has_key('RT'):
+    # if the column header is in the parameter file
+    relax_time = sim.get_key_value('RT')
+else:
+    # get the relaxation time from the feb file
+    feb = sd + df_parm.iloc[simint]['id'] + '.feb'
+    tree = ET.parse(feb)
+    root = tree.getroot()
+    # check that the paths exist in root, parse their values
+    # step size
+    elm = root.findall(xml_relax_num_step)
+    steps = float(elm[0].text)
+    # number of steps
+    elm = root.findall(xml_relax_step_size)
+    size = float(elm[0].text)
+    # calculate the relaxation time
+    relax_time = size * steps
+
+
+
 ## TODO :: plot the force-displacement data as hysteresis loops
-## TODO :: get relaxation time from feb file
 
 # check if the file exists
-if not os.path.exists(path + febio_out):
+if not os.path.exists(sd + febio_out):
     # if the file does not exist, inform the user
-    print("ERROR :: hystersis :: unable to find file {}{} ..".format(path, febio_out))
+    print("ERROR :: hystersis :: unable to find file {}{} ..".format(sd, febio_out))
     exit(nonzero_exitcode)
 
 # open the file, get the time and the work
-df = pd.read_csv(path + febio_out)
+df = pd.read_csv(sd + febio_out)
 
 # drop the first 10000 seconds of simulation data
-df.drop(df[df['t'] <= 1000].index, inplace = True)
-df['t'] = df['t'] - 1000
+df.drop(df[df['t'] <= relax_time].index, inplace = True)
+df['t'] = df['t'] - relax_time
 
 # parse data
 time = df['t'].to_list()
@@ -85,6 +121,6 @@ for i in range(len(hys)):
 
 # print("\n{}\n{}\n".format(header,cycle))
 
-with open(path + hys_out, 'w') as s_io:
+with open(sd + hys_out, 'w') as s_io:
     s_io.writelines("{}\n".format(header))
     s_io.writelines("{}\n".format(cycle))
