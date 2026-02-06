@@ -57,7 +57,7 @@ class Simulation (object):
         df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
         self.parm = df_parm.iloc[si - 1]
         # files
-        self.file_feb = "{0}/{1}/{2}.feb".format(jd, jn, self.parm['id'])
+        self.file_feb = "{0}/{1}/{2}/{3}.feb".format(jd, jn, self.parm['path'], self.parm['id'])
         self.file_xplt = None
         self.file_log = None
         # open parameter file, get parameters

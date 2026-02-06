@@ -53,20 +53,17 @@ sd = "{0}/{1}/{2}".format(jd, jn,  df_parm.iloc[simint]['path'])
 # get the cycle period
 period = float(df_parm.iloc[simint]['OT'])
 # get the relaxation time
-# if sim.has_key('RT'):
-#     # if the column header is in the parameter file
-#     relax_time = sim.get_key_value('RT')
-# else:
-# get the relaxation time from the feb file
-# step size
-steps = int(sim.get_feb_path_value(xml_relax_num_step))
-# number of steps
-size = float(sim.get_feb_path_value(xml_relax_step_size))
-# calculate the relaxation time
-relax_time = size * steps
-
-print(relax_time)
-exit()
+if sim.has_key('RT'):
+    # if the column header is in the parameter file
+    relax_time = sim.get_key_value('RT')
+else:
+    # get the relaxation time from the feb file
+    # step size
+    steps = float(sim.get_feb_path_value(xml_relax_num_step))
+    # number of steps
+    size = float(sim.get_feb_path_value(xml_relax_step_size))
+    # calculate the relaxation time
+    relax_time = size * steps
 
 
 ## TODO :: plot the force-displacement data as hysteresis loops
