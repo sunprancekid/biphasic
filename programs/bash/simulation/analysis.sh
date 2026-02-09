@@ -197,6 +197,7 @@ fi
 # loop through each line, line 1 is the header ..
 for n in $(seq 2 $N_LINES)
 do
+    echo $JOB_PATH
     ## get simulation pathsfebio4
     # the first column is the SUBDIR
     SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 3)
@@ -210,7 +211,8 @@ do
     if [[ $BOOL_HYS -eq 1 ]]; then
         # pass the path to the analysis file and simulation period
         # to the hystersis analysis program
-        $HYSTERESIS $JOB_PATH$SUBDIR $($PARSE_CSV -f $PARM_FILE -l $n -c $PERIOD_COL )
+        echo $JOB_PATH
+        $HYSTERESIS $JOB_PATH $JOB $($PARSE_CSV -f $PARM_FILE -l $n -c 1 )
     fi
 
 
