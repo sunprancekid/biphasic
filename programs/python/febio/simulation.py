@@ -19,6 +19,10 @@ from febio.io.logfile import extract_febio_out, calculate_displacement, calculat
 ## PARAMETERS
 # default outfile
 default_outfile = 'febio4.out.csv'
+# prestress relaxation step size - xml path
+xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
+# prestress relaxation number of steps - xml path
+xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 
 ## METHODS
 # none
@@ -225,8 +229,45 @@ class Simulation (object):
     def parse_prestress_work (self):
         pass
 
-    def parse_hystersis_work (self):
-        pass
+    def parse_hystersis_work (self, show = False):
+        """ from the outfile, determing the hyesteresis performed during each cycle.
+
+        Parameters:
+        -----------
+        show : bool
+            display graph showing the hystersis performed by each cycle in the loop
+
+        Returns:
+        --------
+        List[float]
+            work performed by each cycle which was fully completed.
+        """
+        # load the module
+        ## TODO :: move this back above to the modules section once hystersis has been completely refactored
+        from febio.analysis.hysteresis import calculate_hysteresis_work
+        # get the relaxation time and oscaillation period
+        if self.has_key('OT'):
+            period = self.get_key_value('OT')
+        else:
+            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+        # get the time and work from the outfile
+        time = self.get_outfile()['t'].to_list()
+        work = self.get_outfile()['dw_fdx'].to_list()
+
+        ## calculate work
+
+
 
     def show_hystersis (self):
         pass

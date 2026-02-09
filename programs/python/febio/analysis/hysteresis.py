@@ -30,7 +30,53 @@ xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 
 
 ## METHODS
-# none
+# determine the work performed by each cycle in a hystersis loop
+def calculate_hystersis_work(period, time, work):
+    """ calculate the work performed by oscillation.
+
+    Parameters:
+    -----------
+    period : float
+        oscilation period in seconds.
+    time : List[float]
+        time at each point in the simulation.
+    work : List[float]
+        change in work performed by rigid body at each point in the simulation.
+
+    Return:
+    -------
+    List[float]
+        work performed at each cycle
+    """
+    # determine the number of cycles which have occured
+    n_cyc = math.floor(time[-1] / period)
+    hys = [0.]
+    for i in range(len(time)):
+        # print(i, time[i], work[i])
+        # accumulate the work done in each cycle
+        if len(hys) < math.ceil(time[i] / period):
+            # here, the system has transitioned from one cycle to the next
+            # split the work between the two cycles by averaging between time
+            time_prev = time[i - 1]
+            time_now = time[i]
+            time_period = period * math.ceil(time_prev / period)
+            hys[-1] += ((time_period - time_prev) / (time_now - time_prev)) * work[i]
+            hys.append(((time_now - time_period) / (time_now - time_prev)) * work[i])
+        else:
+            hys[-1] += work[i]
+
+    # if the length of the array is greater than the number of cycles performed
+    if len(hys) > n_cyc:
+        # drop the last entry
+        hys.pop(n_cyc)
+
+    return hys
+
+# determine the prework performed by the simulation during the relaxation phase
+
+# calculate the dyanmic modulus
+
+# calculate the loss modulus / phase shift
 
 
 ## ARGUMENTS
@@ -65,9 +111,6 @@ else:
     # calculate the relaxation time
     relax_time = size * steps
 
-
-## TODO :: plot the force-displacement data as hysteresis loops
-
 # check that the outfile exists
 if not sim.has_outfile():
     # if it does not, extract the outfile data from the logfile
@@ -80,25 +123,8 @@ df = sim.get_outfile()
 df.drop(df[df['t'] <= relax_time].index, inplace = True)
 df['t'] = df['t'] - relax_time
 
-# parse data
-time = df['t'].to_list()
-work = df['dw_fdx'].to_list()
-# determine the number of cycles which have occured
-n_cyc = math.floor(time[-1] / period)
-hys = [0.]
-for i in range(len(time)):
-    # print(i, time[i], work[i])
-    # accumulate the work done in each cycle
-    if len(hys) < math.ceil(time[i] / period):
-        # here, the system has transitioned from one cycle to the next
-        # split the work between the two cycles by averaging between time
-        time_prev = time[i - 1]
-        time_now = time[i]
-        time_period = period * math.ceil(time_prev / period)
-        hys[-1] += ((time_period - time_prev) / (time_now - time_prev)) * work[i]
-        hys.append(((time_now - time_period) / (time_now - time_prev)) * work[i])
-    else:
-        hys[-1] += work[i]
+# calulate hysteresis
+hys = calculate_hystersis_work(period = period, time = df['t'].to_list(), work = df['dw_fdx'].to_list())
 
 # export the file as a csv
 # write header and cycle information
