@@ -190,8 +190,6 @@ def extract_febio_out (d = None, f = None, s = None):
 			# write 'na' to indicate that the end of the job was not reached
 			s_io.writelines("na,na,na\n".format(n_steps, time_linear, time_total))
 
-
-
 # calculate material displacement
 def calculate_force (d = None, f = None, s = None, z = False, y = False, x = False):
 	
@@ -322,20 +320,21 @@ def calculate_work (d = None, f = None, s = None, f_col = None, v_col = None, x_
 	## save the dataframe
 	df.to_csv(d + s, index = False)
 
-## ARGUMENTS
-# first argument: path to directory that contains the file
-d = sys.argv[1]
-# second argument: file that contains output from simulation
-f = sys.argv[2]
+if __name__ == '__main__':
+	## ARGUMENTS
+	# first argument: path to directory that contains the file
+	d = sys.argv[1]
+	# second argument: file that contains output from simulation
+	f = sys.argv[2]
 
-## SCRIPT / MAIN
-# call parse method
-extract_febio_out(d = d, f = f)
-# calculate velocity
-# TODO :: calculate velocity magnitude
-# calculate displacement
-calculate_displacement (d = d, f = default_savefile, z = True)
-# calculate force magnitude
-calculate_force (d = d, f = default_savefile, z = True, y = True, x = True)
-# calculate work
-calculate_work(d = d, f = default_savefile, x_col = 'z', v_col = 'vz', f_col = 'Fz', t_col = 't')
+	## SCRIPT / MAIN
+	# call parse method
+	extract_febio_out(d = d, f = f)
+	# calculate velocity
+	# TODO :: calculate velocity magnitude
+	# calculate displacement
+	calculate_displacement (d = d, f = default_savefile, z = True)
+	# calculate force magnitude
+	calculate_force (d = d, f = default_savefile, z = True, y = True, x = True)
+	# calculate work
+	calculate_work(d = d, f = default_savefile, x_col = 'z', v_col = 'vz', f_col = 'Fz', t_col = 't')

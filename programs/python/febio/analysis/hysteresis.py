@@ -49,7 +49,7 @@ df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
 sim = Simulation(jd, jn, simint)
 
 # estalish the path to the simulation directory
-sd = "{0}/{1}/{2}".format(jd, jn,  df_parm.iloc[simint]['path'])
+sd = sim.sd
 # get the cycle period
 period = float(df_parm.iloc[simint]['OT'])
 # get the relaxation time
@@ -68,16 +68,15 @@ else:
 
 ## TODO :: plot the force-displacement data as hysteresis loops
 
-# check if the file exists
-if not os.path.exists(sd + febio_out):
-    # if the file does not exist, inform the user
-    print("ERROR :: hystersis :: unable to find file {}{} ..".format(sd, febio_out))
-    exit(nonzero_exitcode)
+# check that the outfile exists
+if not sim.has_outfile():
+    # if it does not, extract the outfile data from the logfile
+    sim.parse_logfile()
 
 # open the file, get the time and the work
-df = pd.read_csv(sd + febio_out)
+df = sim.get_outfile()
 
-# drop the first 10000 seconds of simulation data
+# drop the relaxation time from the simulation data
 df.drop(df[df['t'] <= relax_time].index, inplace = True)
 df['t'] = df['t'] - relax_time
 

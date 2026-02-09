@@ -14,10 +14,11 @@ import sys, os
 import pandas as pd
 import xml.etree.ElementTree as ET
 # local
-# none
+from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work
 
 ## PARAMETERS
-# none
+# default outfile
+default_outfile = 'febio4.out.csv'
 
 ## METHODS
 # none
@@ -55,11 +56,15 @@ class Simulation (object):
         """
         # get the row corresponding to the simulation from the parameter file
         df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
+        # parameters corresponding to simulation in job
         self.parm = df_parm.iloc[si - 1]
+        # paths
+        self.sd = "{0}/{1}/{2}".format(jd, jn, self.parm['path'])
         # files
         self.file_feb = "{0}/{1}/{2}/{3}.feb".format(jd, jn, self.parm['path'], self.parm['id'])
-        self.file_xplt = None
-        self.file_log = None
+        self.file_out = "{0}/{1}/{2}/febio4.out.csv".format(jd, jn, self.parm['path'], self.parm['id'])
+        self.file_xplt = "{0}/{1}/{2}/{3}.xplt".format(jd, jn, self.parm['path'], self.parm['id'])
+        self.file_log = "{0}/{1}/{2}/{3}.log".format(jd, jn, self.parm['path'], self.parm['id'])
         # open parameter file, get parameters
         # open feb file, extract feb information (if needed)
         # check febio.out files, xplt files ...
@@ -93,6 +98,8 @@ class Simulation (object):
             value stored in parameter file
         """
         return self.parm[k]
+
+    ## FEBFILE ##
 
     def feb_has_path (self, xml_path):
         """ determines if xml path exists in feb file.
@@ -130,11 +137,90 @@ class Simulation (object):
         elm = root.findall(xml_path)
         return elm[0].text
 
-    def has_logfile (self):
-        pass
+    ## OUTFILE ##
 
-    def parse_logfile (self):
-        pass
+    def has_outfile (self):
+        """ check if outfile exists in simulation directory.
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        bool
+            True if outfile exists in directory, else False.
+        """
+        return os.path.exists(self.file_out)
+
+    def get_outfile(self):
+        """ gets outfile information stored in csv.
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        return pd.read_csv(self.file_out)
+
+    ## LOGFILE ##
+
+    def has_logfile (self):
+        """ check if the logfile exists in the simulation directory
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        bool
+            True if the file exists in the simulation directory, else False.
+        """
+        return (os.path.exists(self.logfile))
+
+    def parse_logfile (self, logfile = None, outfile = None):
+        """ extract rigid body information from the logfile, write to outfile.
+
+        Parameters:
+        ----------
+        logfile : str (optional)
+            path to logfile (default is used if unspecified)
+        outfile : str (optional)
+            path to outfile (default is used if unspecified)
+
+        Returns:
+        --------
+        bool
+            True if operation was successful, else False.
+        """
+        # if a logfile was not sepecified, use the default
+        if logfile is None:
+            logfile = self.file_log
+        # if an outfile was not specified, use the default
+        if outfile is None:
+            outfile = self.file_out
+
+        # check if the logfile exists
+        if not os.path.exists(logfile):
+            print("ERROR :: Simulation.parse_logfile :: Unable able to parse logfile '{0}'. Path does not exist.".format(logfile))
+            return False
+
+        # parse the logfile, write to outfile
+        extract_febio_out(d = self.sd, f = '{0}.log'.format(self.parm['id']))
+        # get displacement and force
+        calculate_displacement (d = self.sd, f = default_outfile,  z = True)
+        calculate_force (d = self.sd, f = default_outfile, z = True, y = True, x = True)
+        # calculate work
+        calculate_work(d = self.sd, f = default_outfile, x_col = 'z', v_col = 'vz', f_col = 'Fz', t_col = 't')
+
+        # operation completed succesfully
+        return True
+
+    ## ANALYSIS - HYSTERESIS ##
 
     def parse_prestress_work (self):
         pass
