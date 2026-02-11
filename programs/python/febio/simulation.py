@@ -291,9 +291,11 @@ class Simulation (object):
         Returns:
         --------
         List[float]
-            displacement data for cyclic loading (or subset thereof)
+            time data for prestress phase
         List[float]
-            force data for cyclic loading (or subset thereof)
+            displacement data for prestress phase
+        List[float]
+            force data for prestress phase
 
         """
         ## get the relevant data
@@ -335,8 +337,6 @@ class Simulation (object):
 
         # return data
         return time, displacement, force
-
-
 
     def parse_hysteresis_work (self, show = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
@@ -460,7 +460,7 @@ class Simulation (object):
         fig.load_data(df, xcol = 'disp', ycol = 'force')
         fig.set_xaxis_label("Displacement (mm)")
         fig.set_yaxis_label("Force (N)")
-        fig.set_subtitle_label("T = {0.2f}".format(period))
+        fig.set_subtitle_label("T = {0:.2f}".format(period))
         gen_plot(fig)
 
         return disp, force
