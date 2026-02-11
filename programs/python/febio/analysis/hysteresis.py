@@ -30,7 +30,7 @@ xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 
 ## METHODS
 # determine the work performed by each cycle in a hystersis loop
-def calculate_hystersis_work(period, time, work):
+def calculate_hysteresis_work(period, time, work):
     """ calculate the work performed by oscillation.
 
     Parameters:
