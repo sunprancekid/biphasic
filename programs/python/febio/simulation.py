@@ -10,13 +10,13 @@
 
 ## MODULES
 # native / conda
-import sys, os
+import sys, os, math
 import pandas as pd
 import xml.etree.ElementTree as ET
 # local
 from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work
 from plot.figure import Figure
-from plot.plot import gen_bar_chart
+from plot.plot import gen_bar_chart, gen_plot
 
 ## PARAMETERS
 # default outfile
@@ -170,6 +170,9 @@ class Simulation (object):
         --------
         None
         """
+        if not self.has_outfile():
+            self.parse_logfile()
+
         return pd.read_csv(self.file_out)
 
     ## LOGFILE ##
@@ -229,6 +232,9 @@ class Simulation (object):
     ## ANALYSIS - HYSTERESIS ##
 
     def parse_prestress_work (self):
+        """ calculate the
+
+        """
         pass
 
     def parse_hysteresis_work (self, show = False):
@@ -248,6 +254,9 @@ class Simulation (object):
         ## TODO :: move this back above to the modules section once hystersis has been completely refactored
         ##          (right now it throughs a cyclical reference error)
         from febio.analysis.hysteresis import calculate_hysteresis_work
+
+        ## TODO :: if the hystersis file already exists in the directory, just load the data from there
+
         # get the relaxation time and oscaillation period
         if self.has_key('OT'):
             period = self.get_key_value('OT')
@@ -282,6 +291,79 @@ class Simulation (object):
         hys = calculate_hysteresis_work(period, time, work)
         return (hys)
 
+    def show_hysteresis (self, cycle = None, show = True, save = False, savedir = None, filename = None):
+        """ show force displacement curve for cyclic loading.
+
+        Paramters:
+        ----------
+        cycle : List[int] (optional, default all cycles)
+            list of integers that represnt subset of cycles to display
+        show : bool (optional, default True)
+            display graph before saving
+        save : bool (optional, default False)
+            True if file should be saved, else False
+        savedir : str or None (optional, default None)
+            path to save directory (simulation directory is used if None)
+        filename : str or None (optional, default is None)
+            save file as ('hys' is used if None)
+
+        Returns:
+        --------
+        List[float]
+            displacement data for cyclic loading (or subset thereof)
+        List[float]
+            force data for cyclic loading (or subset thereof)
+
+        """
+
+        ## get the relevant data
+        # get the period and the relaxation time
+        if self.has_key('OT'):
+            period = self.get_key_value('OT')
+        else:
+            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
+
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+        # get the time and work from the outfile
+        time = self.get_outfile()['t'].to_list()
+        disp = self.get_outfile()['disp'].to_list()
+        force = self.get_outfile()['F_mag'].to_list()
+
+        # drop the relaxation time from the work and time
+        # reduce time
+        for i in range(len(time) - 1, -1, -1):
+            # transverse list in reverse order
+            if time[i] >= relax_time:
+                time[i] = time[i] - relax_time
+                disp[i] = -disp[i]
+            else:
+                time.pop(i)
+                disp.pop(i)
+                force.pop(i)
+
+        ## TODO :: if cycle_list is specified, use period to find the subset of cyclic loading data
+
+        ## plot the data
+        df = pd.DataFrame.from_dict({'disp': disp, 'force': force})
+        fig = Figure()
+        fig.load_data(df, xcol = 'disp', ycol = 'force')
+        fig.set_xaxis_label("Displacement (mm)")
+        fig.set_yaxis_label("Force (N)")
+        fig.set_subtitle_label("T = {0.2f}".format(period))
+        gen_plot(fig)
+
+        return disp, force
+
     def show_hysteresis_work (self, show = True, save = False, savedir = None, filename = None):
         """ graph the work performed each hysteresis cycle.
 
@@ -298,7 +380,8 @@ class Simulation (object):
 
         Returns:
         --------
-        None
+        List[float]
+            list of work performed by cyclic loading each cycle
         """
         # parse the period
         if self.has_key('OT'):
@@ -308,6 +391,8 @@ class Simulation (object):
         # get the hysteresis work
         hys = self.parse_hysteresis_work()
 
+        print(hys)
+
         # display and save
         df = pd.DataFrame.from_dict({'cycle': list(range(len(hys))), 'hys': hys})
         fig = Figure()
@@ -316,6 +401,9 @@ class Simulation (object):
         fig.set_yaxis_label("Energy Dissipated (J)")
         fig.set_cmap('Dark2')
         gen_bar_chart(fig, show = True, save = False)
+
+        # return data
+        return hys
 
 ## ARGUMENTS
 # none
