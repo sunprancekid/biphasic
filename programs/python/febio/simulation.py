@@ -244,6 +244,7 @@ class Simulation (object):
         """
         # load the module
         ## TODO :: move this back above to the modules section once hystersis has been completely refactored
+        ##          (right now it throughs a cyclical reference error)
         from febio.analysis.hysteresis import calculate_hysteresis_work
         # get the relaxation time and oscaillation period
         if self.has_key('OT'):
@@ -264,6 +265,11 @@ class Simulation (object):
         # get the time and work from the outfile
         time = self.get_outfile()['t'].to_list()
         work = self.get_outfile()['dw_fdx'].to_list()
+        # drop the relaxation time from the work and time
+        # reduce time
+        for i in range(len(time) - 1, -1, -1):
+            # transverse list in reverse order
+            print(time[i])
 
         ## calculate work
 

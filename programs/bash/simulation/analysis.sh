@@ -94,7 +94,7 @@ check () {
 
     ## SCRIPT
     # check that the job path exists
-    JOB_PATH=${JOB_PATH}${JOB}/
+    JOB_PATH=${JOB_PATH}/
     if [ $BOOL_PATH -eq 0 ]
     then
         # if the job path has not been specified
@@ -119,7 +119,7 @@ check () {
     else
         # the job name has been specified
         # check that the parameter file exists
-        PARM_FILE="${JOB_PATH}${JOB}.parm.csv"
+        PARM_FILE="${JOB_PATH}${JOB}/${JOB}.parm.csv"
         if [ ! -f $PARM_FILE ]
         then
             # the parameter file does not exist
@@ -197,7 +197,6 @@ fi
 # loop through each line, line 1 is the header ..
 for n in $(seq 2 $N_LINES)
 do
-    echo $JOB_PATH
     ## get simulation pathsfebio4
     # the first column is the SUBDIR
     SUBDIR=$($PARSE_CSV -f $PARM_FILE -l $n -c 3)
@@ -206,19 +205,18 @@ do
 
     ## extract results
     # parse results from febio.out which automatically includes CPU
-    $EXTRACT $JOB_PATH$SUBDIR $FEBIO_OUT
+    $EXTRACT $JOB_PATH${JOB}/$SUBDIR $FEBIO_OUT
     # perform hystersis analysis if requested
     if [[ $BOOL_HYS -eq 1 ]]; then
         # pass the path to the analysis file and simulation period
         # to the hystersis analysis program
-        echo $JOB_PATH
         $HYSTERESIS $JOB_PATH $JOB $($PARSE_CSV -f $PARM_FILE -l $n -c 1 )
     fi
 
 
     ## for the first iteration, parse the headers while performing the analysis
-    CPU_FILE=$JOB_PATH$SUBDIR$CPU_OUT # path to default CPU file
-    HYS_FILE=$JOB_PATH$SUBDIR$HYS_OUT # path to default HYS file
+    CPU_FILE=$JOB_PATH$JOB/$SUBDIR$CPU_OUT # path to default CPU file
+    HYS_FILE=$JOB_PATH$JOB/$SUBDIR$HYS_OUT # path to default HYS file
     if [[ $HAS_SUM_HEADER -eq 0 ]]; then
         # parse the header from the summary file
         SUM_HEADER="$($PARSE_CSV -f $PARM_FILE -l 1 )"
@@ -242,7 +240,7 @@ do
     fi
 
     ## delete the xplt file, if it exists
-    XPLT_FILE="${JOB_PATH}${SUBDIR}${SIMID}.xplt"
+    XPLT_FILE="${JOB_PATH}${JOB}/${SUBDIR}${SIMID}.xplt"
     if [[ $BOOL_XPLT -eq 1 && -f $XPLT_FILE ]]; then
         # remove the xplt file if it exists and the option
         # has been called
