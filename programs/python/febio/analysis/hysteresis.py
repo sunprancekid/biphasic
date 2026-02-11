@@ -93,7 +93,7 @@ def calculate_dynamic_mod (period, time, work):
     List[float]
         dynamic loss modulus of each cycle.
     """
-    pass
+    return []
 
 # calculate the loss modulus / phase shift
 

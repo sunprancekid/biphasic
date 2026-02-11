@@ -231,6 +231,58 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
+    def get_dynamic_modulus (self):
+        """ Use cyclic loading data to determing the dynamic modulus.
+
+        Parameter:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+
+        """
+        ## load module
+        ## TODO :: move module above once hysteresis has been completely refactored
+        from febio.analysis.hysteresis import calculate_dynamic_mod
+
+        ## get data# get the relaxation time and oscaillation period
+        if self.has_key('OT'):
+            period = self.get_key_value('OT')
+        else:
+            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
+
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+        # get the time and work from the outfile
+        time = self.get_outfile()['t'].to_list()
+        work = self.get_outfile()['dw_fdx'].to_list()
+        # drop the relaxation time from the work and time
+        # reduce time
+        for i in range(len(time) - 1, -1, -1):
+            # transverse list in reverse order
+            if time[i] >= relax_time:
+                time[i] = time[i] - relax_time
+            else:
+                time.pop(i)
+                work.pop(i)
+
+        ## pass to method
+        mod = calculate_dynamic_mod(period, time, work)
+
+        ## return to user
+        return mod
+
     def parse_prestress_work (self):
         """ calculate the work performed during the prestress phase
 
