@@ -232,10 +232,111 @@ class Simulation (object):
     ## ANALYSIS - HYSTERESIS ##
 
     def parse_prestress_work (self):
-        """ calculate the
+        """ calculate the work performed during the prestress phase
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        None
 
         """
-        pass
+        ## get relevant the data
+        # get the relaxation time
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+        # get the time and work performed
+        time = self.get_outfile()['t'].to_list()
+        work = self.get_outfile()['dw_fdx'].to_list()
+
+        # drop any data after the relaxation time ends, accumulate the rest
+        work_prestress = 0
+        for i in range(len(time) - 1, -1, -1):
+            if time[i] >= relax_time:
+                time.pop(i)
+                work.pop(i)
+            else:
+                work_prestress += work[i]
+
+        # return the prestress work
+        return work_prestress
+
+    def show_prestress_work (self, show = True, save = False, savedir = None, filename = None):
+        """ plot the work performed during prestress
+
+        Paramters:
+        ----------
+        cycle : List[int] (optional, default all cycles)
+            list of integers that represnt subset of cycles to display
+        show : bool (optional, default True)
+            display graph before saving
+        save : bool (optional, default False)
+            True if file should be saved, else False
+        savedir : str or None (optional, default None)
+            path to save directory (simulation directory is used if None)
+        filename : str or None (optional, default is None)
+            save file as ('hys' is used if None)
+
+        Returns:
+        --------
+        List[float]
+            displacement data for cyclic loading (or subset thereof)
+        List[float]
+            force data for cyclic loading (or subset thereof)
+
+        """
+        ## get the relevant data
+        # get the relaxation time
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+        # get the time and work performed
+        time = self.get_outfile()['t'].to_list()
+        force = self.get_outfile()['F_mag'].to_list()
+        displacement = self.get_outfile()['disp'].to_list()
+        work = self.parse_prestress_work()
+
+        # drop any data after the relaxation time ends
+        for i in range(len(time) -1, -1, -1):
+            if time[i] >= relax_time or time[i] < 0.01:
+                time.pop(i)
+                force.pop(i)
+                displacement.pop(i)
+
+        # plot the data
+        df = pd.DataFrame.from_dict({'disp': displacement, 'force': force, 'time': time})
+        fig = Figure()
+        fig.load_data(df, xcol = 'time', ycol = 'force')
+        fig.set_xaxis_min(0.1)
+        fig.set_xaxis_scale(log = True)
+        fig.set_subtitle_label("$W_{{prestress}} = {0:.2E}$".format(work))
+        fig.set_xaxis_label("Time (s)")
+        fig.set_yaxis_label("Force (N)")
+        gen_plot(fig)
+
+        # return data
+        return time, displacement, force
+
+
 
     def parse_hysteresis_work (self, show = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
