@@ -15,6 +15,8 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 # local
 from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work
+from plot.figure import Figure
+from plot.plot import gen_bar_chart
 
 ## PARAMETERS
 # default outfile
@@ -229,7 +231,7 @@ class Simulation (object):
     def parse_prestress_work (self):
         pass
 
-    def parse_hystersis_work (self, show = False):
+    def parse_hysteresis_work (self, show = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
 
         Parameters:
@@ -251,6 +253,7 @@ class Simulation (object):
             period = self.get_key_value('OT')
         else:
             print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
+
         if self.has_key('RT'):
             relax_time = self.get_key_value('RT')
         else:
@@ -269,14 +272,50 @@ class Simulation (object):
         # reduce time
         for i in range(len(time) - 1, -1, -1):
             # transverse list in reverse order
-            print(time[i])
+            if time[i] >= relax_time:
+                time[i] = time[i] - relax_time
+            else:
+                time.pop(i)
+                work.pop(i)
 
-        ## calculate work
+        ## calculate work, return
+        hys = calculate_hysteresis_work(period, time, work)
+        return (hys)
 
+    def show_hysteresis_work (self, show = True, save = False, savedir = None, filename = None):
+        """ graph the work performed each hysteresis cycle.
 
+        Paramters:
+        ----------
+        show : bool (optional, default True)
+            display graph before saving
+        save : bool (optional, default False)
+            True if file should be saved, else False
+        savedir : str or None (optional, default None)
+            path to save directory (simulation directory is used if None)
+        filename : str or None (optional, default is None)
+            save file as ('hys' is used if None)
 
-    def show_hystersis (self):
-        pass
+        Returns:
+        --------
+        None
+        """
+        # parse the period
+        if self.has_key('OT'):
+            period = self.get_key_value('OT')
+        else:
+            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
+        # get the hysteresis work
+        hys = self.parse_hysteresis_work()
+
+        # display and save
+        df = pd.DataFrame.from_dict({'cycle': list(range(len(hys))), 'hys': hys})
+        fig = Figure()
+        fig.load_data(d = df, xcol = 'cycle', ycol = 'hys')
+        fig.set_xaxis_label("Cycle Number")
+        fig.set_yaxis_label("Energy Dissipated (J)")
+        fig.set_cmap('Dark2')
+        gen_bar_chart(fig, show = True, save = False)
 
 ## ARGUMENTS
 # none
