@@ -231,7 +231,7 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def get_dynamic_modulus (self):
+    def get_complex_modulus (self):
         """ Use cyclic loading data to determing the dynamic modulus.
 
         Parameter:
@@ -245,7 +245,7 @@ class Simulation (object):
         """
         ## load module
         ## TODO :: move module above once hysteresis has been completely refactored
-        from febio.analysis.hysteresis import calculate_dynamic_mod
+        from febio.analysis.hysteresis import calculate_complex_mod
 
         ## get data# get the relaxation time and oscaillation period
         if self.has_key('OT'):
@@ -280,10 +280,10 @@ class Simulation (object):
                 force.pop(i)
 
         ## pass to method
-        mod = calculate_dynamic_mod(period, time, pos, force)
+        delta, dymod = calculate_complex_mod(period, time, pos, force)
 
         ## return to user
-        return mod
+        return delta, dymod
 
     def parse_prestress_work (self):
         """ calculate the work performed during the prestress phase

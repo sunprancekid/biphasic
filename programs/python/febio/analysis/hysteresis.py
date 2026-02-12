@@ -12,6 +12,7 @@ import sys, os, math
 import pandas as pd
 import numpy as np
 import xml.etree.ElementTree as ET
+from scipy.optimize import curve_fit, Bounds
 # local
 from plot.figure import Figure
 from plot.plot import gen_bar_chart, gen_plot
@@ -33,6 +34,24 @@ num_prev_hys = 30
 
 
 ## METHODS
+# cosine function
+def cos_shift (t, delta):
+    """ used to fit normalized amplitude data.
+
+    Parameters:
+    -----------
+    t : float
+        time data, x-axis
+    delta : float (between -pi and pi)
+        function phase shift
+
+    Returns:
+    --------
+    float
+        (1 / 2) * (cos (t + delta) + 1)
+    """
+    return 0.5 * (np.cos((2 * math.pi * t) - delta) + 1.)
+
 # determine the work performed by each cycle in a hystersis loop
 def calculate_hysteresis_work(period, time, work):
     """ calculate the work performed by oscillation.
@@ -93,9 +112,9 @@ def calculate_hysteresis_work(period, time, work):
 
 # determine the prework performed by the simulation during the relaxation phase
 
-# calculate the dyanmic modulus
-def calculate_dynamic_mod (period, time, pos, force):
-    """ calculate the dynamic loss modulus after each cycle.
+# calculate the complex modulus
+def calculate_complex_mod (period, time, pos, force):
+    """ calculate the complex modulus for each cycle in cyclic pertibation.
 
     Parameters:
     -----------
@@ -142,30 +161,73 @@ def calculate_dynamic_mod (period, time, pos, force):
             stress[n].append(-pos[i])
             strain[n].append(force[i])
 
-    # show the stress strain data for the final cycle
+    ## initialize arrays
+    # complex modulus properties
+    delta = []
+    dymod = []
+    # min and max stress / strain for normalization
+    max_strain = [[] for i in range(n_cyc)]
+    min_strain = [[] for i in range(n_cyc)]
+    max_stress = [[] for i in range(n_cyc)]
+    min_stress = [[] for i in range(n_cyc)]
+    # accumulate data for plotting
     x = []
     y = []
     l = []
-    sub_int = n_cyc
-    for i in range(len(stress[n_cyc - sub_int])):
-        # append stress
-        x.append(t[n_cyc - sub_int][i])
-        y.append(stress[n_cyc - sub_int][i] / max(stress[n_cyc - sub_int]))
-        l.append('stress (norm)')
-        # append strain
-        x.append(t[n_cyc - sub_int][i])
-        y.append(strain[n_cyc - sub_int][i] / max(strain[n_cyc - sub_int]))
-        l.append('strain (norm)')
+    sub_int = n_cyc - 1
+    ## loop through all cycles
+    for i in range(n_cyc):
+
+        ## get max and min stress / strain for cycle
+        max_strain[i] = max(strain[i])
+        min_strain[i] = min(strain[i])
+        max_stress[i] = max(stress[i])
+        min_stress[i] = min(stress[i])
+
+        ## normalize each data point
+        for j in range(len(stress[i])):
+            t[i][j] = t[i][j] / period # reduce the time scale by the period
+            # reduce the stress / strain by the max and minimum values
+            stress[i][j] = (stress[i][j] - min_stress[i]) / (max_stress[i] - min_stress[i])
+            strain[i][j] = (strain[i][j] - min_strain[i]) / (max_strain[i] - min_strain[i])
+
+        ## determine the phase shift for the normalized strain data
+        x_fit = t[i]
+        y_fit = strain[i]
+        popt, pcov = curve_fit(f = cos_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
+        delta_strain = popt[0]
+
+        ## determine the phase shift for the normalized stress data
+        x_fit = t[i]
+        y_fit = stress[i]
+        popt, pcov = curve_fit(f = cos_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
+        delta_stress = popt[0]
+
+        # calculate the difference in phase shift between stress and strain, convert from radians to degrees
+        delta.append((delta_stress - delta_strain) * (180. / (2. * math.pi)))
+        # dynamic modulus is related to the phase shift according to:
+        # max_stress / max_strain * cos(delta)
+        dymod.append((max_stress[i] / max_strain[i]) * math.cos(delta[-1] * (2. * math.pi) / 180.))
+
+        if i == sub_int:
+            # append data to plot data frame if specified
+            for j in range(len(stress[i])):
+                # append strain
+                x.append(t[i][j])
+                y.append(strain[i][j])
+                l.append('$\\varepsilon_{{norm}}$')
+                # append stress
+                x.append(t[i][j])
+                y.append(stress[i][j])
+                l.append('$\\sigma_{{norm}}$')
 
     df = pd.DataFrame.from_dict({'x': x, 'y': y, 'l': l})
     fig = Figure()
     fig.load_data(df, xcol = 'x', ycol = 'y', icol = 'l')
-    gen_plot(fig, show = True, save = False)
+    fig.set_subtitle_label("$\\delta = {0:.4f}, Y' = {1:.2f}$".format(delta[sub_int], dymod[sub_int]))
+    gen_plot(fig, show = False, save = False)
 
-    for i in range(n_cyc):
-        dm.append(max(stress[i]) / max(strain[i]))
-
-    return dm
+    return delta, dymod
 
 # calculate the loss modulus / phase shift
 

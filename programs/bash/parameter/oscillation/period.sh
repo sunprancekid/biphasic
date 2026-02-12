@@ -176,7 +176,7 @@ check () {
 gen () {
 
 	# PARAMTERS
-	# NOTE: oscillation controller equations assume time of equilibriation is 1000 seconds
+	# NOTE: oscillation controller equations assume that the relaxation time has been defined
 	# period sin controller - cycle around mid point
 	SIN_CONTROL="0.5*sin((2*${PI}/${KEY_OT})*(t-RT))"
 	# period cos controller - cycle starts from bottom of oscillation
@@ -204,7 +204,6 @@ gen () {
 	## write dependencies
 	# write the math equation used for tip oscillation
 	$FEB_PARAMETER -j $JOB -d $DIR -k $KEY_MATH -x $XML_MATH -D $DESCRIP_MATH -C $SIN_CONTROL -R -S
-	# TODO :: hold time is hard coded.
 	# write the total number of numerical steps (constant)
 	declare -i TOTAL_STEPS_MAX=$( echo "$N_CYCLES * $N_STEPS" | bc -l ) # based on max step size
 	declare -i TOTAL_STEPS_MIN=$( echo "$TOTAL_STEPS_MAX * 10" | bc -l ) # based on the inital step size
