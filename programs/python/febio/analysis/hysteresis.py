@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 import xml.etree.ElementTree as ET
 # local
+from plot.figure import Figure
+from plot.plot import gen_bar_chart, gen_plot
 
 
 ## PARAMETERS
@@ -49,14 +51,30 @@ def calculate_hysteresis_work(period, time, work):
     List[float]
         work performed at each cycle
     """
-    # determine the number of cycles which have occured
+    # determine the number of cycles that were performed
+    err = []
+    n_cyc = 1
+    while True:
+        err.append(time[-1] - n_cyc * period)
+        if len(err) > 1:
+            # is the error decreasing?
+            if abs(err[-1]) > abs(err[-2]):
+                # error increased from the previous calculation
+                # the previous integer was the closest to the period
+                n_cyc -= 1
+                break
+            else:
+                n_cyc += 1
+    # accumulate work for each cycle
     hys = [0.]
-    # loop through all point except the last one
+    # n = 0
     for i in range(len(time)):
-        # print(i, time[i], work[i])
+        # if the current time is greater than the total simulation length
+        if time[i] > period * n_cyc: break
         # accumulate the work done in each cycle
         if len(hys) < math.ceil(time[i] / period):
             if i > len(time) - num_prev_hys:
+                ## TODO integrate force data to end using gap in time data
                 # if one the final time points,
                 # integrate without splitting
                 hys[-1] += work[i]
@@ -76,7 +94,7 @@ def calculate_hysteresis_work(period, time, work):
 # determine the prework performed by the simulation during the relaxation phase
 
 # calculate the dyanmic modulus
-def calculate_dynamic_mod (period, time, work):
+def calculate_dynamic_mod (period, time, pos, force):
     """ calculate the dynamic loss modulus after each cycle.
 
     Parameters:
@@ -85,15 +103,69 @@ def calculate_dynamic_mod (period, time, work):
         oscilation period in seconds.
     time : List[float]
         time at each point in the simulation.
-    work : List[float]
-        change in work performed by rigid body at each point in the simulation.
+    pos : List[float]
+        position of rigid body, corresponing to time data
+    force : List[float]
+        reaction force on rigid body, corresponding to time data
 
     Return:
     -------
     List[float]
         dynamic loss modulus of each cycle.
     """
-    return []
+    ## get the stress strain information for each cycle, find the max
+    # determine the number of cycles that were performed
+    err = []
+    n_cyc = 1
+    while True:
+        err.append(time[-1] - n_cyc * period)
+        if len(err) > 1:
+            # is the error decreasing?
+            if abs(err[-1]) > abs(err[-2]):
+                # error increased from the previous calculation
+                # the previous integer was the closest to the period
+                n_cyc -= 1
+                break
+            else:
+                n_cyc += 1
+
+    # loop through all points, accumulate stress and strain for each cycle
+    dm = []
+    t = [[] for i in range(n_cyc)]
+    stress = [[] for i in range(n_cyc)]
+    strain = [[] for i in range(n_cyc)]
+    for i in range(len(time)):
+        # accumulate stress strain data
+        n = math.floor(time[i] / period)
+        if n < n_cyc:
+            t[n].append(time[i])
+            stress[n].append(-pos[i])
+            strain[n].append(force[i])
+
+    # show the stress strain data for the final cycle
+    x = []
+    y = []
+    l = []
+    sub_int = n_cyc
+    for i in range(len(stress[n_cyc - sub_int])):
+        # append stress
+        x.append(t[n_cyc - sub_int][i])
+        y.append(stress[n_cyc - sub_int][i] / max(stress[n_cyc - sub_int]))
+        l.append('stress (norm)')
+        # append strain
+        x.append(t[n_cyc - sub_int][i])
+        y.append(strain[n_cyc - sub_int][i] / max(strain[n_cyc - sub_int]))
+        l.append('strain (norm)')
+
+    df = pd.DataFrame.from_dict({'x': x, 'y': y, 'l': l})
+    fig = Figure()
+    fig.load_data(df, xcol = 'x', ycol = 'y', icol = 'l')
+    gen_plot(fig, show = True, save = False)
+
+    for i in range(n_cyc):
+        dm.append(max(stress[i]) / max(strain[i]))
+
+    return dm
 
 # calculate the loss modulus / phase shift
 

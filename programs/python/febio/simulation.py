@@ -266,7 +266,8 @@ class Simulation (object):
 
         # get the time and work from the outfile
         time = self.get_outfile()['t'].to_list()
-        work = self.get_outfile()['dw_fdx'].to_list()
+        pos = self.get_outfile()['disp'].to_list()
+        force = self.get_outfile()['F_mag'].to_list()
         # drop the relaxation time from the work and time
         # reduce time
         for i in range(len(time) - 1, -1, -1):
@@ -275,10 +276,11 @@ class Simulation (object):
                 time[i] = time[i] - relax_time
             else:
                 time.pop(i)
-                work.pop(i)
+                pos.pop(i)
+                force.pop(i)
 
         ## pass to method
-        mod = calculate_dynamic_mod(period, time, work)
+        mod = calculate_dynamic_mod(period, time, pos, force)
 
         ## return to user
         return mod
