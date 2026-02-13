@@ -231,7 +231,7 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def get_complex_modulus (self):
+    def parse_complex_modulus (self):
         """ Use cyclic loading data to determing the dynamic modulus.
 
         Parameter:

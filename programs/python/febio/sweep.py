@@ -14,6 +14,8 @@ import sys, os, math
 import pandas as pd
 # local
 from febio.simulation import Simulation
+from plot.figure import Figure
+from plot.plot import gen_plot
 
 
 ## PARAMETERS
@@ -251,13 +253,13 @@ class Sweep (object):
         df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
         for i in range(self.get_sim_num()):
             df.loc[i, 'T'] = ot[i]
-            df.loc[i, 'f'] = 1. / ot[i]
+            df.loc[i, 'f'] = 2. * math.pi / ot[i]
             for j in range(len(hys[i])):
                 df.loc[i,j] = hys[i][j]
         # return the data frame to the user
         return df
 
-    def show_work (self, cycle = None):
+    def show_hysteresis_work (self, cycle = None):
         """ plot hysteresis work for second to last cycle.
 
         Parameters:
@@ -270,24 +272,73 @@ class Sweep (object):
         None
 
         """
-        pass
+        # get work for simulations within set
+        df_hys = self.get_hysteresis_work()
+        # determine how cycles were performed
+        c = list(df_hys.columns.values)
+        i = 0
+        while True:
+            i += 1
+            if i in c:
+                continue
+            else:
+                i -= 2
+                break
+        # display the results
+        fig = Figure()
+        fig.load_data(df_hys, xcol = 'f', ycol = i)
+        fig.set_xaxis_scale(log = True)
+        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        fig.set_yaxis_label("Dissipated Energy (J)")
+        gen_plot(fig, show = True, save = False)
 
 
     ## ANALYSIS - PHASE SHIFT ##
 
-    def get_phase_shift (self):
+    def get_phase_shift (self, cycles = None):
         """ returns the phase shift (deg) in dynamic response for all simulations.
 
         Parameters:
         -----------
-        None
+        cycles : int or List[int]
+            subset of cycles to get work for
 
         Returns:
         --------
-        None
+        df
+            contains phase shift as well as simulation properties
 
         """
-        pass
+        # initialize arrays
+        max_cycle = 0
+        ot = []
+        hys = [[] for i in range(self.get_sim_num())]
+        # loop through all simulations
+        for i in range(self.get_sim_num()):
+            # initialize the simulation
+            sim = Simulation(self.list_sim[col_jd][i], \
+                    self.list_sim[col_jn][i], \
+                    self.list_sim[col_si][i])
+            # get the hysteresis data
+            if sim.has_key('OT'):
+                ot.append(sim.get_key_value('OT'))
+                hys[i] = sim.parse_complex_modulus()[0]
+                if len(hys[i]) > max_cycle:
+                    max_cycle = len(hys[i])
+            # remove the simulation
+            del sim
+        # add to the dataframe
+        col_header = ['T', 'f']
+        for i in range(max_cycle):
+            col_header.append(i)
+        df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
+        for i in range(self.get_sim_num()):
+            df.loc[i, 'T'] = ot[i]
+            df.loc[i, 'f'] = 2. * math.pi / ot[i]
+            for j in range(len(hys[i])):
+                df.loc[i,j] = hys[i][j]
+        # return the data frame to the user
+        return df
 
     def show_phase_shift (self):
         """ displays the phase shift (deg) for all simulations against frequency.
@@ -301,7 +352,25 @@ class Sweep (object):
         None
 
         """
-        pass
+        # get work for simulations within set
+        df = self.get_phase_shift()
+        # determine how cycles were performed
+        c = list(df.columns.values)
+        i = 0
+        while True:
+            i += 1
+            if i in c:
+                continue
+            else:
+                i -= 2
+                break
+        # display the results
+        fig = Figure()
+        fig.load_data(df, xcol = 'f', ycol = i)
+        fig.set_xaxis_scale(log = True)
+        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        fig.set_yaxis_label("Phase lag (degrees, $^{{\\circ}}$)")
+        gen_plot(fig, show = True, save = False)
 
 
     ## ANALYSIS - DYNAMIC MODULUS ##
@@ -318,7 +387,36 @@ class Sweep (object):
         None
 
         """
-        pass
+        # initialize arrays
+        max_cycle = 0
+        ot = []
+        hys = [[] for i in range(self.get_sim_num())]
+        # loop through all simulations
+        for i in range(self.get_sim_num()):
+            # initialize the simulation
+            sim = Simulation(self.list_sim[col_jd][i], \
+                    self.list_sim[col_jn][i], \
+                    self.list_sim[col_si][i])
+            # get the hysteresis data
+            if sim.has_key('OT'):
+                ot.append(sim.get_key_value('OT'))
+                hys[i] = sim.parse_complex_modulus()[1]
+                if len(hys[i]) > max_cycle:
+                    max_cycle = len(hys[i])
+            # remove the simulation
+            del sim
+        # add to the dataframe
+        col_header = ['T', 'f']
+        for i in range(max_cycle):
+            col_header.append(i)
+        df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
+        for i in range(self.get_sim_num()):
+            df.loc[i, 'T'] = ot[i]
+            df.loc[i, 'f'] = 2. * math.pi / ot[i]
+            for j in range(len(hys[i])):
+                df.loc[i,j] = hys[i][j]
+        # return the data frame to the user
+        return df
 
     def show_dynamic_modulus (self):
         """ displays the dynamic modulus for all simulations against frequency.
@@ -332,7 +430,25 @@ class Sweep (object):
         None
 
         """
-        pass
+        # get work for simulations within set
+        df = self.get_dynamic_modulus()
+        # determine how cycles were performed
+        c = list(df.columns.values)
+        i = 0
+        while True:
+            i += 1
+            if i in c:
+                continue
+            else:
+                i -= 2
+                break
+        # display the results
+        fig = Figure()
+        fig.load_data(df, xcol = 'f', ycol = i)
+        fig.set_xaxis_scale(log = True)
+        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        fig.set_yaxis_label("Dynamic Modulus ($Pa$)")
+        gen_plot(fig, show = True, save = False)
 
 
 ## ARGUMENTS
