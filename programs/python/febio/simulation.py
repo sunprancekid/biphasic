@@ -60,6 +60,9 @@ class Simulation (object):
         --------
         None
         """
+        ## TODO save simulation data to files within directories, to avoid recalculating things
+        ## TODO seperate complex modulus to phase shift and dynamic modulus
+        ## TODO add save statement requirements for files
         # get the row corresponding to the simulation from the parameter file
         df_parm = pd.read_csv("{0}/{1}/{1}.parm.csv".format(jd, jn))
         # parameters corresponding to simulation in job

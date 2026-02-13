@@ -34,6 +34,9 @@ num_prev_hys = 30
 
 
 ## METHODS
+## TODO seperate methods to make them more modular
+## TODO extract max stress and strain as properties
+## TODO return stress strain curves if requested
 # cosine function
 def cos_shift (t, delta):
     """ used to fit normalized amplitude data.
@@ -203,6 +206,10 @@ def calculate_complex_mod (period, time, pos, force):
         popt, pcov = curve_fit(f = cos_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
         delta_stress = popt[0]
 
+        ## NOTE right now the dynamic modulus displays behavior opposite
+        ## to what one expects from literature (one expects the dynamic mod
+        ## to be highest at fast cycles and lowest at slow cycles). 
+        ## TODO Double check definitions
         # calculate the difference in phase shift between stress and strain, convert from radians to degrees
         delta.append((delta_stress - delta_strain) * (180. / (2. * math.pi)))
         # dynamic modulus is related to the phase shift according to:

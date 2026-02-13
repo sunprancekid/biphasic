@@ -66,6 +66,10 @@ class Sweep (object):
             initialized Simulation object.
 
         """
+        ## TODO  add cycle specification, file saving and loading
+        ## TODO check dynamic modulus
+        ## TODO modularize accessing properties from simulations (lots of repeats)
+        ## TODO add max / min stress / strain as properties
         # initialize lists
         self.list_sim = [[] for i in range(4)]
         self.parm_sim = []
