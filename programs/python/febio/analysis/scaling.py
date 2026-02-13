@@ -67,6 +67,7 @@ for k in non_constant_col:
 		norm_cols.append(k)
 df_norm = pd.DataFrame(columns=norm_cols)
 for index, row in df_sum.iterrows():
+	print(index)
 	# ignore data when the time scale is less than 1.
 	# if row['OT'] < 1.0: continue
 
