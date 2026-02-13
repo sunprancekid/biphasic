@@ -41,29 +41,19 @@ class Sweep (object):
 
     """
     __init__ (self, jd = None, jn = None):
-<<<<<<< HEAD
         """ Initialize object attributes. Attempt to load jobs if provided.
-=======
-        """ initialize object attributes, load simulations if specified.
->>>>>>> 219440f (Added docstring to initialization routine.)
 
         Parameters:
         -----------
         jd : str
-<<<<<<< HEAD
             path to job directory
         jn : job name
             job name, corresponds to parameter and config files
-=======
-            path to directory containing job
-        jn : str
-            job name in directory
 
         Returns:
         --------
         Simulation
             initialized Simulation object.
->>>>>>> 219440f (Added docstring to initialization routine.)
 
         """
         # initialize the list
