@@ -37,8 +37,8 @@ class Sweep (object):
 
     Attributes:
     -----------
-    list_sim : List[n_sim][]
-      list of paths to simulations that exist within sweep set
+    list_sim : List[][str]
+      md list of paths to simulations that exist within sweep set
     parm_sim : dict
         simulation parameters stored in dictionary
     check_paths : bool
@@ -84,7 +84,7 @@ class Sweep (object):
         --------
         None
         """
-        pass
+        return len(self.list_sim[col_jd])
 
     def add_sim (self, jd, jn, si):
         """ append simulation to list.
@@ -209,26 +209,61 @@ class Sweep (object):
 
     ## ANALYSIS - HYSTERESIS WORK ##
 
-    def get_hysteresis_work (self):
+    def get_hysteresis_work (self, cycles = None):
         """ returns the hysteresis work for all simulations.
+
+        for all simulation within the set, the hysteresis work is 
+        determined for the 
 
         Parameters:
         -----------
-        None
+        cycles : int or List[int]
+            subset of cycles numbers to be selected
 
         Returns:
         --------
-        None
+        df
+            DataFrame containg hysteresis work and simulation parameters
 
         """
-        pass
+        # initialize arrays
+        max_cycle = 0
+        ot = []
+        hys = [[] for i in range(self.get_sim_num())]
+        # loop through all simulations
+        for i in range(self.get_sim_num()):
+            # initialize the simulation
+            sim = Simulation(self.list_sim[col_jd][i], \
+                    self.list_sim[col_jn][i], \
+                    self.list_sim[col_si][i])
+            # get the hysteresis data
+            if sim.has_key('OT'):
+                ot.append(sim.get_key_value('OT'))
+                hys[i] = sim.parse_hysteresis_work()
+                if len(hys[i]) > max_cycle:
+                    max_cycle = len(hys[i])
+            # remove the simulation
+            del sim
+        # add to the dataframe
+        col_header = ['T', 'f']
+        for i in range(max_cycle):
+            col_header.append(i)
+        df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
+        for i in range(self.get_sim_num()):
+            df.loc[i, 'T'] = ot[i]
+            df.loc[i, 'f'] = 1. / ot[i]
+            for j in range(len(hys[i])):
+                df.loc[i,j] = hys[i][j]
+        # return the data frame to the user
+        return df
 
-    def show_work (self):
-        """ plot hysteresis work.
+    def show_work (self, cycle = None):
+        """ plot hysteresis work for second to last cycle.
 
         Parameters:
         -----------
-        None
+        cycle : int
+            specify cycle to display data for.
 
         Returns:
         --------
