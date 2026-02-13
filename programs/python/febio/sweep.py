@@ -40,12 +40,25 @@ class Sweep (object):
     None
 
     """
-    __init__ (self):
+    __init__ (self, jd = None, jn = None):
+        """ Initialize object attributes. Attempt to load jobs if provided.
+
+        Parameters:
+        -----------
+        jd : str
+            path to job directory
+        jn : job name
+            job name, corresponds to parameter and config files
+
+        """
         # initialize the list
         self.list_sim = []
         self.parm_sim = []
+        # if jd and jn were specified
+        if jd is not None and jn is not None:
+            self.add_sim_batch(jd, jn)
 
-    ## SIMULATIONS
+    ## SIMULATIONS ##
 
     def get_sim_num (self):
         """ returns number of simulations stored within object.
@@ -60,7 +73,7 @@ class Sweep (object):
         """
         pass
 
-    def add_sim(self, jd, jn, si):
+    def add_sim (self, jd, jn, si):
         """ append simulation to list.
 
         Attempts to add simulation to list_sim. Checks simulation parameters
@@ -84,6 +97,29 @@ class Sweep (object):
         bool
             True if addition was successful, else False.
         """
+        # if not the first simulation in the list
+        # check the simulation parameters against the constants and their values
+
+        pass
+
+    def add_sim_batch (self):
+        """ add simulation batch to object.
+
+        Parameters:
+        -----------
+        jd : str
+            path to job directory
+        jn : job name
+            job name, corresponds to parameter and config files
+
+        Returns:
+        --------
+        None
+
+        """
+        # check that the job name and directory are valid paths
+        # get the total number of simulations in the batch
+        # loop through all simulations, append
         pass
 
     ## ANALYSIS - HYSTERESIS WORK ##
