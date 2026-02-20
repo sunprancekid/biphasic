@@ -94,7 +94,29 @@ class Job (object):
         self.df_config = pd.read_csv(config_file_format.format(self.jd, self.jn))
 
 
-    ## add parameter
+    def add_parameters (self):
+        """ adds parameters to config.
+
+        Parameters:
+        -----------
+        p : Parameter
+            parameter object
+
+        Returns:
+        --------
+        None
+        """
+        pass
+        ## TODO create parameter object
+
+    def add_constant_parameter (self, val, key, xml, units, description, related, symbolic):
+        """ add constant parameter to config file.
+
+        Parameters:
+        -----------
+        val : float, int, or str
+            value """
+        pass
 
     ## generate parameters with model
 
