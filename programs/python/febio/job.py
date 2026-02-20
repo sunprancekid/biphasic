@@ -9,6 +9,10 @@
 ## PURPOSE: contains classes and methods for handling febio simulation
 
 ## MODULES
+# native / conda
+import os, sys, math
+import pandas as pd
+# local
 # none
 
 ## PARAMETERS
@@ -58,10 +62,8 @@ class Job (object):
             self.load_config()
         else:
             # create an empty config
+            self.df_config = pd.DataFrame(columns = config_header)
         ## if the paths do not exist,
-        self.df_config = None
-        self.df_parm = None
-        self.df_sum = None
 
     def has_config(self):
         """ check if config file exists in job directory.
