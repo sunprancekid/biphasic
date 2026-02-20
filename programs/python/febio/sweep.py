@@ -263,13 +263,13 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_hysteresis_work (self, cycle = None):
+    def show_hysteresis_work (self, period = False):
         """ plot hysteresis work for second to last cycle.
 
         Parameters:
         -----------
-        cycle : int
-            specify cycle to display data for.
+        period : bool
+            if 'True', displays hysteresis work against period.
 
         Returns:
         --------
@@ -290,9 +290,15 @@ class Sweep (object):
                 break
         # display the results
         fig = Figure()
-        fig.load_data(df_hys, xcol = 'f', ycol = i)
+        if period:
+            fig.load_data(df_hys, xcol = 'T', ycol = i)
+        else:
+            fig.load_data(df_hys, xcol = 'f', ycol = i)
         fig.set_xaxis_scale(log = True)
-        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        if period:
+            fig.set_xaxis_label("Period ($s$)")
+        else:
+            fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Dissipated Energy (J)")
         gen_plot(fig, show = True, save = False)
 
@@ -344,12 +350,13 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_phase_shift (self):
+    def show_phase_shift (self, period = False):
         """ displays the phase shift (deg) for all simulations against frequency.
 
         Parameters:
         -----------
-        None
+        period : bool
+            if 'True', display phase shift against cycle period.
 
         Returns:
         --------
@@ -370,9 +377,15 @@ class Sweep (object):
                 break
         # display the results
         fig = Figure()
-        fig.load_data(df, xcol = 'f', ycol = i)
+        if period:
+            fig.load_data(df, xcol = 'T', ycol = i)
+        else:
+            fig.load_data(df, xcol = 'f', ycol = i)
         fig.set_xaxis_scale(log = True)
-        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        if period:
+            fig.set_xaxis_label("Period ($s)")
+        else:
+            fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Phase lag (degrees, $^{{\\circ}}$)")
         gen_plot(fig, show = True, save = False)
 
@@ -422,12 +435,13 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_dynamic_modulus (self):
+    def show_dynamic_modulus (self, period = False):
         """ displays the dynamic modulus for all simulations against frequency.
 
         Parameters:
         -----------
-        None
+        period : bool
+            if 'True', dynamic modulus is shown against period.
 
         Returns:
         --------
@@ -448,9 +462,15 @@ class Sweep (object):
                 break
         # display the results
         fig = Figure()
-        fig.load_data(df, xcol = 'f', ycol = i)
+        if period:
+            fig.load_data(df, xcol='T', ycol = i)
+        else:
+            fig.load_data(df, xcol = 'f', ycol = i)
         fig.set_xaxis_scale(log = True)
-        fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
+        if period:
+            fig.set_xaxis_scale("Cycle Perid ($s$)")
+        else:
+            fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Dynamic Modulus ($Pa$)")
         gen_plot(fig, show = True, save = False)
 

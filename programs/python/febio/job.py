@@ -12,8 +12,10 @@
 # none
 
 ## PARAMETERS
+# format of config file
+config_file_format = "{0}/{1}/{1}.config.csv"
 # header used for config files
-default_config_header = "key, xml, description, units, constant, related, symbolic"
+config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 'symbolic']
 
 ## METHODS
 # none
@@ -51,14 +53,43 @@ class Job (object):
         ## assign the job name and directory
         self.jd = jd
         self.jn = jn
+        ## load the config file
+        if self.has_config():
+            self.load_config()
+        else:
+            # create an empty config
         ## if the paths do not exist,
         self.df_config = None
         self.df_parm = None
         self.df_sum = None
 
-    ## has config file
+    def has_config(self):
+        """ check if config file exists in job directory.
 
-    ## load config file
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if file exists in job directory, else 'False'.
+        """
+        return (os.path.exists(config_file_format.format(self.jd, self.jn)))
+
+
+    def load_config (self):
+        """ load config file into Job from simulation directory.
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        self.df_config = pd.read_csv(config_file_format.format(self.jd, self.jn))
 
 
     ## add parameter
