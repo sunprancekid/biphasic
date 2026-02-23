@@ -176,6 +176,8 @@ class Sweep (object):
             True if operation was successful, otherwise False
 
         """
+        self.jd = jd
+        self.jn = jn
         # check that the job name and directory are valid paths
         if jd is not None:
             # attempt to locate the directory
@@ -263,13 +265,15 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_hysteresis_work (self, period = False):
+    def show_hysteresis_work (self, period = False, save = False):
         """ plot hysteresis work for second to last cycle.
 
         Parameters:
         -----------
-        period : bool
+        period : bool (default 'False')
             if 'True', displays hysteresis work against period.
+        save : bool (default 'False')
+            if 'True', saves display to job directory
 
         Returns:
         --------
@@ -300,7 +304,8 @@ class Sweep (object):
         else:
             fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Dissipated Energy (J)")
-        gen_plot(fig, show = True, save = False)
+        fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
+        gen_plot(fig, show = True, save = save)
 
 
     ## ANALYSIS - PHASE SHIFT ##
@@ -350,13 +355,15 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_phase_shift (self, period = False):
+    def show_phase_shift (self, period = False, save = False):
         """ displays the phase shift (deg) for all simulations against frequency.
 
         Parameters:
         -----------
         period : bool
             if 'True', display phase shift against cycle period.
+        save : bool (default 'False')
+            if 'True', saves display to job directory.
 
         Returns:
         --------
@@ -387,7 +394,8 @@ class Sweep (object):
         else:
             fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Phase lag (degrees, $^{{\\circ}}$)")
-        gen_plot(fig, show = True, save = False)
+        fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'phase_shift')
+        gen_plot(fig, show = True, save = save)
 
 
     ## ANALYSIS - DYNAMIC MODULUS ##
@@ -435,13 +443,15 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_dynamic_modulus (self, period = False):
+    def show_dynamic_modulus (self, period = False, save = False):
         """ displays the dynamic modulus for all simulations against frequency.
 
         Parameters:
         -----------
         period : bool
             if 'True', dynamic modulus is shown against period.
+        save : bool (default 'False')
+            if 'True', saves display to job directory.
 
         Returns:
         --------
@@ -472,7 +482,8 @@ class Sweep (object):
         else:
             fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Dynamic Modulus ($Pa$)")
-        gen_plot(fig, show = True, save = False)
+        fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'dynamic_modulus')
+        gen_plot(fig, show = True, save = save)
 
 
 ## ARGUMENTS

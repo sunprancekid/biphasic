@@ -101,3 +101,9 @@ j.add_constant_parameter(val = 'E1', key = 'G', xml = "Material/material[@id='1'
 j.add_constant_parameter(val = "E2 / E1", key = 'g1', xml = "Material/material[@id='1']/g1", units = None, description = "gamma_1", related = True)
 j.add_constant_parameter(val = "n2 / E2", key = 't1', xml = "Material/material[@id='1']/t1", units = 'seconds', description = "tau_1", related = True)
 
+# create the frequency sweep
+
+# generate parameter file
+
+j.save_config()
+
