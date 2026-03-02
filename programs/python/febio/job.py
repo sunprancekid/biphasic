@@ -492,6 +492,18 @@ class Job (object):
                 config_header[11]: 'na'}
         self.df_config.loc[len(self.df_config.index)] = parm
 
+    def hysteresis_scaling(self, show = True, save = False):
+        """ determing the scaling of hysteresis with respect to non-constant parameters.
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        pass
 
 ## ARGUMENTS
 # none
