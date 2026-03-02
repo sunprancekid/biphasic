@@ -20,6 +20,10 @@ import pandas as pd
 config_file_format = "{0}/{1}/{1}.config.csv"
 # header used for config files
 config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 'symbolic', 'val', 'min_val', 'max_val', 'n_val', 'log']
+# format of parameter file
+parameter_file_format = "{0}/{1}/{1}.parm.csv"
+# header used for parameter file
+parameter_header = ['n', 'id', 'path']
 
 ## METHODS
 # none
@@ -54,16 +58,20 @@ class Job (object):
         Job
             initialized Job object.
         """
-        ## assign the job name and directory
+        # assign the job name and directory
         self.jd = jd
         self.jn = jn
-        ## load the config file
+        # load the config file
         if self.has_config():
             self.load_config()
         else:
             # create an empty config
             self.df_config = pd.DataFrame(columns = config_header)
-        ## if the paths do not exist,
+        # load the parameter file if it exists
+        if self.has_parameters():
+            self.load_parameters()
+        else:
+            self.df_parm = None
 
     def has_config(self):
         """ check if config file exists in job directory.
@@ -118,20 +126,168 @@ class Job (object):
         else:
             print("ERROR :: Job.save_config() :: Config file '{0}' already exists. Unable to write without 'overwrite'.".format(config_file_format.format(self.jd, self.jn)))
 
-    def add_parameters (self):
-        """ adds parameters to config.
+    def has_parameters (self):
+        """ check if the parameter file exists within the job directory.
 
         Parameters:
         -----------
-        p : Parameter
-            parameter object
+        None
+
+        Returns:
+        --------
+        bool 
+            'True' if the parameter file exists, else 'False'.
+        """
+        return (os.path.exists(parameter_file_format.format(self.jd, self.jn)))
+
+    def load_parameters (self):
+        """ loads the parameter file, if it exists.
+
+        Parameters:
+        -----------
+        None
 
         Returns:
         --------
         None
         """
         pass
-        ## TODO create parameter object
+
+    def generate_parameters (self, overwrite = False):
+        """ using config file, generate the job parameters.
+
+        Parameters:
+        -----------
+        overwrite : bool (default 'False')
+            if 'False', parameter file will not be overwritten if it exists.
+
+        Returns:
+        --------
+        None
+        """
+        # check if the parameter file already exists
+        if self.df_parm is not None and not overwrite:
+            # parameters have already been generated / loaded and overwrite has not been called
+            print("ERROR :: Job.generate_parameters() :: must specifiy 'overwrite' to overwrite existing parameters.")
+            return
+
+        # find the non-constant parameters, determine how many unique parameters exist
+        nonconstant_col = []
+        constant_col = []
+        constant_col
+        for idx, row in self.df_config.iterrows():
+            # check if the column is non constant
+            if row['constant'] == 0:
+                nonconstant_col.append(row['key'])
+            else:
+                constant_col.append(row['key'])
+
+        ## generate parameters
+        # initialize dataframe with header, empty rows
+        self.df_parm = pd.DataFrame(columns = parameter_header + constant_col)
+
+        # define the constant valuess
+        for c in constant_col:
+
+        print(self.df_parm.head)
+        exit()
+
+        # define nonconstant values, if there are any
+        if len(nonconstant_col) == 0:
+            # all columns are constant, only one parameter set
+            pass
+        else:
+            # determine the size of the parameter set from the number of non-constants
+            n_parm = 1
+            for c in nonconstant_col:
+                idx = self.df_config.index[self.df_config['key'] == c].tolist()
+                n_parm = n_parm * self.df_config.iloc[idx[0]]['n_val']
+
+            # generate columns for 
+
+            # loop through all parameters in config file, generate parameters and append
+        print(n_parm)
+        exit()
+
+    def save_parameters (self, overwrite = False):
+        """ save the parameters to their file"""
+        pass
+
+    def add_variable_parameter (self, minval = None, maxval = None, nval = None, log = False, key = None, xml = None, units = None, description = None, related = False):
+        """ add variable parameter set to config file.
+
+        Parameters:
+        -----------
+        minval : float, int, or str
+            lowest value range of variable set.
+        maxval : float, int, or str
+            largest value in range of variable set.
+        nval : int
+            number of values to generate.
+        key : str
+            id representing parameter, used as column header in parameter file
+        log : bool (default 'False')
+            determines if values should be generated along a linear log scale
+        xml : str (optional, default 'None')
+            xml path to parameter in feb file
+        units : str (optional, default 'None')
+            units assigned to parameter
+        description : str
+            (optional) short description of parameter
+        related : bool (default 'False')
+            if 'True', 'val' uses other parameter's 'key's and must be evaluated.
+
+        Returns:
+        --------
+        bool
+            'True' if operation is successful, else 'False'.
+        """
+        # check method arguments
+        if minval is None:
+            print("ERROR :: Job.add_variable_parameter() :: 'minval' must be assigned as 'float', 'int', or 'str'.")
+            return False
+        if maxval is None:
+            print("ERROR :: Job.add_variable_parameter() :: 'minval' must be assigned as 'float', 'int', or 'str'.")
+            return False
+        if nval is None:
+            print("ERROR :: Job.add_variable_parameter() :: 'nval' must be assigned as 'int' greater than 1.")
+            return False
+        if key is None:
+            print("ERROR :: Job.add_constant_parameter() :: 'key' representing parameter must be assigned.")
+            return False
+
+        # replace None types with 'na'
+        if xml is None:
+            xml = 'na'
+        if units is None:
+            units = 'na'
+        if description is None:
+            description = 'na'
+
+        # reassign booleans
+        if related:
+            related = 1
+        else:
+            related = 0
+        if log:
+            log = 1
+        else:
+            log = 0
+
+        # create array, add to config file
+        parm = {config_header[0]: key,
+                config_header[1]: xml,
+                config_header[2]: units,
+                config_header[3]: description,
+                config_header[4]: 0,
+                config_header[5]: related,
+                config_header[6]: 0,
+                config_header[7]: 'na',
+                config_header[8]: minval,
+                config_header[9]: maxval,
+                config_header[10]: nval,
+                config_header[11]: log}
+        self.df_config.loc[len(self.df_config.index)] = parm
 
     def add_constant_parameter (self, val = None, key = None, xml = None, units = None, description = None, related = False, symbolic = False):
         """ add constant parameter to config file.
@@ -193,12 +349,13 @@ class Job (object):
                 config_header[4]: 1,
                 config_header[5]: related,
                 config_header[6]: symbolic,
-                config_header[7]: val}
+                config_header[7]: val,
+                config_header[8]: 'na',
+                config_header[9]: 'na',
+                config_header[10]: 'na',
+                config_header[11]: 'na'}
         self.df_config.loc[len(self.df_config.index)] = parm
 
-
-
-    ## generate parameters with model
 
 ## ARGUMENTS
 # none

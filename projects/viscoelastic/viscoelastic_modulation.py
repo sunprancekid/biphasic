@@ -17,8 +17,14 @@ from febio.job import Job
 
 
 ## PARAMETERS
+# number of oscillation cycles
+n_cycles = 11
+# number of steps per cycle
+n_steps = 60
 # loading depth (mm)
 loading_depth = 0.025
+# oscillation amplitude (mm)
+oscillation_amplitude = 0.01
 # relaxation time (s)
 relaxation_time = 10000
 # default first elastic modulus
@@ -51,6 +57,12 @@ j.add_constant_parameter(val = loading_depth,
 	key = 'LD', 
 	xml = "Step/step[@id='1']/Rigid/rigid_bc[@name='tip_displacement']/value", 
 	description = "loading_discplacement", 
+	units = "mm",
+	related = False)
+# oscillation amplitude is constant
+j.add_constant_parameter(val = oscillation_amplitude,
+	key = 'OA',
+	xml = "Step/step[@id='2']/Rigid/rigid_bc[@name='tip_oscillation']/value",
 	units = "mm",
 	related = False)
 # relaxation time is constant
@@ -102,8 +114,53 @@ j.add_constant_parameter(val = "E2 / E1", key = 'g1', xml = "Material/material[@
 j.add_constant_parameter(val = "n2 / E2", key = 't1', xml = "Material/material[@id='1']/t1", units = 'seconds', description = "tau_1", related = True)
 
 # create the frequency sweep
+## TODO :: change to 'add_sweep'
+j.add_variable_parameter (minval = 100.,
+	maxval = 1000000.,
+	nval = 40,
+	log = True,
+	key = "OT",
+	xml = None,
+	units = "s",
+	description = "oscillation_period")
+# oscillation equation
+j.add_constant_parameter (val = "0.5*sin((2*{0}/OT)*(t-RT))".format(3.14159265359),
+	key = "OTMa",
+	xml = "LoadData/load_controller[@name='tip_oscillation_controller']/math",
+	units = None,
+	description = "tip_oscillation_equation",
+	related = True,
+	symbolic = True)
+# number of cycles
+j.add_constant_parameter(val = n_cycles,
+	key = "NCy",
+	description = "number_oscillation_cycles")
+# number of nsteps per cycle
+j.add_constant_parameter (val = n_steps,
+	key = "NOSs",
+	description = "number_steps_per_oscillation_cycle")
+# total number of numerical steps
+j.add_constant_parameter (val = "NCy * NOSs * 10",
+	key = "ON",
+	xml = "Step/step[@id='2']/Control/time_steps",
+	units = None,
+	description = "oscillation_total_numerical_steps",
+	related = True)
+j.add_constant_parameter (val = "(OT) / (NOSs)",
+	key = "OSMx",
+	xml = "Step/step[@id='2']/Control/time_stepper[@type='default']/dtmax",
+	units = None,
+	description = "oscillation_max_step",
+	related = True)
+j.add_constant_parameter (val = "(OT) / (NOSs * 10)",
+	key = "OSMn",
+	xml = "Step/step[@id='2']/Control/step_size",
+	units = None,
+	description = "oscillation_initial_step",
+	related = True)
 
 # generate parameter file
+j.generate_parameters()
 
-j.save_config()
+# j.save_config()
 
