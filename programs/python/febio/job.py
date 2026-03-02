@@ -13,7 +13,7 @@
 import os, sys, math
 import pandas as pd
 # local
-# none
+from util.smoothie import log2lin, lin2log
 
 ## PARAMETERS
 # format of config file
@@ -26,7 +26,66 @@ parameter_file_format = "{0}/{1}/{1}.parm.csv"
 parameter_header = ['n', 'id', 'path']
 
 ## METHODS
-# none
+def gen_linear_scale_range (n, min_val, max_val):
+    """ generate n, linearly seperated values.
+
+    Parameters:
+    -----------
+    n : int
+        total number of values to generate
+    min_val : float
+        lowest value in linear series
+    max_val : float
+        largest value in linear series
+
+    Returns:
+    --------
+    List[float]
+        list of n values which are linearly spaced.
+    """
+    if not isinstance(n, int):
+        n = int(n)
+    if not isinstance(min_val, float):
+        min_val = float(min_val)
+    if not isinstance (max_val, float):
+        max_val = float(max_val)
+    val = []
+    for i in range(n):
+        val.append(min_val + ((i) / (n - 1)) * (max_val - min_val))
+    return val
+
+def gen_log_scale_range (n, min_val, max_val):
+    """ generate n, linearly seperated values.
+
+    Parameters:
+    -----------
+    n : int
+        total number of values to generate
+    min_val : float
+        lowest value in logarithmic series
+    max_val : float
+        highest value in logarithmic series
+
+    Returns:
+    List[float]
+        list of n values which a logarithmically spaced.
+    """
+    # check the arguments
+    if not isinstance(n, int):
+        n = int(n)
+    if not isinstance(min_val, float):
+        min_val = float(min_val)
+    if not isinstance(max_val, float):
+        max_val = float(max_val)
+    # convert min and max values to logscale
+    min_val = lin2log(min_val)
+    max_val = lin2log(max_val)
+    # generate range
+    val = []
+    for i in range(n):
+        tmp = min_val + ((i) / (n - 1)) * (max_val - min_val)
+        val.append(log2lin(tmp))
+    return val
 
 ## CLASSES
 # job class
@@ -183,35 +242,88 @@ class Job (object):
                 constant_col.append(row['key'])
 
         ## generate parameters
-        # initialize dataframe with header, empty rows
-        self.df_parm = pd.DataFrame(columns = parameter_header + constant_col)
+        # initialize lists for n ,id and path
+        n = [1]
+        sid = ['job']
+        path = ['job/']
 
-        # define the constant valuess
-        for c in constant_col:
+        # define the constant values
+        con_dict = {} # dictionary for constant values
+        if len(constant_col) > 0:
+            for c in constant_col:
+                # get the constant value from the config file
+                idx = self.df_config.index[self.df_config['key'] == c]
+                val = self.df_config.iloc[idx[0]]['val']
+                con_dict.update({c: [val]})
 
-        print(self.df_parm.head)
-        exit()
-
-        # define nonconstant values, if there are any
-        if len(nonconstant_col) == 0:
-            # all columns are constant, only one parameter set
-            pass
-        else:
-            # determine the size of the parameter set from the number of non-constants
-            n_parm = 1
+        # define nonconstant values
+        noncon_dict = {}
+        if len(nonconstant_col) > 0:
+            # for each of the non-constant columns
+            n_parm_total = 1
             for c in nonconstant_col:
+                # get the total number of parameters, range, etc.
                 idx = self.df_config.index[self.df_config['key'] == c].tolist()
-                n_parm = n_parm * self.df_config.iloc[idx[0]]['n_val']
+                n_parm = int(self.df_config.iloc[idx[0]]['n_val'])
+                n_parm_total = n_parm * n_parm_total
+                # generate values
+                vals = []
+                if self.df_config.iloc[idx[0]]['log'] == 1:
+                    # generate parameters along a log scale
+                    vals = gen_log_scale_range(n = self.df_config.iloc[idx[0]]['n_val'],
+                                           min_val = self.df_config.iloc[idx[0]]['min_val'],
+                                           max_val = self.df_config.iloc[idx[0]]['max_val'])
+                else:
+                    # generate parameters along a linear scale
+                    vals = gen_linear_scale_range(n = self.df_config.iloc[idx[0]]['n_val'],
+                                           min_val = self.df_config.iloc[idx[0]]['min_val'],
+                                           max_val = self.df_config.iloc[idx[0]]['max_val'])
+                # update non-constant parameters
+                if len(noncon_dict) == 0:
+                    # append the new column to the empty dictionary
+                    noncon_dict.update({c: vals})
+                    # update the n, sid, and path
+                    n = list(range(1, len(vals) + 1))
+                    sid = []
+                    path = []
+                    for i in n:
+                        sid.append("{0}{1}".format(c, i))
+                        path.append("job/{0}{1}/".format(c, i))
+                else:
+                    print("TODO :: Job.generate_parameters() :: implement 'generate_parameters' for multiple non-consants.")
+                    exit()
 
-            # generate columns for 
+            # update constant parameters
+            if len(con_dict) > 0:
+                # duplicate all of the constant parameters by the total parameters
+                for k in list(con_dict.keys()):
+                    nl = [] # new list
+                    for i in con_dict[k]:
+                        for j in range(n_parm_total):
+                            nl.append(i)
+                    con_dict[k] = nl # replace old list with new list
 
-            # loop through all parameters in config file, generate parameters and append
-        print(n_parm)
-        exit()
+        # generate the new parameters dataframe
+        self.df_parm = pd.DataFrame.from_dict({'n': n, 'id': sid, 'path': path} | con_dict | noncon_dict)
 
     def save_parameters (self, overwrite = False):
-        """ save the parameters to their file"""
-        pass
+        """ save the parameters to the job directory
+
+        Parameters:
+        -----------
+        overwrite : bool
+            if 'True', overwrites existing parameter file.
+
+        Return:
+        -------
+        None
+        """
+        if not self.has_parameters() or overwrite:
+            if not os.path.exists("{0}/{1}".format(self.jd, self.jn)):
+                os.makedirs("{0}/{1}".format(self.jd, self.jn))
+            self.df_parm.to_csv(parameter_file_format.format(self.jd, self.jn), index = False)
+        else:
+            print("ERROR :: Job.save_config() :: Config file '{0}' already exists. Unable to write without 'overwrite'.".format(config_file_format.format(self.jd, self.jn)))
 
     def add_variable_parameter (self, minval = None, maxval = None, nval = None, log = False, key = None, xml = None, units = None, description = None, related = False):
         """ add variable parameter set to config file.
