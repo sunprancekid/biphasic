@@ -32,9 +32,15 @@ relaxation_time = 10000
 # default first elastic modulus
 default_E1_val = 1.129
 # default second elastic modulus
-default_E2_val = 6.
+default_E2_val = 7.014
 # default second viscosity
-default_n2_val = 478.33
+default_n2_val = 3355
+# default bulk modulus
+default_bulk = default_E1_val
+# default first relaxation modulus constant
+default_g1_val = (default_E2_val / default_E1_val)
+# default first time constant
+default_t1_val = (default_n2_val / default_E2_val)
 
 
 ## METHODS
@@ -46,12 +52,15 @@ default_n2_val = 478.33
 
 
 ## ARGUMENTS
-# none
+# first argument: job directory
+jd = sys.argv[1]
+# second argument: job id
+jn = sys.argv[2]
 
 
 ## SCRIPT
 # create job
-j = Job (rmt_dir, "ve-mod")
+j = Job (jd, jn)
 
 ## add parameters
 # loading depth is constant
@@ -90,31 +99,82 @@ if not j.has_config():
 
 	## establish the materials parameters
 	# the first elastic modulus varies
-	j.add_constant_parameter(val = default_E1_val,
-		key = "E1",
-		xml = None,
-		units = 'MPa',
-		description = "emod_1",
-		related = False)
-	# the second elastic modulus varies
-	j.add_constant_parameter(val = default_E2_val,
-		key = "E2",
-		xml = None,
-		units = 'MPa',
-		description = "emod_2",
-		related = False)
-	# the second viscosity varies
-	j.add_constant_parameter(val = default_n2_val,
-		key = "n2",
-		xml = None,
-		units = 'MPa * seconds',
-		description = "viscocity_2",
-		related = False)
+	# j.add_constant_parameter(val = default_E1_val,
+	# 	key = "E1",
+	# 	xml = None,
+	# 	units = 'MPa',
+	# 	description = "emod_1",
+	# 	related = False)
+	# # the second elastic modulus varies
+	# j.add_constant_parameter(val = default_E2_val,
+	# 	key = "E2",
+	# 	xml = None,
+	# 	units = 'MPa',
+	# 	description = "emod_2",
+	# 	related = False)
+	# # the second viscosity varies
+	# j.add_constant_parameter(val = default_n2_val,
+	# 	key = "n2",
+	# 	xml = None,
+	# 	units = 'MPa * seconds',
+	# 	description = "viscocity_2",
+	# 	related = False)
 
 	# establish relationships between the each the viscoelastic constants and model parameters
-	j.add_constant_parameter(val = 'E1', key = 'G', xml = "Material/material[@id='1']/elastic/E", units = "MPa", description = "bulk_modulus", related = True)
-	j.add_constant_parameter(val = "E2 / E1", key = 'g1', xml = "Material/material[@id='1']/g1", units = None, description = "gamma_1", related = True)
-	j.add_constant_parameter(val = "n2 / E2", key = 't1', xml = "Material/material[@id='1']/t1", units = 'seconds', description = "tau_1", related = True)
+	if 'k' in sys.argv:
+		# vary the bulk modulus
+		j.add_variable_parameter(minval = 0.1,
+			maxval = 100.,
+			nval = 5,
+			log = True,
+			key = 'k',
+			xml = "Material/material[@id='1']/elastic/E",
+			units = "MPa",
+			description = "bulk_modulus")
+	else:
+		# the bulk modulus is constant, use the default value
+		j.add_constant_parameter(val = default_bulk,
+			key = 'k',
+			xml = "Material/material[@id='1']/elastic/E",
+			units = "MPa",
+			description = "bulk_modulus")
+
+	if 'g1' in sys.argv:
+		# vary the first relaxation modulus
+		j.add_variable_parameter(minval = 0.1,
+			maxval = 100.,
+			nval = 5,
+			log = True,
+			key = 'g',
+			xml = "Material/material[@id='1']/g1",
+			units = None,
+			description = "gamma_1")
+	else:
+		# the first relaxation moudlus is constant, use the default value
+		j.add_constant_parameter(val = default_g1_val,
+			key = 'g',
+			xml = "Material/material[@id='1']/g1",
+			units = None,
+			description = "gamma_1")
+
+	if 't1' in sys.argv:
+		print("Varying the first timescale")
+		# vary the first time constant
+		j.add_variable_parameter(minval = 1.,
+			maxval = 1000.,
+			nval = 5,
+			log = True,
+			key = 't',
+			xml = "Material/material[@id='1']/t1",
+			units = 'seconds',
+			description = "tau_1")
+	else:
+		# the first time constant is constant, use the default value
+		j.add_constant_parameter(val = default_t1_val,
+			key = 't',
+			xml = "Material/material[@id='1']/t1",
+			units = 'seconds',
+			description = "tau_1")
 
 	# create the frequency sweep
 	## TODO :: change to 'add_sweep'

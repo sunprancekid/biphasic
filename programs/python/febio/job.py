@@ -290,8 +290,32 @@ class Job (object):
                         sid.append("{0}{1}".format(c, i))
                         path.append("job/{0}{1}/".format(c, i))
                 else:
-                    print("TODO :: Job.generate_parameters() :: implement 'generate_parameters' for multiple non-consants.")
-                    exit()
+                    # update n, sid, and path
+                    # n is the new total number of parameters
+                    n = list(range(1, n_parm_total + 1))
+                    sidn = [] # new sid list
+                    pathn = [] # new path list
+                    for i in range(len(sid)):
+                        for j in range(n_parm):
+                            sidn.append("{0}{1}{2}".format(sid[i],c,j))
+                            pathn.append("{0}{1}{2}/".format(path[i],c,j))
+                    # replace the old list with the new list
+                    sid = sidn
+                    path = pathn
+                    # update the previous nonconstant parameters
+                    for k in list(noncon_dict.keys()):
+                        kn = [] # new list for key
+                        for i in noncon_dict[k]:
+                            for j in range(n_parm):
+                                kn.append(i)
+                        # print old list with new list
+                        noncon_dict[k] = kn
+                    # add the new non-constant parameter to the dict
+                    v = []
+                    for i in range(int(n_parm_total / n_parm)):
+                        for j in vals:
+                            v.append(j)
+                    noncon_dict.update({c: v})
 
             # update constant parameters
             if len(con_dict) > 0:
