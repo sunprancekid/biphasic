@@ -127,14 +127,14 @@ if not j.has_config():
 			maxval = 100.,
 			nval = 5,
 			log = True,
-			key = 'k',
+			key = 'E',
 			xml = "Material/material[@id='1']/elastic/E",
 			units = "MPa",
 			description = "bulk_modulus")
 	else:
 		# the bulk modulus is constant, use the default value
 		j.add_constant_parameter(val = default_bulk,
-			key = 'k',
+			key = 'E',
 			xml = "Material/material[@id='1']/elastic/E",
 			units = "MPa",
 			description = "bulk_modulus")
@@ -145,14 +145,14 @@ if not j.has_config():
 			maxval = 100.,
 			nval = 5,
 			log = True,
-			key = 'g',
+			key = 'gamma',
 			xml = "Material/material[@id='1']/g1",
 			units = None,
 			description = "gamma_1")
 	else:
 		# the first relaxation moudlus is constant, use the default value
 		j.add_constant_parameter(val = default_g1_val,
-			key = 'g',
+			key = 'gamma',
 			xml = "Material/material[@id='1']/g1",
 			units = None,
 			description = "gamma_1")
@@ -164,14 +164,14 @@ if not j.has_config():
 			maxval = 1000.,
 			nval = 5,
 			log = True,
-			key = 't',
+			key = 'tau',
 			xml = "Material/material[@id='1']/t1",
 			units = 'seconds',
 			description = "tau_1")
 	else:
 		# the first time constant is constant, use the default value
 		j.add_constant_parameter(val = default_t1_val,
-			key = 't',
+			key = 'tau',
 			xml = "Material/material[@id='1']/t1",
 			units = 'seconds',
 			description = "tau_1")

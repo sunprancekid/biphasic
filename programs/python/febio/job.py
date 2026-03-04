@@ -13,6 +13,9 @@
 import os, sys, math
 import pandas as pd
 # local
+from febio.simulation import Simulation
+from plot.figure import Figure
+from plot.plot import gen_plot
 from util.smoothie import log2lin, lin2log
 
 ## PARAMETERS
@@ -132,6 +135,46 @@ class Job (object):
         else:
             self.df_parm = None
 
+    ## SIMULATION ##
+
+    def has_simulation (self, n):
+        """ determines if simulation number exists in job.
+
+        Parameters:
+        -----------
+        n : int
+            integer corresponding to simulation in parameter file.
+
+        Returns:
+        --------
+        bool
+            'True' if Job has Simulation, else 'False'
+        """
+        if self.has_parameters():
+            return (n in self.df_parm['n'].tolist())
+        else:
+            return False
+
+    def get_simulation (self, n):
+        """ returns Simulation corrseponding to integer.
+
+        Parameters:
+        -----------
+        n : int
+            integer specifiying simulation in parameter file.
+
+        Returns:
+        --------
+        Simulation
+            simulation object corresponding to integer.
+        """
+        if self.has_simulation(n):
+            return Simulation(self.jd, self.jn, n)
+        else:
+            return None
+
+    ## CONFIG ##
+
     def has_config(self):
         """ check if config file exists in job directory.
 
@@ -185,6 +228,8 @@ class Job (object):
         else:
             print("ERROR :: Job.save_config() :: Config file '{0}' already exists. Unable to write without 'overwrite'.".format(config_file_format.format(self.jd, self.jn)))
 
+    ## PARAMETERS ##
+
     def has_parameters (self):
         """ check if the parameter file exists within the job directory.
 
@@ -210,7 +255,7 @@ class Job (object):
         --------
         None
         """
-        pass
+        self.df_parm = pd.read_csv(parameter_file_format.format(self.jd, self.jn))
 
     def generate_parameters (self, overwrite = False):
         """ using config file, generate the job parameters.
@@ -492,6 +537,8 @@ class Job (object):
                 config_header[11]: 'na'}
         self.df_config.loc[len(self.df_config.index)] = parm
 
+    ## SCALING ANALYSIS ##
+
     def hysteresis_scaling(self, show = True, save = False):
         """ determing the scaling of hysteresis with respect to non-constant parameters.
 
@@ -503,6 +550,46 @@ class Job (object):
         --------
         None
         """
+        # determine constant and non-constant parameters
+        noncon_col = []
+        noncon_dict = {}
+        con_col = []
+        for idx, row in self.df_config.iterrows():
+            if row['constant'] == 1:
+                con_col.append(row['key'])
+            else:
+                noncon_col.append(row['key'])
+                noncon_dict.update({row['key']: []})
+
+        # get the hystresis values for each simulation, create dataframe
+        # df = pd.DataFrame(index = self.get_sim_num(), column = ['id', 'T', 'f'] + noncon_col + )
+        hys = []
+        for idx, row in self.df_parm.iterrows():
+            # open the simulation
+            s = Simulation(self.jd, self.jn, row['n'])
+            # get the hysteresis data
+            h = s.parse_hysteresis_work()
+            # append the second to last value
+            hys.append(h[-2])
+            # append nonconstant value
+            for k in list(noncon_dict.keys()):
+                noncon_dict[k].append(row[k])
+        # for each non-constant column which is not 'OT', plot the frequency data
+        df = pd.DataFrame.from_dict(noncon_dict | {'h': hys})
+        for k in noncon_col:
+            if k != 'OT':
+                fig = Figure()
+                fig.load_data(df, xcol = 'OT', ycol = 'h', icol = k)
+                fig.add_format("${0}$ ".format(k) + "= {:.1e}")
+                fig.set_xaxis_label("Cycle Period (s))")
+                fig.set_yaxis_label("Energy Dissipated (J)")
+                fig.set_xaxis_scale(log = True)
+                # fig.set_yaxis_scale(log = True)
+                # fig.set_saveas(savedir = savedir, filename = 'sweep')
+                gen_plot(fig, show = show, save = False)
+
+
+        # plot non-constant parameters against frequency
         pass
 
 ## ARGUMENTS
