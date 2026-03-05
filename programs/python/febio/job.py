@@ -16,6 +16,7 @@ import pandas as pd
 from febio.simulation import Simulation
 from plot.figure import Figure
 from plot.plot import gen_plot
+from plot.fit import Line, fit_line
 from util.smoothie import log2lin, lin2log
 
 ## PARAMETERS
@@ -539,12 +540,17 @@ class Job (object):
 
     ## SCALING ANALYSIS ##
 
-    def hysteresis_scaling(self, show = True, save = False):
+    def hysteresis_scaling(self, fit = True, show = True, save = False):
         """ determing the scaling of hysteresis with respect to non-constant parameters.
 
         Parameters:
         -----------
-        None
+        fit : bool
+            boolean determines if scaling should be fit to power law
+        show : bool
+            boolean determines if graphs are displayed
+        save : bool
+            boolean determines if graphs are saved
 
         Returns:
         --------
@@ -578,6 +584,9 @@ class Job (object):
         df = pd.DataFrame.from_dict(noncon_dict | {'h': hys})
         for k in noncon_col:
             if k != 'OT':
+                # establish save directory if saving
+                if save:
+                    savedir = "{0}/{1}/results/{2}/".format(self.jd, self.jn, k)
                 fig = Figure()
                 fig.load_data(df, xcol = 'OT', ycol = 'h', icol = k)
                 fig.add_format("${0}$ ".format(k) + "= {:.1e}")
@@ -585,9 +594,62 @@ class Job (object):
                 fig.set_yaxis_label("Energy Dissipated (J)")
                 fig.set_xaxis_scale(log = True)
                 # fig.set_yaxis_scale(log = True)
-                # fig.set_saveas(savedir = savedir, filename = 'sweep')
-                gen_plot(fig, show = show, save = False)
-
+                if save:
+                    fig.set_saveas(savedir = savedir, filename = 'sweep')
+                gen_plot(fig, show = show, save = save)
+                # find the maximum for each hysteresis curve
+                n = 0
+                df_scale = pd.DataFrame(columns = [k, 'T', 'A'])
+                for i in df[k].unique():
+                    # get the data set corresponding to the parameter
+                    df_temp = df[df[k] == i].reset_index()
+                    # find the maximum amplitude and the corresponding period
+                    # here, is there a better way to identify the maximum (with curve fitting)
+                    mx_idx = df_temp.index[df_temp['h'] == df_temp['h'].max()].to_list()
+                    # if the max index is the first or the last
+                    if (mx_idx[0] == 0) or (mx_idx[0] == len(df_temp)): continue
+                    # append to the data frame and accumulate the next value
+                    df_scale.loc[n] = [i, df_temp.iloc[mx_idx[0]]['OT'], df_temp.iloc[mx_idx[0]]['h'] ]
+                    n = n+1
+                # establish axis string describing the parameter
+                df_key = self.df_config.loc[self.df_config['key'] == k].reset_index()
+                xax_str = "{0} (${1}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
+                # plot the resonant period against the model parameter
+                if fit:
+                    fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['T'].to_list(), log = True)
+                    fit_parms = fit_power.get_parameters()
+                    fit_power.set_label("${0} \\propto T^{{{1:.02f}}}$".format(k, fit_parms[0]))
+                    fit_power.set_linecolor("k")
+                    fit_power.set_linestyle(":")
+                else:
+                    fit_power = None
+                fig = Figure()
+                fig.load_data(df_scale, xcol = k, ycol = 'T')
+                fig.set_xaxis_label(xax_str)
+                fig.set_yaxis_label('Resontant Period ($s$)')
+                fig.set_xaxis_scale(log = True)
+                fig.set_yaxis_scale(log = True)
+                if save:
+                    fig.set_saveas(savedir = savedir, filename = 'Tv{0}'.format(k))
+                gen_plot(fig, linewidth = 0, markersize = 8, show = show, save = save, fit = fit_power)
+                # plot the resonant amplitude against the model parameter
+                if fit:
+                    fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['A'].to_list(), log = True)
+                    fit_parms = fit_power.get_parameters()
+                    fit_power.set_label("${0} \\propto A^{{{1:.02f}}}$".format(k, fit_parms[0]))
+                    fit_power.set_linecolor("k")
+                    fit_power.set_linestyle(":")
+                else:
+                    fit_power = None
+                fig = Figure()
+                fig.load_data(df_scale, xcol = k, ycol = 'A')
+                fig.set_xaxis_label(xax_str)
+                fig.set_yaxis_label('Resontant Amplitude ($J$)')
+                fig.set_xaxis_scale(log = True)
+                fig.set_yaxis_scale(log = True)
+                if save:
+                    fig.set_saveas(savedir = savedir, filename = 'Av{0}'.format(k))
+                gen_plot(fig, linewidth = 0, markersize = 8, show = show, save = save, fit = fit_power)
 
         # plot non-constant parameters against frequency
         pass

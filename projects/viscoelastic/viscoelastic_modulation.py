@@ -34,7 +34,7 @@ default_E1_val = 1.129
 # default second elastic modulus
 default_E2_val = 7.014
 # default second viscosity
-default_n2_val = 3355
+default_n2_val = 335.5
 # default bulk modulus
 default_bulk = default_E1_val
 # default first relaxation modulus constant
@@ -142,7 +142,7 @@ if not j.has_config():
 	if 'g1' in sys.argv:
 		# vary the first relaxation modulus
 		j.add_variable_parameter(minval = 0.1,
-			maxval = 100.,
+			maxval = 1000.,
 			nval = 5,
 			log = True,
 			key = 'gamma',
@@ -160,7 +160,7 @@ if not j.has_config():
 	if 't1' in sys.argv:
 		print("Varying the first timescale")
 		# vary the first time constant
-		j.add_variable_parameter(minval = 1.,
+		j.add_variable_parameter(minval = 10.,
 			maxval = 1000.,
 			nval = 5,
 			log = True,
