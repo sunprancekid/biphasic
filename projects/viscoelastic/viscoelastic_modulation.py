@@ -178,8 +178,8 @@ if not j.has_config():
 
 	# create the frequency sweep
 	## TODO :: change to 'add_sweep'
-	j.add_variable_parameter (minval = 100.,
-		maxval = 1000000.,
+	j.add_variable_parameter (minval = 10.,
+		maxval = 100000.,
 		nval = 40,
 		log = True,
 		key = "OT",
