@@ -206,7 +206,7 @@ send () {
     if [ $BOOL_VERBOSE -eq 1 ]; then
         display_verbose "sending files from ${LOCAL_PATH} to ${REMOTE_ADDRESS}:${REMOTE_PATH}"
     fi 
-    echo rsync $RSYNC_FLAGS $LOCAL_PATH ${REMOTE_ADDRESS}:${REMOTE_PATH}
+    rsync $RSYNC_FLAGS $LOCAL_PATH ${REMOTE_ADDRESS}:${REMOTE_PATH}
      
 }
 

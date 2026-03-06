@@ -613,7 +613,7 @@ class Job (object):
                     n = n+1
                 # establish axis string describing the parameter
                 df_key = self.df_config.loc[self.df_config['key'] == k].reset_index()
-                xax_str = "{0} (${1}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
+                xax_str = "{1} (${0}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
                 # plot the resonant period against the model parameter
                 if fit:
                     fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['T'].to_list(), log = True)
