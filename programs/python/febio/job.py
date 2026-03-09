@@ -552,13 +552,26 @@ class Job (object):
 
     ## SCALING ANALYSIS ##
 
-    def hysteresis_scaling(self, period = False, fit = True, show = True, save = False):
+    def show_hysteresis(self, n = None, show = True, save = False):
+        """ show hystersis loops for multiple simulations in job.
+
+        Parameters:
+        -----------
+        n : int or List[int]
+            one or more integers corresponding to simulaitons in job.
+        show : bool
+        """
+        pass
+
+    def hysteresis_scaling(self, period = False, recalculate = False, fit = True, show = True, save = False):
         """ determing the scaling of hysteresis with respect to non-constant parameters.
 
         Parameters:
         -----------
         period : bool
             if 'True', plot scaling as a function of period rather than frequency.
+        recalculate : bool
+            recalculate hysteresis even if files exist
         fit : bool
             boolean determines if scaling should be fit to power law
         show : bool
@@ -589,7 +602,7 @@ class Job (object):
             # open the simulation
             s = Simulation(self.jd, self.jn, row['n'])
             # get the hysteresis data
-            h = s.parse_hysteresis_work(norm = True)
+            h = s.parse_hysteresis_work(norm = True, recalculate)
             # append the second to last value
             hys.append(h[-2])
             # append frequency

@@ -24,9 +24,9 @@ n_cycles = 11
 # number of steps per cycle
 n_steps = 60
 # loading depth (mm)
-loading_depth = 0.025
+loading_depth = 0.005
 # oscillation amplitude (mm)
-oscillation_amplitude = 0.01
+oscillation_amplitude = 0.001
 # relaxation time (s)
 relaxation_time = 10000
 # default first elastic modulus

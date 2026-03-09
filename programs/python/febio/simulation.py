@@ -395,15 +395,16 @@ class Simulation (object):
         # return data
         return time, displacement, force
 
-    def parse_hysteresis_work (self, show = False, norm = False):
+    def parse_hysteresis_work (self, show = False):
+    def parse_hysteresis_work (self, recalculate = False, norm = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
 
         Parameters:
         -----------
-        show : bool
-            display graph showing the hystersis performed by each cycle in the loop
         norm : bool
             normalize hysteresis values by the pre-stress work
+        recalculate : bool
+            recalculate hysteresis even if files already exist
 
         Returns:
         --------
@@ -435,6 +436,8 @@ class Simulation (object):
             relax_time = size * steps
 
         # get the time and work from the outfile
+        if recalculate:
+            self.parse_logfile()
         time = self.get_outfile()['t'].to_list()
         work = self.get_outfile()['dw_fdx'].to_list()
         # drop the relaxation time from the work and time
