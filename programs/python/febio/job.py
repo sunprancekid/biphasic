@@ -610,6 +610,7 @@ class Job (object):
             # append nonconstant value
             for k in list(noncon_dict.keys()):
                 noncon_dict[k].append(row[k])
+
         # for each non-constant column which is not 'OT', plot the frequency data
         df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
         for k in noncon_col:

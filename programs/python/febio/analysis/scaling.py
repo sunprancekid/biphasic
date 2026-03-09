@@ -31,7 +31,31 @@ width_base_val = 0.125
 amp_base_val = 0.05
 
 ## METHODS
-# none
+normalize ():
+	""" normalize response by assuming scaling values of certain parameters.
+
+	Arguments:
+	----------
+	None
+
+	Returns:
+	--------
+	None
+
+	"""
+
+scale ():
+	""" determine scaling of resonant response withrespect to model parameters.
+
+	Arguments:
+	----------
+	saveto : str
+		path to directory to save images and data
+
+	Returns:
+	--------
+	None
+	"""
 
 ## ARGUMENTS
 # first argument: path to job directory
