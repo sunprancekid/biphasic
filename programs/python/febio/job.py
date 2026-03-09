@@ -97,6 +97,18 @@ class Job (object):
 
     """ handles simulations en batch.
 
+    ## TODO :: job handles creating directories and generates feb files.
+    ## TODO :: somehow isolates model parameters from osilation and loading.
+        - LD is a special parameter set that can be added via methods
+        - OT is a special parameter set that can be added via methods
+        - when generating parameters, LD and OT are created last
+        - when creating directories, sub-jobs are created in which constant parameters 
+            are added (variable in main job) and only parameters dealing with oscillation are
+            varied
+        - main job has special config files which point to individual sweeps
+    ## TODO :: add parameters to existing jobs without having to re-run everything
+    ## TODO :: re-calculate certain values upon request (e.g. if re-running)
+
     Attributes:
     -----------
     None
@@ -540,11 +552,13 @@ class Job (object):
 
     ## SCALING ANALYSIS ##
 
-    def hysteresis_scaling(self, fit = True, show = True, save = False):
+    def hysteresis_scaling(self, period = False, fit = True, show = True, save = False):
         """ determing the scaling of hysteresis with respect to non-constant parameters.
 
         Parameters:
         -----------
+        period : bool
+            if 'True', plot scaling as a function of period rather than frequency.
         fit : bool
             boolean determines if scaling should be fit to power law
         show : bool
@@ -570,27 +584,36 @@ class Job (object):
         # get the hystresis values for each simulation, create dataframe
         # df = pd.DataFrame(index = self.get_sim_num(), column = ['id', 'T', 'f'] + noncon_col + )
         hys = []
+        f = []
         for idx, row in self.df_parm.iterrows():
             # open the simulation
             s = Simulation(self.jd, self.jn, row['n'])
             # get the hysteresis data
-            h = s.parse_hysteresis_work()
+            h = s.parse_hysteresis_work(norm = True)
             # append the second to last value
             hys.append(h[-2])
+            # append frequency
+            f.append(2. * math.pi / row['OT'])
             # append nonconstant value
             for k in list(noncon_dict.keys()):
                 noncon_dict[k].append(row[k])
         # for each non-constant column which is not 'OT', plot the frequency data
-        df = pd.DataFrame.from_dict(noncon_dict | {'h': hys})
+        df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
         for k in noncon_col:
             if k != 'OT':
                 # establish save directory if saving
+                if not period:
+                    xcol = 'f'
+                    xaxis = "Cyclic Frequency ($Hz, 2 \\pi \\cdot T^{{-1}}$)"
+                else:
+                    xcol = 'OT'
+                    xaxis = "Cyclic Period ($seoncds, 2 \\pi f$)"
                 if save:
                     savedir = "{0}/{1}/results/{2}/".format(self.jd, self.jn, k)
                 fig = Figure()
-                fig.load_data(df, xcol = 'OT', ycol = 'h', icol = k)
+                fig.load_data(df, xcol = xcol, ycol = 'h', icol = k)
                 fig.add_format("${0}$ ".format(k) + "= {:.1e}")
-                fig.set_xaxis_label("Cycle Period (s))")
+                fig.set_xaxis_label(xaxis)
                 fig.set_yaxis_label("Energy Dissipated (J)")
                 fig.set_xaxis_scale(log = True)
                 # fig.set_yaxis_scale(log = True)
@@ -609,11 +632,15 @@ class Job (object):
                     # if the max index is the first or the last
                     if (mx_idx[0] == 0) or (mx_idx[0] == len(df_temp)): continue
                     # append to the data frame and accumulate the next value
-                    df_scale.loc[n] = [i, df_temp.iloc[mx_idx[0]]['OT'], df_temp.iloc[mx_idx[0]]['h'] ]
+                    df_scale.loc[n] = [i, df_temp.iloc[mx_idx[0]][xcol], df_temp.iloc[mx_idx[0]]['h'] ]
                     n = n+1
                 # establish axis string describing the parameter
                 df_key = self.df_config.loc[self.df_config['key'] == k].reset_index()
                 xax_str = "{1} (${0}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
+                if not period:
+                    yax_str_time = "Resontant Cyclic Frequency ($Hz, 2 \\pi \\cdot T^{{-1}}$)"
+                else:
+                    yax_str_time = "Resontant Cyclic Period ($seconds, 2 \\pi f$)"
                 # plot the resonant period against the model parameter
                 if fit:
                     fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['T'].to_list(), log = True)
@@ -626,7 +653,7 @@ class Job (object):
                 fig = Figure()
                 fig.load_data(df_scale, xcol = k, ycol = 'T')
                 fig.set_xaxis_label(xax_str)
-                fig.set_yaxis_label('Resontant Period ($s$)')
+                fig.set_yaxis_label(yax_str_time)
                 fig.set_xaxis_scale(log = True)
                 fig.set_yaxis_scale(log = True)
                 if save:

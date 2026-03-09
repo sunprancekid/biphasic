@@ -395,13 +395,15 @@ class Simulation (object):
         # return data
         return time, displacement, force
 
-    def parse_hysteresis_work (self, show = False):
+    def parse_hysteresis_work (self, show = False, norm = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
 
         Parameters:
         -----------
         show : bool
             display graph showing the hystersis performed by each cycle in the loop
+        norm : bool
+            normalize hysteresis values by the pre-stress work
 
         Returns:
         --------
@@ -447,6 +449,10 @@ class Simulation (object):
 
         ## calculate work, return
         hys = calculate_hysteresis_work(period, time, work)
+        if norm:
+            psw = self.parse_prestress_work()
+            for i in range(len(hys)):
+                hys[i] = hys[i] / psw
         return (hys)
 
     def show_hysteresis (self, cycle = None, show = True, save = False, savedir = None, filename = None):
