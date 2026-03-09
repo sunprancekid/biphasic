@@ -14,6 +14,7 @@ import os, sys, math
 import pandas as pd
 # local
 from febio.simulation import Simulation
+from febio.scaling import scale
 from plot.figure import Figure
 from plot.plot import gen_plot
 from plot.fit import Line, fit_line
@@ -624,6 +625,9 @@ class Job (object):
                     xaxis = "Cyclic Period ($seoncds, 2 \\pi f$)"
                 if save:
                     savedir = "{0}/{1}/results/{2}/".format(self.jd, self.jn, k)
+                else:
+                    savedir = None
+                # return scale (df, k, fit = fit, save_to = savedir)
                 fig = Figure()
                 fig.load_data(df, xcol = xcol, ycol = 'h', icol = k)
                 fig.add_format("${0}$ ".format(k) + "= {:.1e}")

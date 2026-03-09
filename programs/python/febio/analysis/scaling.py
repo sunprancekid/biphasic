@@ -43,19 +43,36 @@ normalize ():
 	None
 
 	"""
+	pass
 
-scale ():
+scale (sum_df = None, scale_key = None, fit = False, norm = False, norm_dict = None, save_to = None):
 	""" determine scaling of resonant response withrespect to model parameters.
 
 	Arguments:
 	----------
-	saveto : str
+	sum_df : DataFrame
+		contains model parameters and property data.
+	scale_key : str
+		one key cooresponding to one parameter in 'sum_df' which scaling analysis is performed for
+	fit : bool
+		fit power to propery time- and amplitude-scaling against model parameters.
+	norm : bool
+		normalize property time- and amplitude data by scaling fit or norm_dict integers.
+	norm_dict : Dict[int]
+		maps keys to scaling integers when normalizing property data.
+	save_to : str
 		path to directory to save images and data
 
 	Returns:
 	--------
 	None
 	"""
+	# check the scale key
+	# check that the scale key is in the scale_df
+	# plot the sweep for the unique model parameters
+	# plot scaling (and fitting, if requested)
+	# plot the normalization (if requested)
+	return None
 
 ## ARGUMENTS
 # first argument: path to job directory
