@@ -14,7 +14,7 @@ import os, sys, math
 import pandas as pd
 # local
 from febio.simulation import Simulation
-from febio.scaling import scale
+from febio.analysis.scaling import scale
 from plot.figure import Figure
 from plot.plot import gen_plot
 from plot.fit import Line, fit_line
@@ -556,13 +556,46 @@ class Job (object):
     def show_hysteresis(self, n = None, show = True, save = False):
         """ show hystersis loops for multiple simulations in job.
 
-        Parameters:
+        Arguments:
         -----------
         n : int or List[int]
             one or more integers corresponding to simulaitons in job.
         show : bool
+            display figure
+        save : bool
+            save figure to results directory
+
+        Returns:
+        --------
+        None
         """
-        pass
+        # if n is a single integer, make it an integer list
+        if isinstance(n, int):
+            n = [n]
+
+        # initialize the figure
+        fig = Figure()
+        # loop through each item in the list
+        for i in n:
+            # check that i is an integer
+            if not isinstance(i, int):
+                print("ERROR :: Job.show_hysteresis() :: Unable to parse simulaiton '{0}' from Job, not an integer.".format(i))
+            # check that i is a simulation in the job
+            if not self.has_simulation(i):
+                print("ERROR :: Job.show_hysteresis() :: Simulation '{0}' does not exist in job.".format(i))
+
+            # get simulation, get hysteresis data, append to Figure
+            s = self.get_simulation(i)
+            d, f = s.show_hysteresis(show = False)
+            fig.append_lists(xlist = d, ylist = f, label = s.get_simid())
+
+        # plot the figure
+        fig.set_xaxis_label("Displacement (mm)")
+        fig.set_yaxis_label("Force (N)")
+        if save:
+            fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'simulation-hysteresis')
+            fig.save_data()
+        gen_plot(fig, show = show, save = save)
 
     def hysteresis_scaling(self, period = False, recalculate = False, fit = True, show = True, save = False):
         """ determing the scaling of hysteresis with respect to non-constant parameters.
@@ -603,7 +636,7 @@ class Job (object):
             # open the simulation
             s = Simulation(self.jd, self.jn, row['n'])
             # get the hysteresis data
-            h = s.parse_hysteresis_work(norm = True, recalculate)
+            h = s.parse_hysteresis_work(recalculate, norm = False)
             # append the second to last value
             hys.append(h[-2])
             # append frequency

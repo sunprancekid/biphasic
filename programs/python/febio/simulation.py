@@ -78,6 +78,19 @@ class Simulation (object):
         # open feb file, extract feb information (if needed)
         # check febio.out files, xplt files ...
 
+    def get_simid (self):
+        """ returns the id assigned to the simulation.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        return self.parm['id']
+
     def has_key (self, k):
         """ check if key exists as job parameter.
 
@@ -395,7 +408,6 @@ class Simulation (object):
         # return data
         return time, displacement, force
 
-    def parse_hysteresis_work (self, show = False):
     def parse_hysteresis_work (self, recalculate = False, norm = False):
         """ from the outfile, determing the hyesteresis performed during each cycle.
 
@@ -521,13 +533,14 @@ class Simulation (object):
         ## TODO :: if cycle_list is specified, use period to find the subset of cyclic loading data
 
         ## plot the data
-        df = pd.DataFrame.from_dict({'disp': disp, 'force': force})
-        fig = Figure()
-        fig.load_data(df, xcol = 'disp', ycol = 'force')
-        fig.set_xaxis_label("Displacement (mm)")
-        fig.set_yaxis_label("Force (N)")
-        fig.set_subtitle_label("T = {0:.2f}".format(period))
-        gen_plot(fig)
+        if show:
+            df = pd.DataFrame.from_dict({'disp': disp, 'force': force})
+            fig = Figure()
+            fig.load_data(df, xcol = 'disp', ycol = 'force')
+            fig.set_xaxis_label("Displacement (mm)")
+            fig.set_yaxis_label("Force (N)")
+            fig.set_subtitle_label("T = {0:.2f}".format(period))
+            gen_plot(fig)
 
         return disp, force
 
