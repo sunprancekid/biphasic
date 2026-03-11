@@ -29,6 +29,8 @@ config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 's
 parameter_file_format = "{0}/{1}/{1}.parm.csv"
 # header used for parameter file
 parameter_header = ['n', 'id', 'path']
+# contains assumed scaling parameters for viscoelastic model
+viscoelastic_normalization_dict = {'E': [1, 0], 'gamma': [1, 0], 'tau': [0, 1]}
 
 ## METHODS
 def gen_linear_scale_range (n, min_val, max_val):
@@ -615,7 +617,7 @@ class Job (object):
 
         Returns:
         --------
-        None
+
         """
         # determine constant and non-constant parameters
         noncon_col = []
@@ -731,6 +733,133 @@ class Job (object):
 
         # plot non-constant parameters against frequency
         pass
+
+    def viscoelastic_normalization (self, norm_dict = viscoelastic_normalization_dict, period = False, recalculate = False, show = True, save = False):
+        """ normalize a series of frequency sweeps by the assumed scaling parameters for viscoelasticity.
+
+        Parameters:
+        -----------
+        norm_dict : Dict[int] (default is 'viscoelastic_normalization_dict')
+            contains the assumed scaling parameters.
+        period : bool (default is 'False')
+            determines if scaling occuers with respect to period or frequency
+        recalculate : bool (default is 'False')
+            recalculate hysteresis before normalization
+        show : bool (default is 'True')
+            display normalization plots
+        save : bool (default is 'False')
+            save normalization plots to 'results' in job dictionary
+
+        Returns:
+        --------
+        DataFrame
+            parameters plus an additional column 'norm' that conatins normalized hysteresis
+        """
+        # determine constant and non-constant parameters
+        noncon_col = []
+        noncon_dict = {}
+        con_col = []
+        for idx, row in self.df_config.iterrows():
+            if row['constant'] == 1:
+                con_col.append(row['key'])
+            else:
+                noncon_col.append(row['key'])
+                noncon_dict.update({row['key']: []})
+
+        # get the hystresis values for each simulation, create dataframe
+        hys = []
+        f = []
+        for idx, row in self.df_parm.iterrows():
+            # open the simulation
+            s = Simulation(self.jd, self.jn, row['n'])
+            # get the hysteresis data
+            h = s.parse_hysteresis_work(recalculate, norm = False)
+            # append the second to last value
+            hys.append(h[-2])
+            # append frequency
+            f.append(2. * math.pi / row['OT'])
+            # append nonconstant value
+            for k in list(noncon_dict.keys()):
+                noncon_dict[k].append(row[k])
+
+        ## NORMALIZE
+        # determine the normalization values amplitude and timeseries data
+        A_norm = 1.
+        T_norm = 1.
+        f_norm = 1.
+
+        # normalize the amplitude and time-series data
+        df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
+        df_norm = pd.DataFrame(columns = list(df.columns.values))
+        for index, row in df.iterrows():
+            row_norm = [] # new row for df_norm
+            # initial normalization values
+            A_norm = 1.
+            T_norm = 1.
+            f_norm = 1.
+            for c in list(df.columns.values):
+                # the order of the columns in the dictionary should be parameters, then properties
+                if c in list(norm_dict.keys()):
+                    A_norm = A_norm * pow(row[c],  norm_dict[c][0])
+                    T_norm = T_norm * pow(row[c],  norm_dict[c][1])
+                    f_norm = f_norm * pow(row[c], -norm_dict[c][1])
+                    row_norm.append(row[c])
+                elif c == 'OT':
+                    row_norm.append(row['OT'] / T_norm)
+                elif c == 'f':
+                    row_norm.append(row['f'] / f_norm)
+                elif c == 'h':
+                    row_norm.append(row['h'] / A_norm)
+                else:
+                    row_norm.append(row[c])
+            # add to df_norm
+            df_norm.loc[index] = row_norm
+
+        ## PLOT
+        # normalization strings are used to indicated the normalization in the figure axes
+        A_norm_str = ""
+        f_norm_str = ""
+        T_norm_str = ""
+        for c in list(df.columns.values):
+            if c in list(norm_dict.keys()):
+                A_norm_str += r"{0}".format(c) + r"^{{" + r"{0}".format(norm_dict[c][0]) + r"}}"
+                T_norm_str += "{0}^{{".format(c) + "{0}".format(norm_dict[c][1]) + "}}"
+                f_norm_str += r"{0}".format(c) + r"^{{" + r"{0}".format(-norm_dict[c][1]) + r"}}"
+
+        # set subtitle
+        subtitle = ""
+        # loop through constant columns,
+        for c in con_col:
+            # if any exist in the normalization dictionary
+            if c in list(norm_dict.keys()):
+                if subtitle: # here, empty strings are equivalent to boolean False
+                    subtitle += ", "
+                # get the constant value
+                val = self.get_simulation(1).get_key_value(c)
+                subtitle += "{0} = {1:.1e}".format(c, val)
+
+        # loop through non-constant columns, plot
+        for k in noncon_col:
+            if k != 'OT':
+                # plot, return to user
+                fig = Figure()
+                ycol = "Normalized Energy Loss (J, $W^{{*}} =  W \\cdot " + A_norm_str + "$)"
+                if period:
+                    xcol = 'OT'
+                    xcol_label = "Normalized Oscillation Period (s, $T$)"
+                else:
+                    xcol = 'f'
+                    xcol_label = "Normalized Oscilation Frequency (Hz, $f^{{*}} = f \\cdot " + f_norm_str + "$)"
+                fig.append_df(df_norm, xcol = xcol, ycol = 'h', icol = k)
+                fig.set_axis_label('x', l = xcol_label)
+                fig.set_axis_label('y', l = ycol)
+                fig.set_axis_scale('x', log = True)
+                # fig.set_axis_scale('y', log = True)
+                fig.set_subtitle_label(subtitle)
+                fig.add_format("{0}".format(k) + " = {:.1e}")
+                if save:
+                    fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = "norm-{0}".format(k))
+                gen_plot(fig, show = show, save = save)
 
 ## ARGUMENTS
 # none
