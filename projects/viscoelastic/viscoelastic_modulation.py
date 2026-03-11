@@ -149,6 +149,26 @@ if not j.has_config():
 			xml = "Material/material[@id='1']/g1",
 			units = None,
 			description = "gamma_1")
+	elif 'g1-lo' is sys.argv:
+		# vary the first relaxation modulus within the low
+		j.add_variable_parameter(minval = 0.001,
+			maxval = 1.,
+			nval = 5,
+			log = True,
+			key = 'gamma',
+			xml = "Material/material[@id='1']/g1",
+			units = None,
+			description = "gamma_1")
+	elif 'g1-hi' is sys.argv:
+		# vary the first relaxation modulus within the low
+		j.add_variable_parameter(minval = 10.,
+			maxval = 10000.,
+			nval = 5,
+			log = True,
+			key = 'gamma',
+			xml = "Material/material[@id='1']/g1",
+			units = None,
+			description = "gamma_1")
 	else:
 		# the first relaxation moudlus is constant, use the default value
 		j.add_constant_parameter(val = default_g1_val,
@@ -179,8 +199,8 @@ if not j.has_config():
 	# create the frequency sweep
 	## TODO :: change to 'add_sweep'
 	j.add_variable_parameter (minval = 10.,
-		maxval = 100000.,
-		nval = 40,
+		maxval = 1000000.,
+		nval = 50,
 		log = True,
 		key = "OT",
 		xml = None,
