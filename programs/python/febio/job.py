@@ -788,6 +788,9 @@ class Job (object):
         T_norm = 1.
         f_norm = 1.
 
+        ## TODO use latex for keys when possible
+        ## TODO add constants to scaling when possible
+
         # normalize the amplitude and time-series data
         df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
         df_norm = pd.DataFrame(columns = list(df.columns.values))
