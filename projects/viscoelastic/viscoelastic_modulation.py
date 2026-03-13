@@ -21,9 +21,9 @@ from febio.feb.model import Model
 # absolute path to remote data
 rmt_dir = "/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # number of oscillation cycles
-n_cycles = 11
+n_cycles = 15
 # number of steps per cycle
-n_steps = 60
+n_steps = 150
 # loading depth (mm), unless otherwise specified
 default_loading_depth = 0.005
 # relaxation time (s), unless otherwise specified
