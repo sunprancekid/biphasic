@@ -289,9 +289,9 @@ def frequency_sweep (job, loading_depth = default_loading_depth, relaxation_time
 		description = 'loading-hold-time',
 		related = False)
 	# add oscillation frequency - variable
-	job.add_variable_parameter (minval = default_period_low,
-		maxval = default_period_high,
-		nval = default_period_n,
+	job.add_variable_parameter (minval = period_low,
+		maxval = period_high,
+		nval = period_n,
 		log = True,
 		key = "OT",
 		xml = None,
