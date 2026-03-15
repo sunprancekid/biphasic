@@ -116,8 +116,8 @@ class Job (object):
     -----------
     None
 
-    Methods
-    -------
+    Methods:
+    --------
     None
     """
 
@@ -790,6 +790,17 @@ class Job (object):
 
         ## TODO use latex for keys when possible
         ## TODO add constants to scaling when possible
+        A_norm_base = 1.
+        T_norm_base = 1.
+        f_norm_base = 1.
+        for k in con_col:
+            if k in list(norm_dict.keys()):
+                # get the constant value
+                val = self.get_simulation(1).get_key_value(k)
+                # append the constant value to the normalization values
+                A_norm_base = A_norm * pow(val,  norm_dict[k][0])
+                T_norm_base = T_norm * pow(val,  norm_dict[k][1])
+                f_norm_base = f_norm * pow(val, -norm_dict[k][1])
 
         # normalize the amplitude and time-series data
         df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
@@ -797,9 +808,9 @@ class Job (object):
         for index, row in df.iterrows():
             row_norm = [] # new row for df_norm
             # initial normalization values
-            A_norm = 1.
-            T_norm = 1.
-            f_norm = 1.
+            A_norm = A_norm_base
+            T_norm = T_norm_base
+            f_norm = f_norm_base
             for c in list(df.columns.values):
                 # the order of the columns in the dictionary should be parameters, then properties
                 if c in list(norm_dict.keys()):
@@ -823,11 +834,17 @@ class Job (object):
         A_norm_str = ""
         f_norm_str = ""
         T_norm_str = ""
-        for c in list(df.columns.values):
+        for c in (list(df.columns.values) + con_col):
             if c in list(norm_dict.keys()):
-                A_norm_str += r"{0}".format(c) + r"^{{" + r"{0}".format(norm_dict[c][0]) + r"}}"
-                T_norm_str += "{0}^{{".format(c) + "{0}".format(norm_dict[c][1]) + "}}"
-                f_norm_str += r"{0}".format(c) + r"^{{" + r"{0}".format(-norm_dict[c][1]) + r"}}"
+                ## NOTE :: r helps regularize strings, avoids parsing issue
+                c_str = c
+                if c_str == "gamma": c_str = "\\gamma"
+                if c_str == "tau": c_str = "\\tau"
+                if norm_dict[c][0] != 0:
+                    A_norm_str += r"{0}".format(c_str) + r"^{{" + r"{0}".format(norm_dict[c][0]) + r"}}"
+                if norm_dict[c][1] != 0:
+                    T_norm_str += r"{0}".format(c_str) + r"^{{" + r"{0}".format(norm_dict[c][1]) + r"}}"
+                    f_norm_str += r"{0}".format(c_str) + r"^{{" + r"{0}".format(-norm_dict[c][1]) + r"}}"
 
         # set subtitle
         subtitle = ""
@@ -839,7 +856,10 @@ class Job (object):
                     subtitle += ", "
                 # get the constant value
                 val = self.get_simulation(1).get_key_value(c)
-                subtitle += "{0} = {1:.1e}".format(c, val)
+                c_str = c
+                if c_str == "gamma": c_str = "$\\gamma$"
+                if c_str == "tau": c_str = "$\\tau$"
+                subtitle += "{0} = {1:.1e}".format(c_str, val)
 
         # loop through non-constant columns, plot
         for k in noncon_col:
@@ -849,7 +869,7 @@ class Job (object):
                 ycol = "Normalized Energy Loss (J, $W^{{*}} =  W \\cdot " + A_norm_str + "$)"
                 if period:
                     xcol = 'OT'
-                    xcol_label = "Normalized Oscillation Period (s, $T$)"
+                    xcol_label = "Normalized Oscillation Period (s, $T^{{*}} = T \\cdot " + T_norm_str + "$)"
                 else:
                     xcol = 'f'
                     xcol_label = "Normalized Oscilation Frequency (Hz, $f^{{*}} = f \\cdot " + f_norm_str + "$)"
@@ -859,7 +879,10 @@ class Job (object):
                 fig.set_axis_scale('x', log = True)
                 # fig.set_axis_scale('y', log = True)
                 fig.set_subtitle_label(subtitle)
-                fig.add_format("{0}".format(k) + " = {:.1e}")
+                k_str = k
+                if k_str == "gamma": k_str = "$\\gamma$"
+                if k_str == "tau": k_str = "$\\tau$"
+                fig.add_format("{0}".format(k_str) + " = {:.1e}")
                 if save:
                     fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = "norm-{0}".format(k))
                 gen_plot(fig, show = show, save = save)
