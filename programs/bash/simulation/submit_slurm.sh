@@ -163,6 +163,7 @@ gen_slurm_script () {
     if [[ $BOOL_XPLT -eq 1 ]]; then
         echo "rm *.xplt" >> $FILEPATH$FILENAME
     fi
+    echo "rm *.feb" >> $FILEPATH$FILENAME
 
 }
 
