@@ -22,6 +22,8 @@ FILENAME="./programs/bash/simulation/run.sh"
 PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # path to script for slurm submission
 SUB_SLURM="./programs/bash/simulation/submit_slurm.sh"
+# generate feb files
+GENERATE="./programs/bash/simulation.sh"
 
 ## HOSTNAME AND FEBIO EXECUTABLE INSTRUCTIONS
 # host name of mpikg lbox
@@ -78,6 +80,7 @@ help () {
     echo -e " -j  << ARG >>\t| MANDATORY: job name."
     # echo -e " -t  << ARG >>\t| OPTIONAL:  transfer job files to another location before execution."
     echo -e " -c  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
+    echo -e " -f  << ARG >>\t| OPTIONAL: specify a FEB file, generate feb file before execution."
     echo -e " -n  << ARG >>\t| OPTIONAL: submit single job corresponding to integer in parameter file."
     echo -e ""
     # exit
@@ -129,7 +132,7 @@ check () {
 
     ## SCRIPT
     # check that the job path exists
-    JOB_PATH=${JOB_PATH}${JOB}/ # update job name
+    JOB_PATH=${DIR}${JOB}/ # update job name
     if [ $BOOL_PATH -eq 0 ]
     then
         # if the job path has not been specified
@@ -173,6 +176,14 @@ check () {
             # if it does not, then jobs cannot be run locally
             display_error "the command '${febio4}' could not be found, jobs cannot be run locally"
             help $NONZEROEXITCODE
+        fi
+    fi
+
+    # if a feb file has been specified, check that it exists
+    if [ $BOOL_FEB -eq 1 ]; then
+        # check that feb file exists
+        if [[ ! -f $FEB_FILE ]]; then
+            display_error "unable to find FEB FILE '${FEB_FILE}' (option -f)"
         fi
     fi
 }
@@ -277,6 +288,10 @@ submit_single () {
         fi
     done
 
+    if [[ $BOOL_FEB -eq 1 ]]; then
+        # generate the feb file, if requested
+        $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $l
+    fi
     # submit the job according the specifications
     submit $l
 }
@@ -293,6 +308,10 @@ submit_batch () {
     ## SCRIPT
     # loop through all lines in parameter file and submit
     for l in $(seq 2 $($PARSE_CSV -f $PARM_FILE -l )); do
+        if [[ $BOOL_FEB -eq 1 ]]; then
+            # generate the feb file, if requested
+            $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $l
+        fi
         # pass line to submit
         submit $l
     done
@@ -300,7 +319,7 @@ submit_batch () {
 
 ## OPTIONS
 # parse options
-while getopts "hvlsd:j:c:n:x" opt
+while getopts "hvlsd:j:c:f:n:x" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -313,13 +332,16 @@ do
             declare -i BOOL_SLURM=1 ;;
         d) # path to job directory$SUB_SLURM
             declare -i BOOL_PATH=1
-            JOB_PATH=${OPTARG} ;;
+            DIR=${OPTARG} ;;
         j) # specify job name
             declare -i BOOL_JOB=1
             JOB=${OPTARG} ;;
         c) # check file
             declare -i BOOL_CHECKFILE=1
             CHECKFILE=${OPTARG} ;;
+        f) # feb file
+            declare -i BOOL_FEB=1
+            FEB_FILE=${OPTARG} ;;
         n) # specify single job
             declare -i BOOL_SIMINT=1
             declare -i SIMINT=${OPTARG} ;;
