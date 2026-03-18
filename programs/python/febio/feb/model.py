@@ -103,6 +103,26 @@ class Model(object):
             return True
 
     # add element
+    def add_element_to_tree (self, path = None, value = None, attributes = None, duplicate = False):
+        """ adds element to model tree.
+        
+        Arguments:
+        ----------
+        path : str
+            path in tree to store element
+        value : str
+            value which is stored in element tree
+        attributes : dict
+            additional properties which are associated with element
+        duplicate : bool (default is 'False')
+            if 'True', checks that path does not already exist in tree before appending.
+
+        Returns:
+        --------
+        bool
+            'True' if operation successful, else 'False.'
+        """
+        pass
 
     # update element
 
@@ -110,7 +130,7 @@ class Model(object):
 
     # get element
 
-    def add_element_output (self, elements = None, properties = None, filename = None):
+    def add_output_element (self, elements = None, properties = None, filename = None):
         """ adds instructions to write specific element data to property file.
 
         Arguments:
@@ -160,7 +180,7 @@ class Model(object):
             print("ERROR :: Model.add_element_output() :: model file '{0}' already has element data in '{1}'.".format(self.feb_file, elm_data_path))
             return
 
-        ## import element output into the model tree
+        ## ADD element output into the model tree
         # create an attribute dictionary
         attrib_dict = {}
         prop_str = ""
