@@ -28,6 +28,8 @@ declare -i BOOL_FEB=0
 declare -i BOOL_RETURN=0
 # boolean determining if the xplt file should be deleted post-run
 declare -i BOOL_XPLT=0
+# boolean determining if the feb file should be deleted post-run
+declare -i BOOL_DEL_FEB=0
 
 
 ## FUNCTIONS
@@ -48,6 +50,7 @@ help () {
     echo -e " -h\t\t| display options, exit 0"
     echo -e " -r\t\t| return the simulation batch id."
     echo -e " -x\t\t| remove '.xplt' file after simulation is done."
+    echo -e " -y\t\t| remove '.feb' file after simulation is done."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to '.feb' file name in \$DIR."
@@ -164,8 +167,9 @@ gen_slurm_script () {
     if [[ $BOOL_XPLT -eq 1 ]]; then
         echo "rm *.xplt" >> $FILEPATH$FILENAME
     fi
-    echo "rm *.feb" >> $FILEPATH$FILENAME
-
+    if [[ $BOOL_DEL_FEB -eq 1 ]]; then
+        echo "rm *.feb" >> $FILEPATH$FILENAME
+    fi
 }
 
 # submit slurm script to cluster
@@ -199,7 +203,7 @@ sub_slurm_script () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:f:rx" option; do
+while getopts "hd:j:f:rxy" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -216,6 +220,8 @@ while getopts "hd:j:f:rx" option; do
             declare -i BOOL_RETURN=1 ;;
         x) # delete xplt file after running
             declare -i BOOL_XPLT=1 ;;
+        y) # delete feb file after running
+            declare -i  BOOL_DEL_FEB = 1 ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE

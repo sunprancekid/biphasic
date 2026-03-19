@@ -53,6 +53,8 @@ declare -i BOOL_SIMINT=0
 declare -i BOOL_CHECKFILE=0
 # boolean determining if the xplt file should be removed
 declare -i BOOL_XPLT=0
+# boolean determing if the feb file should be removed
+declare -i BOOL_DEL_FEB=0
 
 ## FUNCTIONS
 # display options, exit
@@ -74,7 +76,8 @@ help () {
 #     echo -e " -o\t\t| overwrite files and restart all simulations, even if they have already run."
     echo -e " -l\t\t| run job locally ('febio4' must be installed)."
     echo -e " -s\t\t| submit job via slurm (via 'sbatch' - see ${SUB_SLURM})."
-    echo -e " -x\t\t| delete xplt file after running."
+    echo -e " -x\t\t| delete '.xplt' file after simulation completes."
+    echo -e " -y\t\t| delete '.feb' file after simulation completes."
     echo -e "\n ## SCRIPT PARAEMETERS ## \n"
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory."
     echo -e " -j  << ARG >>\t| MANDATORY: job name."
@@ -259,6 +262,9 @@ submit () {
         if [[ $BOOL_XPLT -eq 1 ]]; then
             SLURM_FLAGS="-x"
         fi
+        if [[ $BOOL_DEL_FEB -eq 1 ]]; then
+            SLURM_FLAGS=" -y"
+        fi
         # submit the script from the local directory
         declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
         echo "${JOB}${simint} (slurm id: ${simid}): $slurmid"
@@ -319,7 +325,7 @@ submit_batch () {
 
 ## OPTIONS
 # parse options
-while getopts "hvlsd:j:c:f:n:x" opt
+while getopts "hvlsd:j:c:f:n:xy" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -347,6 +353,8 @@ do
             declare -i SIMINT=${OPTARG} ;;
         x) # boolean for xplt file removal
             declare -i BOOL_XPLT=1 ;;
+        y) # delete feb file post simulation
+            declare -i BOOL_DEL_FEB=1 ;;
         ?) # unknown option
             help $NONZEROEXITCODE
     esac 
