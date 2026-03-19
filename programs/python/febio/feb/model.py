@@ -237,7 +237,7 @@ class Model(object):
 
     # get element
 
-    def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None):
+    def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None, delim = None):
         """ adds instructions to write specific element data to property file.
 
         Arguments:
@@ -246,8 +246,10 @@ class Model(object):
             integers ranging from 1 to the maximum number of elements in the mesh file.
         properties : str or List[str]
             list of properties which can be exported from febio simulation (from ELM_PROP)
-        filename : str (optional)
+        filename : str (optional, default is 'None')
             data is exported to specific file
+        delim : str (optional, default is 'None')
+            delimitter used during file writing
 
         Returns:
         -----------
@@ -295,9 +297,10 @@ class Model(object):
             print("ERROR :: Model.add_element_output() :: model file '{0}' already has element data in '{1}'.".format(self.feb_file, elm_data_path))
             return
 
-        ## ADD element output into the model tree
+        ## establish attributes
         # create an attribute dictionary
         attrib_dict = {}
+        # append properties
         prop_str = ""
         for i in range(len(properties)):
             # add properties to list
@@ -306,7 +309,11 @@ class Model(object):
             else:
                 prop_str += "{0}".format(properties[i])
         attrib_dict.update({'data': prop_str})
-        ## TODO :: add filename if requested
+        # add the delimitter
+        if delim is not None:
+            attrib_dict.update({'delim': delim})
+        if filename is not None:
+            attrib_dict.update({'file': filename})
         self.add_element_to_tree(path = 'Output/logfile', new_element = 'element_data', value = elements_str, attributes = attrib_dict)
         return True
 
