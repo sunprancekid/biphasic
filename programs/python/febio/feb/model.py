@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET # handles xml formatting
 # none
 
 ## PARAMETERS
-# accepted element properties
+# accepted element data properties
 ELM_PROP = ['p']
 
 ## METHODS

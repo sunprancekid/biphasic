@@ -86,10 +86,11 @@ check () {
     if [[ $BOOL_FEB -eq 1 ]]; then
         # a feb file has been specified by the user
         # check that it exists
-        if [[ ! -f ${FEB_FILE} ]]; then
+        MODEL=${DIR}${FEB_FILE}
+        if [[ ! -f ${MODEL} ]]; then
             # the feb file does not exist in the specified directory
             # inform the user and exit nonzero
-            echo -e "\nERROR :: model file '${DIR}${FEB_FILE}' cannot be found.\n"
+            echo -e "\nERROR :: model file '${MODEL}' cannot be found.\n"
             help $NONZEROEXITCODE
         fi
         # otherwise, the FEB file specified by the user does exist.
@@ -110,7 +111,7 @@ check () {
             help $NONZEROEXITCODE
 
             ## TODO :: parse job name if not specified by user
-        elif [[ ! -f "${DIR}${FEB_FILE}" ]]; then
+        elif [[ ! -f ${DIR}${FEB_FILE} ]]; then
             # a model file corresponding to the job does not exist in the job directory
             # inform user and exit nonzero
             echo -e "\nERROR :: model file '${DIR}${JOB}.feb' cannot be found.\n"
