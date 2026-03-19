@@ -34,7 +34,24 @@ class Model(object):
 
     Methods:
     --------
-    None
+    __init__():
+        initialize model object.
+    save_model():
+        save model tree to file.
+    update_model():
+        save model tree file to location of original feb file.
+    show_tree_sub_elements():
+        write elements below specified path to CLT, if any.
+    tree_has_element():
+        check if element exists within model tree.
+    tree_has_multiple_elements():
+        check if multiple elements exist within model tree.
+    add_element_to_tree():
+        add element to model tree.
+    remove_element_from_tree():
+        removes element from model tree.
+    add_element_data_to_logfile_output():
+        add intructions to model file to write property data from specific elements to logfile.
     """
 
     def __init__ (self, feb_file):
@@ -60,13 +77,36 @@ class Model(object):
         self.root = self.tree.getroot()
         # TODO get max number of elements from meshing file
 
-    def update_model (self, filename = None, overwrite = False):
-        """ save model to feb_file location, unless otherwise specified.
+    def save_model (self, filename = None, overwrite = False):
+        """ save model file.
 
         Parameters:
         -----------
-        filename : str (default location is 'feb_file')
-            path to location to save file.
+        filename : str
+            path to location to save model.
+        overwrite : bool
+            if 'True' and the file already exists, it will not be overwritten.
+
+        Returns:
+        --------
+        bool
+            'True' if saving operation was successful, else 'False'.
+        """
+        # check the filename
+        if filename is None:
+            return False
+        if os.path.exists(filename) and not overwrite:
+            print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritte.".format(filename))
+            return False
+        # write the tree to the file
+        self.tree.write(filename, encoding='ISO-8859-1', xml_declaration=True)
+        return True
+
+    def update_model (self, filename = None, overwrite = False):
+        """ save model tree to location of original model file.
+
+        Parameters:
+        -----------
         overwrite : bool
             checks if the file already exists. if 'True', file is overwritten.
 
@@ -75,20 +115,13 @@ class Model(object):
         bool
             'True' if writing operating was successful, else 'False'.
         """
-        # check the filename
-        if filename is None:
-            filename = self.feb_file
-        # check if the path already exists
-        if os.path.exists(filename) and not overwrite:
-            # the file exists and should not be overwritten
-            print("ERROR :: Model.update_model() :: model file '{0}' already exists and cannot be overwritten.".format(filename))
-            return False
-        # write the tree to the file
-        self.tree.write(filename, encoding='ISO-8859-1', xml_declaration=True)
+        return self.save_model(self.feb_file, overwrite = overwrite)
+
+    ## XLM ROOT / TREE
 
     # show sub elements
-    def show_sub_elements (self, path = None):
-        """ write elements below specified path to CLT.
+    def show_tree_sub_elements (self, path = None):
+        """ write elements below specified path to CLT, if any.
 
         Arguments:
         ----------
@@ -100,14 +133,14 @@ class Model(object):
         None
         """
         # check that the path exists
-        if self.has_element(path):
+        if self.tree_has_element(path):
             print("The path '{0}' exists.".format(path))
             for child in self.root.findall(path):
                 print(child.tag)
         else:
             print("The path '{0}' does not exist.".format(path))
 
-    def has_element(self, elm_path = None):
+    def tree_has_element(self, elm_path = None):
         """ check it element path exists within model tree.
 
         Arguments:
@@ -116,9 +149,6 @@ class Model(object):
             xml format path
 
         Returns:
-
-    def update_model (self):
-
         --------
         bool
             'True' is the element pathway exists, else 'False'.
@@ -131,7 +161,7 @@ class Model(object):
         else:
             return True
 
-    def has_multiple_elements (self, elm_path = None):
+    def tree_has_multiple_elements (self, elm_path = None):
         """ checks if multiple elements exists in tree at specified location.
 
         Parameters:
@@ -175,7 +205,7 @@ class Model(object):
             'True' if operation successful, else 'False.'
         """
         # check if duplicates exist
-        if self.has_multiple_elements(path):
+        if self.tree_has_multiple_elements(path):
             print("ERROR :: Model.add_element_to_tree() :: unable able to add element '{0}', multiple paths '{1}' exist.")
             return False
         # check that value is a string
@@ -190,10 +220,24 @@ class Model(object):
             sub.text = value
 
     # remove element
+    def remove_element_from_tree (self, path = None):
+        """ remove specified path and subelements from the model tree.
+
+        Arguments:
+        ----------
+        path : str
+            existing xml path in model tree
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'.
+        """
+        pass
 
     # get element
 
-    def add_output_element (self, elements = None, properties = None, filename = None):
+    def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None):
         """ adds instructions to write specific element data to property file.
 
         Arguments:
@@ -207,7 +251,8 @@ class Model(object):
 
         Returns:
         -----------
-        None
+        bool
+            'True' if operation was successful, else 'False'.
         """
         # path to element data output in model tree
         elm_data_path = 'Output/logfile/element_data'
@@ -245,7 +290,7 @@ class Model(object):
 
         # check element path in model tree
         # check if there is already element data
-        if self.has_element(elm_data_path):
+        if self.tree_has_element(elm_data_path):
             # element data output has already been specified within the model
             print("ERROR :: Model.add_element_output() :: model file '{0}' already has element data in '{1}'.".format(self.feb_file, elm_data_path))
             return
@@ -263,7 +308,7 @@ class Model(object):
         attrib_dict.update({'data': prop_str})
         ## TODO :: add filename if requested
         self.add_element_to_tree(path = 'Output/logfile', new_element = 'element_data', value = elements_str, attributes = attrib_dict)
-        pass
+        return True
 
 
 if __name__ == "__main__":
