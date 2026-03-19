@@ -60,6 +60,32 @@ class Model(object):
         self.root = self.tree.getroot()
         # TODO get max number of elements from meshing file
 
+    def update_model (self, filename = None, overwrite = False):
+        """ save model to feb_file location, unless otherwise specified.
+
+        Parameters:
+        -----------
+        filename : str (default location is 'feb_file')
+            path to location to save file.
+        overwrite : bool
+            checks if the file already exists. if 'True', file is overwritten.
+
+        Returns:
+        --------
+        bool
+            'True' if writing operating was successful, else 'False'.
+        """
+        # check the filename
+        if filename is None:
+            filename = self.feb_file
+        # check if the path already exists
+        if os.path.exists(filename) and not overwrite:
+            # the file exists and should not be overwritten
+            print("ERROR :: Model.update_model() :: model file '{0}' already exists and cannot be overwritten.".format(filename))
+            return False
+        # write the tree to the file
+        self.tree.write(filename, encoding='ISO-8859-1', xml_declaration=True)
+
     # show sub elements
     def show_sub_elements (self, path = None):
         """ write elements below specified path to CLT.
@@ -90,6 +116,9 @@ class Model(object):
             xml format path
 
         Returns:
+
+    def update_model (self):
+
         --------
         bool
             'True' is the element pathway exists, else 'False'.
@@ -102,29 +131,63 @@ class Model(object):
         else:
             return True
 
+    def has_multiple_elements (self, elm_path = None):
+        """ checks if multiple elements exists in tree at specified location.
+
+        Parameters:
+        -----------
+        elm_path : str
+            path to element in model tree
+
+        Returns:
+        --------
+        bool
+            'True' if path describes multiple elements in model tree, else 'False'
+        """
+        if elm_path is None:
+            return False
+        elm = self.root.findall(elm_path)
+        if elm is None or (isinstance(elm, list) and len(elm) == 1):
+            return False
+        else:
+            return True
+
     # add element
-    def add_element_to_tree (self, path = None, value = None, attributes = None, duplicate = False):
+    def add_element_to_tree (self, path = None, new_element = None, value = None, attributes = None, duplicate = False):
         """ adds element to model tree.
         
         Arguments:
         ----------
         path : str
-            path in tree to store element
+            path in tree which points to location to store element
+        new_element : str
+            name of element stored at path
         value : str
             value which is stored in element tree
         attributes : dict
             additional properties which are associated with element
         duplicate : bool (default is 'False')
-            if 'True', checks that path does not already exist in tree before appending.
+            if 'True', checks that element does not already exist in path before appending.
 
         Returns:
         --------
         bool
             'True' if operation successful, else 'False.'
         """
-        pass
-
-    # update element
+        # check if duplicates exist
+        if self.has_multiple_elements(path):
+            print("ERROR :: Model.add_element_to_tree() :: unable able to add element '{0}', multiple paths '{1}' exist.")
+            return False
+        # check that value is a string
+        if not isinstance(value, str):
+            print("ERROR :: Model.add_element_to_tree() :: method argument 'value' must be type 'str'.")
+            return False
+        # get element at path
+        elm = self.tree.getroot().find(path)
+        # append subelement
+        sub = ET.SubElement(elm, new_element, attrib = attributes)
+        if value is not None:
+            sub.text = value
 
     # remove element
 
@@ -154,7 +217,7 @@ class Model(object):
             print("ERROR :: Model.add_element_output() :: must specify 'elements' in method arguments.")
             return
         elif not isinstance(elements, list):
-            if not isinstance(elmenents, int):
+            if not isinstance(elements, int):
                 print("ERROR :: Model.add_element_output() :: method argument 'elements' must be of type 'int' or 'List[int]'.")
                 return
             else:
@@ -168,6 +231,13 @@ class Model(object):
             if len(elements) == 0:
                 print("ERROR :: Model.add_element_output() :: method argument 'elements' is an empty list.")
                 return
+        ## elements are now a list of integers
+        ## convert list to str
+        elements_str = ""
+        for i in range(len(elements)):
+            elements_str += "{:d}".format(elements[i])
+            if i < len(elements) - 1:
+                elements_str += ","
         # check 'properties'
         ## TODO complete ELM_PROP
         if not isinstance(properties, list):
@@ -192,7 +262,7 @@ class Model(object):
                 prop_str += "{0}".format(properties[i])
         attrib_dict.update({'data': prop_str})
         ## TODO :: add filename if requested
-        self.add_element_to_tree(path = elm_data_path, value = elements, attributes = attrib_dict)
+        self.add_element_to_tree(path = 'Output/logfile', new_element = 'element_data', value = elements_str, attributes = attrib_dict)
         pass
 
 
