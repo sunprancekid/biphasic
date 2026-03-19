@@ -317,6 +317,8 @@ class Model(object):
         self.add_element_to_tree(path = 'Output/logfile', new_element = 'element_data', value = elements_str, attributes = attrib_dict)
         return True
 
+    ## TODO :: add methods for writing plotfile, rigid_body data
+
 
 if __name__ == "__main__":
     pass
