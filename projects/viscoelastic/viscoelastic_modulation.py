@@ -18,6 +18,8 @@ from febio.feb.model import Model
 
 
 ## PARAMETERS
+# base model file
+model_file = "models/bend/bend.feb"
 # absolute path to remote data
 rmt_dir = "/mnt/data/bgfs1/dorsey/biphasic_simulations/"
 # number of oscillation cycles

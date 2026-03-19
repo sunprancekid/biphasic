@@ -302,7 +302,7 @@ class Model(object):
         for i in range(len(properties)):
             # add properties to list
             if i != (len(properties) - 1):
-                prop_str += "{0},".format(properties[i])
+                prop_str += "{0};".format(properties[i])
             else:
                 prop_str += "{0}".format(properties[i])
         attrib_dict.update({'data': prop_str})
