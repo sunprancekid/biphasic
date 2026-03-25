@@ -30,7 +30,7 @@ parameter_file_format = "{0}/{1}/{1}.parm.csv"
 # header used for parameter file
 parameter_header = ['n', 'id', 'path']
 # contains assumed scaling parameters for viscoelastic model
-viscoelastic_normalization_dict = {'E': [1, 0], 'gamma': [1, 0], 'tau': [0, 1]}
+viscoelastic_normalization_dict = {'E': [1, 0], 'gamma': [1, 0], 'tau': [0, 1], 'k': [1, 0]}
 
 ## METHODS
 def gen_linear_scale_range (n, min_val, max_val):
@@ -662,10 +662,16 @@ class Job (object):
                     savedir = "{0}/{1}/results/{2}/".format(self.jd, self.jn, k)
                 else:
                     savedir = None
+                if k == 'tau':
+                    k_str = '\\tau'
+                elif k == 'gamma':
+                    k_str = '\\gamma'
+                else:
+                    k_str = k
                 # return scale (df, k, fit = fit, save_to = savedir)
                 fig = Figure()
                 fig.load_data(df, xcol = xcol, ycol = 'h', icol = k)
-                fig.add_format("${0}$ ".format(k) + "= {:.1e}")
+                fig.add_format("${0}$ ".format(k_str) + "= {:.1e}")
                 fig.set_xaxis_label(xaxis)
                 fig.set_yaxis_label("Energy Dissipated (J)")
                 fig.set_xaxis_scale(log = True)
@@ -689,7 +695,15 @@ class Job (object):
                     n = n+1
                 # establish axis string describing the parameter
                 df_key = self.df_config.loc[self.df_config['key'] == k].reset_index()
-                xax_str = "{1} (${0}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
+                if k == 'k':
+                    xax_str = "$k$ ($MPa$)"
+                elif k == 'gamma':
+                    xax_str = "$\\gamma_{{1}}$"
+                elif k == 'tau':
+                    xax_str = "$\\tau_{{1}}$ ($s$)"
+                else:
+                    xax_str = "{1} (${0}$)".format(df_key.iloc[0]['description'].replace('_', ' ').title(), df_key.iloc[0]['units'])
+                print(xax_str)
                 if not period:
                     yax_str_time = "Resontant Cyclic Frequency ($Hz, 2 \\pi \\cdot T^{{-1}}$)"
                 else:
@@ -698,7 +712,10 @@ class Job (object):
                 if fit:
                     fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['T'].to_list(), log = True)
                     fit_parms = fit_power.get_parameters()
-                    fit_power.set_label("${0} \\propto T^{{{1:.02f}}}$".format(k, fit_parms[0]))
+                    if not period:
+                        fit_power.set_label("${0} \\propto f^{{{1:.02f}}}$".format(k_str, fit_parms[0]))
+                    else:
+                        fit_power.set_label("${0} \\propto T^{{{1:.02f}}}$".format(k_str, fit_parms[0]))
                     fit_power.set_linecolor("k")
                     fit_power.set_linestyle(":")
                 else:
@@ -716,7 +733,7 @@ class Job (object):
                 if fit:
                     fit_power = fit_line(x = df_scale[k].to_list(), y = df_scale['A'].to_list(), log = True)
                     fit_parms = fit_power.get_parameters()
-                    fit_power.set_label("${0} \\propto A^{{{1:.02f}}}$".format(k, fit_parms[0]))
+                    fit_power.set_label("${0} \\propto A^{{{1:.02f}}}$".format(k_str, fit_parms[0]))
                     fit_power.set_linecolor("k")
                     fit_power.set_linestyle(":")
                 else:
