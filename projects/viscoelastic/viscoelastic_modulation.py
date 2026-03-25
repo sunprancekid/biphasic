@@ -390,7 +390,7 @@ if __name__ == "__main__":
 			constant_tau (job = j, t_val = default_t_val)
 
 		# create the frequency sweep
-		freqeuncy_sweep(job) # use default values
+		frequency_sweep(job) # use default values
 
 	# generate parameter file
 	if not j.has_parameters():
