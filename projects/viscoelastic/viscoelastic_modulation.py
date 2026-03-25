@@ -362,10 +362,10 @@ if __name__ == "__main__":
 		## BULK MODULUS
 		if 'k' in sys.argv:
 			# vary the bulk modulus
-			vary_bulk_modulus(job, E_low = default_E_low, E_high = default_E_high, E_n = default_E_n)
+			vary_bulk_modulus(job = j, E_low = default_E_low, E_high = default_E_high, E_n = default_E_n)
 		else:
 			# the bulk modulus is constant
-			constant_bulk_modulus(job, E_val = default_bulk)
+			constant_bulk_modulus(job = j, E_val = default_bulk)
 
 		## FIRST RELAXATION MODULUS
 		if 'g1' in sys.argv:
