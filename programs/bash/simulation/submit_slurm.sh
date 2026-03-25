@@ -89,7 +89,7 @@ check () {
     if [[ $BOOL_FEB -eq 1 ]]; then
         # a feb file has been specified by the user
         # check that it exists
-        MODEL=${DIR}${FEB_FILE}
+        MODEL=${FEB_FILE}
         if [[ ! -f ${MODEL} ]]; then
             # the feb file does not exist in the specified directory
             # inform the user and exit nonzero
