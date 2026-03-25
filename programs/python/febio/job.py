@@ -885,6 +885,7 @@ class Job (object):
                 fig.add_format("{0}".format(k_str) + " = {:.1e}")
                 if save:
                     fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = "norm-{0}".format(k))
+                    fig.save_data()
                 gen_plot(fig, show = show, save = save)
 
 ## ARGUMENTS

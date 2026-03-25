@@ -65,7 +65,7 @@ default_gamma_low = 0.1
 # highest gamma value to test, when not specified
 default_gamma_high = 100.
 # number of gamma values to test, when not specified
-default_gamma_n = 5
+default_gamma_n = 7
 
 ## FIRST TIME CONSTANT
 # default first time constant
@@ -370,7 +370,7 @@ if __name__ == "__main__":
 		## FIRST RELAXATION MODULUS
 		if 'g1' in sys.argv:
 			# vary gamma within full range
-			vary_gamma (job = j, g_low = 0.1, g_high = 1000., g_n = 5)
+			vary_gamma (job = j, g_low = 0.1, g_high = 1000., g_n = default_gamma_n)
 		elif 'g1-lo' in sys.argv:
 			# vary gamma below transition regime
 			vary_gamma(job = j, g_low = 0.001, g_high = 1., g_n = 5)

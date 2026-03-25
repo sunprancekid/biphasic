@@ -45,6 +45,7 @@ class Simulation (object):
     """
 
     def __init__ (self, jd, jn, si):
+
         """ initialize simulation path using job directory.
 
         Parameter:
@@ -400,6 +401,7 @@ class Simulation (object):
         fig.load_data(df, xcol = 'time', ycol = 'force')
         fig.set_xaxis_min(0.1)
         fig.set_xaxis_scale(log = True)
+        fig.set_axis_scale('y', log = True)
         fig.set_subtitle_label("$W_{{prestress}} = {0:.2E}$".format(work))
         fig.set_xaxis_label("Time (s)")
         fig.set_yaxis_label("Force (N)")
