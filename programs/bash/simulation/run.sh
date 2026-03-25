@@ -23,7 +23,7 @@ PARSE_CSV="./programs/bash/util/parse_csv.sh"
 # path to script for slurm submission
 SUB_SLURM="./programs/bash/simulation/submit_slurm.sh"
 # generate feb files
-GENERATE="./programs/bash/simulation.sh"
+GENERATE="./programs/bash/simulation/generate.sh"
 
 ## HOSTNAME AND FEBIO EXECUTABLE INSTRUCTIONS
 # host name of mpikg lbox
