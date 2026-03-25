@@ -221,7 +221,7 @@ while getopts "hd:j:f:rxy" option; do
         x) # delete xplt file after running
             declare -i BOOL_XPLT=1 ;;
         y) # delete feb file after running
-            declare -i  BOOL_DEL_FEB = 1 ;;
+            declare -i  BOOL_DEL_FEB=1 ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
