@@ -60,6 +60,193 @@ def parse_io (d = None, f = None, s = None):
 
 	return d, f, s
 
+# get element data from dat file
+def get_element_data (f = None, elm = None, prop = None):
+	""" open '.dat' file, return element data stored within. 
+
+	## TODO :: add option to specify delimiter
+	
+	Arguments:
+	----------
+	f : str
+		path to '.dat' file
+	elm : List[int] (optional)
+		specific list of elements to extract data for
+	prop : List[str] (optional)
+		specified set of properties to extract data for
+
+	Returns:
+	--------
+	Dict[DataFrame]
+		dictionary containing element data over time, where
+		keys correspond to each property.
+	"""
+	## check method arguments
+	# check that the file exists
+	if not os.path.exists(f):
+		print("ERROR :: get_element_data() :: file 'f' ({0}) does not exist or cannot be found.".format(f))
+		return None
+	
+	# check the 'prop' is a string or a list of strings
+	if  isinstance(prop, list):
+		# prop is a list
+		# parse through each item in the list 
+		for i in range(len(prop) - 1, -1, -1):
+			# transverse the list in reverse order
+			if not isinstance(prop[i], str):
+				# the property should be a string, drop it
+				print("ERROR :: get_element_data() :: property '{0}' in argument list 'prop' must be type 'str'.".format(prop.pop(i)))
+		# check that there are still items in the list
+		if len(prop) == 0:
+			print("ERROR :: get_element_data() :: method argument 'prop' is empty.")
+			return None
+	elif isinstance(prop, str):
+		# prop is a string, store it as a list
+		prop = [prop]
+	elif prop is not None:
+		# prop was specified but is neither a list not a string
+		# report an error
+		print("ERROR :: get_element_data() :: method argument 'prop' must be either of type 'list' or 'str', or left unspecified.")
+		return None
+	
+	# check that 'elm' is a list of integers
+	if isinstance(elm, list):
+		# elm is a list
+		# parse through each item in the list
+		for i in range(len(elm) - 1, -1, -1):
+			# transverse the list in reverse order
+			if not isinstance(elm[i], int):
+				# the elmement should be stored as an integer, drop it
+				print("ERROR :: get_element_data() :: element number {0} in argument list 'elm' ({1}) must be of type 'int', removing.".format(i, elm.pop(i)))
+		# check that there are still items in the list
+		if len(elm) == 0:
+			print("ERROR :: get_element_data() :: method argument 'elm' is empty.")
+			return None
+	elif isinstance(elm, int):
+		# elm is a integer
+		# reformat as a list of integers
+		elm = [elm]
+	elif elm is not None:
+		# 'elm' was specified but is neither a list nor an integer
+		print("ERROR :: get_element_data() :: method argument 'elm' must be either of type 'list' or 'int', or left unspecified.")
+		return None
+
+	## open the file, parse data stored within file to initialize data_dict
+	data_dict = {} # empty dictionary which contains property / element data
+	with open (f, 'r') as f_io:
+		## skip the first two lines
+		# the first line is the step number
+		f_io.readline()
+		# the second line is the current time
+		f_io.readline()
+
+		## check the properties stored in the file
+		# the third line is the properties
+		l = f_io.readline()
+		l = l[9:].strip('\n') # drop the first 9 characters, newline character
+		p = l.split(';')
+		# use the existing properties to initialize the data dictionary
+		if prop is not None:
+			# if properties were specified in the arguments
+			for i in range(len(prop) - 1, -1, -1):
+				if prop[i] not in p:
+					# the requested property does not exist, remove it from the list
+					print("ERROR :: get_element_data() :: property '{0}' was not written to '{1}'.".format(prop.pop(i), f))
+			# check that there are still items in the property dictionary
+			if len(prop) != 0:
+				# initialize the data dictionary using the specified dictionary
+				for i in prop:
+					data_dict.update({i: None}) # initialize with empty object
+			else:
+				# all of the properties were removed from the argument list
+				# return None with error
+				print("ERROR :: get_element_data() :: unable to return requested data.")
+				return None
+		else:
+			# property list was not specified by the user
+			# use the properties stored in the file to initialize the data dictionary
+			for i in p:
+				# initialize with an empty object
+				data_dict.update({i: None})
+			# store prop as p
+			prop = p
+
+		## check the elements store in the file
+		# get elements from file
+		e = [] # empty list of elements stored in file
+		while True:
+			l = f_io.readline()
+			if len(l.split(' ')) > 1:
+				# if the line contains spaces, then element data has ended
+				break
+			# parse  the element number from the line
+			e.append(int(l.split(',')[0]))
+		# initialize data_dict with DataFrame for each object
+		if elm is not None:
+			# if a list of elements were specified
+			# check that the elements
+			for i in range(len(elm) - 1, -1, -1):
+				# traverse the list in reverse order
+				if elm[i] not in e:
+					# the specified element does not exist in the file
+					print("ERROR :: get_element_data() :: elmement '{0}' in 'elm' does not exist.".format(elm.pop(i)))
+			if len(elm) == 0:
+				# if the list is empty, return nothing
+				print("ERROR :: get_element_data() :: unable to return the requested data.")
+				return None
+			else:
+				# use the specified list to initialize the data frame
+				for i in list(data_dict.keys()):
+					data_dict[i] = pd.DataFrame(columns = ['Step', 'Time'] + elm)
+		else:
+			# elements were not specified by the user
+			# initialize the property data frames with all elements in the file
+			for i in list(data_dict.keys()):
+				data_dict[i] = pd.DataFrame(columns = ['Step', 'Time'] + e)
+			# store e in elm
+			elm = e
+		# close the file
+		f_io.close()
+
+	## restart reading the file, store data in dict
+	with open(f, 'r') as f_io:
+		# initialize the number of steps
+		n_step = 0
+		count = 0
+		# loop through each line
+		while True:
+			l = f_io.readline()
+			# check for the end of the file
+			if not l:
+				break
+
+			if l == "*Step  = {0}\n".format(n_step) or l == "*Step  = 1\n":
+				# increment the step
+				count += 1
+				n_step += 1
+				if l == "*Step  = 1\n":
+					n_step = 2
+				# the next line is the simulation time
+				l = f_io.readline().strip('\n').split(' ')
+				# the third line contains the data specification, skip
+				f_io.readline()
+				# initialize the property dictionary with the 
+				for i in list(data_dict.keys()):
+					data_dict[i].loc[len(data_dict[i])] = [count - 1, l[3]] + [np.nan for j in range(len(elm))]
+			else:
+				# the line is a piece of element data
+				# determine the element
+				l = l.split(',')
+				h = int(l[0])
+				if h in elm:
+					# the element is in the list data to get
+					for i in list(data_dict.keys()):
+						# get the list of properties to get
+						j = p.index(i) # index corresponding to property in file
+						k = elm.index(h) # index corresponding to elm in df column
+						data_dict[i].loc[len(data_dict[i]) - 1, h] = float(l[1 + j])
+	return data_dict
+
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):
 	
