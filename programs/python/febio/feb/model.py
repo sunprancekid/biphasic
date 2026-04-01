@@ -77,12 +77,14 @@ class Model(object):
         self.root = self.tree.getroot()
         # TODO get max number of elements from meshing file
 
-    def save_model (self, filename = None, overwrite = False):
+    def save_model (self, saveto = None, saveas = None, overwrite = False):
         """ save model file.
 
         Parameters:
         -----------
-        filename : str
+        saveto : str (optional, default is './')
+            path to save location
+        saveas : str (optional, default is 'model.feb')
             path to location to save model.
         overwrite : bool
             if 'True' and the file already exists, it will not be overwritten.
@@ -92,14 +94,25 @@ class Model(object):
         bool
             'True' if saving operation was successful, else 'False'.
         """
+        # check the save directory
+        if saveto is None:
+            saveto = './'
+        elif not os.path.exists(saveto):
+            # if the path does not exists, make it
+            os.makedirs(saveto)
+
         # check the filename
-        if filename is None:
+        if saveas is None:
+            saveas = 'model.feb'
+
+        # check if the file already exitss
+        savepath = saveas + saveto
+        if os.path.exists(savepath) and not overwrite:
+            print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritte.".format(savepath))
             return False
-        if os.path.exists(filename) and not overwrite:
-            print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritte.".format(filename))
-            return False
+
         # write the tree to the file
-        self.tree.write(filename, encoding='ISO-8859-1', xml_declaration=True)
+        self.tree.write(savepath, encoding='ISO-8859-1', xml_declaration=True)
         return True
 
     def update_model (self, filename = None, overwrite = False):
