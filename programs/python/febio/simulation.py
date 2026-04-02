@@ -11,6 +11,7 @@
 ## MODULES
 # native / conda
 import sys, os, math
+import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
 # local
@@ -311,7 +312,7 @@ class Simulation (object):
         """
         return (prop in list(self.elm_data.keys()))
 
-    def get_properies_in_element_data(self):
+    def get_properties_in_element_data(self):
         """ returns list of properties stored within element data.
 
         Arguments:
@@ -325,38 +326,158 @@ class Simulation (object):
         """
         return list(self.elm_data.keys())
 
-    def element_data_has_element(self, elm):
+    def element_data_has_element(self, elm, prop = None):
         """ checks if element exists within elements that have element data.
 
         Arguments:
         ----------
         elm : int
             integer corresponding to element number
+        prop : str (optional)
+            specify propery data set to get element data for (in case of inconsistent data)
 
         Returns:
         --------
         bool
             'True' if element exists within list, else 'False'
         """
-        return (elm in self.get_elements_in_element_data())
+        return (elm in self.get_elements_in_element_data(prop))
 
-    def get_elements_in_element_data(self):
+    def get_elements_in_element_data(self, prop = None):
         """ returns elements which has element data.
 
         Arguments:
         ----------
-        None
+        prop : str (optional)
+            specify propery data set to get element data for (in case of inconsistent data)
 
         Returns:
         --------
         List[int]
         """
-        if (not self.elm_dat):
-            return list(self.elm_data[self.get_properies_in_element_data()[0]].columns.values)
+        if prop is None: prop = self.get_properties_in_element_data()[0]
+        if (self.elm_data):
+            vals = list(self.elm_data[prop].columns.values)
+            vals.pop(0) # remove the column header for steps
+            vals.pop(0) # remove the column header for time
+            return vals
         else:
             return []
 
-    def get_steady_state_property_distribution (self):
+    def get_property_values (self, prop = None, elm = None, time = None):
+        """ get the values for one propery, with optional time and element specification.
+
+        Arguments:
+        ----------
+        prop : str
+            property that exists within element data.
+        elm : int or List[int] (optional, default is all elements)
+            subset of elements to return property data for.
+        time : float or List[float] (optional, default is all time points)
+            subset of time points to return propery data for.
+
+        Returns:
+        --------
+        DataFrame
+            ...
+        """
+        # TODO :: automatically parse data if it has not been loaded
+        # check the property passed to the method
+        if prop is None:
+            print("ERROR :: Simulation.get_property_values() :: must specify method argument 'prop'.")
+            return None
+        elif not isinstance(prop, str):
+            print("ERROR :: Simulation.get_property_values() :: method argument 'prop' should be type 'str'.")
+            return None
+        elif not self.element_data_has_property(prop):
+            print("ERROR :: Simulation.get_property_values() :: property '{0}' does not exist with element propery data.".format(prop))
+            return None
+
+        # check the specified elements
+        # TODO :: does not remove elements that are not in the list
+        if isinstance(elm, list):
+            # check all items in list
+            for i in range(len(elm) - 1, -1, -1):
+                # transverse list in reverse order
+                # check elm is an integer
+                if not isinstance(elm[i], int):
+                    # remove from list
+                    print("ERROR :: Simulation.get_property_values() :: element in list 'elm' ({0}, {1}) is not type integer, removing.".format(i, elm[i]))
+                # check if elm is in the list of accepted integer
+                if not self.element_data_has_element(elm[i]):
+                    # if not, remove from the list
+                    print("ERROR :: Simulation.get_property_values() :: element is method argument list 'elm' ({0}, {1}) does not exist in element data for property '{2}', removing from list.".format(i, elm[i], prop))
+            # check that there are still items in the list
+            if len(elm) == 0:
+                print("ERROR :: Simulation.get_property_values() :: element list 'elm' is empty.")
+                return None
+        elif isinstance(elm, int):
+            # turn int into list int
+            elm = [elm]
+        elif elm is None:
+            # if unspecified, elm is all elements corresponding to property
+            elm = self.get_elements_in_element_data(prop)
+        else:
+            # elm should either be int or list int
+            print("ERROR :: Simulation.get_property_values() :: method argument 'elm' must be either type 'int' or 'List[int]'.")
+            return None
+
+        # check the specified time points
+        ## TODO :: check items in time list
+        if isinstance(time, list):
+            # check all points in the list
+            for i in range(len(time) - 1, -1, -1):
+                # transverse the list in reverse order
+                pass
+        elif isinstance(time, float):
+            # turn float into list float
+            time = [time]
+        elif isinstance(time, int):
+            # turn int into list float
+            time = [float(time)]
+        elif time is None:
+            # use all time points in list
+            time = self.elm_data[prop]['Time'].tolist()
+        else:
+            # time should be either float or list float
+            print("ERROR :: Simulation.get_propery_values() :: method argment 'time' must be either type 'float' or 'List[float]'.")
+            return None
+
+        ## go through each point in list, append to df_return if meets criteria
+        # NOTE :: this algorithm assumes that data in 'time' are ordered
+        df_return = pd.DataFrame(columns = (['Time'] + elm)) # empty data frame
+        # find the data that corresponds to the time point
+        idx_timelist = 0 # current inedex in time list
+        rt_idx = 0 # current index for the return dataframe
+        # TODO :: change to while loop
+        for i in range(1, len(self.elm_data[prop])):
+            # check the time of the current row
+            if abs(float(self.elm_data[prop].loc[i, 'Time']) - time[idx_timelist]) > abs(float(self.elm_data[prop].loc[i - 1, 'Time']) - time[idx_timelist]):
+                # check if the parsed time is the same as the current time
+                print(df_return.head)
+                if (len(df_return) != 0) and (df_return.loc[rt_idx - 1, 'Time'] == self.elm_data[prop].loc[i - 1, 'Time']):
+                    # here, the time points in 'time' are too close together,
+                    # and the same data points from 'elm_data[prop]' will be added to the return
+                    # matrix a second time. So skip time point in 'time'
+                    # NOTE :: switching to while loop will help solve this bug
+                    idx_timelist += 1
+                    if idx_timelist == len(time): break
+                # the error between the current time and the desired time is increasing from the previous index
+                # append the current time point
+                df_return.loc[rt_idx] = [np.nan for i in range(len(elm) + 1)]
+                # return df_return
+                df_return.loc[rt_idx, 'Time'] = float(self.elm_data[prop].loc[i - 1, 'Time'])
+                for e in elm:
+                    df_return.loc[rt_idx, e] = self.elm_data[prop].loc[i - 1, e]
+                # increment indicies
+                idx_timelist += 1
+                rt_idx += 1
+                if idx_timelist == len(time): break
+        # return the data frame
+        return df_return
+
+
+    def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = None):
         """"""
         pass
 
