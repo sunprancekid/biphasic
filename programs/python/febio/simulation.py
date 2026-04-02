@@ -479,6 +479,10 @@ class Simulation (object):
 
     def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = None):
         """"""
+        # according to period, determine start and end of second to last cycle
+        # pick a few points that are distributed in time along the cycle
+        # condense data frame
+        # plot
         pass
 
     ## ANALYSIS - HYSTERESIS ##
