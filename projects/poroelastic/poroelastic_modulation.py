@@ -225,29 +225,20 @@ if __name__ == "__main__":
 		constant_permeability(job = j)
 		# vary the time scale according to the anticipated maximum
 		ts = default_bulk * default_perm / pow(float(z), 2.)
+		print(ts)
 		frequency_sweep(job = j,
 				  period_low = ts / 100, # the lowest value is two orders of magnitude lower than the anticipated maximum
 				  period_high = ts * 100) # the highest value is two order of magnitude greater than the anticipated maximum
 
 		## save, quit
 		# save model to the directory
-		m.save_model()
+		m.save_model(saveto = "{0}{1}/z{2}/".format(jd, jn, z_int), saveas = "{0}-z{1}.feb".format(jn, z_int))
 		# generate parmeters
+		if not j.has_parameters():
+			j.generate_parameters()
 		# save config, parameter files
+		j.save_config()
+		j.save_parameters()
+		exit()
 
-
-	# create job
-	j = Job (jd, jn)
-
-	# generate parameter file
-	if not j.has_parameters():
-		j.generate_parameters()
-
-	# save
-	j.save_config()
-	j.save_parameters()
-
-	# generate
-	# j.save_model()
-	# j.generate_simulations()
 

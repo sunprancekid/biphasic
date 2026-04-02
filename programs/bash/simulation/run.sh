@@ -55,6 +55,8 @@ declare -i BOOL_CHECKFILE=0
 declare -i BOOL_XPLT=0
 # boolean determing if the feb file should be removed
 declare -i BOOL_DEL_FEB=0
+# determines if a feb file has been specified
+declare -i BOOL_FEB=0
 
 ## FUNCTIONS
 # display options, exit
@@ -260,10 +262,10 @@ submit () {
         fi
         SLURM_FLAGS=""
         if [[ $BOOL_XPLT -eq 1 ]]; then
-            SLURM_FLAGS="-x"
+            SLURM_FLAGS="-x "
         fi
         if [[ $BOOL_DEL_FEB -eq 1 ]]; then
-            SLURM_FLAGS=" -y"
+            SLURM_FLAGS="${SLURM_FLAGS}-y"
         fi
         # submit the script from the local directory
         declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
@@ -296,7 +298,7 @@ submit_single () {
 
     if [[ $BOOL_FEB -eq 1 ]]; then
         # generate the feb file, if requested
-        $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $l
+        $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $simint
     fi
     # submit the job according the specifications
     submit $l
@@ -316,7 +318,7 @@ submit_batch () {
     for l in $(seq 2 $($PARSE_CSV -f $PARM_FILE -l )); do
         if [[ $BOOL_FEB -eq 1 ]]; then
             # generate the feb file, if requested
-            $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $l
+            $GENERATE -d $DIR -j $JOB -f $FEB_FILE -n $((l-1))
         fi
         # pass line to submit
         submit $l
