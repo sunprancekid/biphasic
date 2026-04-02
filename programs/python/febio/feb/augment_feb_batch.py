@@ -94,13 +94,12 @@ def augment_feb_single (feb, path, job, simint):
                     # determine if the row corresponds to a value in the value
                     if row2['key'] in df_gen.iloc[0][row['key']]:
                         # print(row2['key'])
-                        relationship = relationship.replace(row2['key'],"{:.2f}".format(df_gen.iloc[0][row2['key']]))
+                        relationship = relationship.replace(row2['key'],"{:.5f}".format(df_gen.iloc[0][row2['key']]))
 
                 # check if the relationship should be evaluated (i.e. is not symbolic), or should be left as is
                 if row['symbolic'] == 0:
                     # if the relationship is not symbolic, evaluate it
                     relationship = eval(relationship)
-                    # print(relationship)
 
                 # print("AFTER: {:s}".format(relationship)) 
                 for e in elm:

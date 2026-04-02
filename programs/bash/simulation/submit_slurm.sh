@@ -162,7 +162,7 @@ gen_slurm_script () {
     echo "### JOB ###" >> $FILEPATH$FILENAME
     echo "echo \"Running ${SIMID} on host \$(hostname) in \$(pwd)\"" >> $FILEPATH$FILENAME
     echo "echo \"Job start time is \$(date).\"" >> $FILEPATH$FILENAME
-#     echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
+    echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
     if [[ $BOOL_XPLT -eq 1 ]]; then
         echo "rm *.xplt" >> $FILEPATH$FILENAME

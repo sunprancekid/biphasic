@@ -282,10 +282,12 @@ def extract_febio_out (d = None, f = None, s = None):
 			l = l.strip()
 
 			# if the line matched for the format for the data entry
-			if l == "Step = {}".format(n_step) or l == "Step = 1":
-				# parse the information from the step
-				if l == "Step = 1": 
-					n_step = 1
+			if l == "Data Record #1":
+				# next line is filler
+				f_io.readline()
+
+				# next line contains the number of steps
+				f_io.readline()
 					
 				# parse the time
 				l = f_io.readline().strip() # remove leading and trailing spaces
