@@ -60,8 +60,7 @@ def parse_io (d = None, f = None, s = None):
 
 	return d, f, s
 
-# get element data from dat file
-def get_element_data (f = None, elm = None, prop = None):
+def parse_element_data (f = None, elm = None, prop = None):
 	""" open '.dat' file, return element data stored within. 
 
 	## TODO :: add option to specify delimiter

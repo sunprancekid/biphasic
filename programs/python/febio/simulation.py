@@ -14,13 +14,15 @@ import sys, os, math
 import pandas as pd
 import xml.etree.ElementTree as ET
 # local
-from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work
+from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work, parse_element_data
 from plot.figure import Figure
 from plot.plot import gen_bar_chart, gen_plot
 
 ## PARAMETERS
 # default outfile
 default_outfile = 'febio4.out.csv'
+# default file containing element data
+default_elm_dat = 'elm.dat'
 # prestress relaxation step size - xml path
 xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
 # prestress relaxation number of steps - xml path
@@ -75,9 +77,9 @@ class Simulation (object):
         self.file_out = "{0}/{1}/{2}/febio4.out.csv".format(jd, jn, self.parm['path'], self.parm['id'])
         self.file_xplt = "{0}/{1}/{2}/{3}.xplt".format(jd, jn, self.parm['path'], self.parm['id'])
         self.file_log = "{0}/{1}/{2}/{3}.log".format(jd, jn, self.parm['path'], self.parm['id'])
-        # open parameter file, get parameters
-        # open feb file, extract feb information (if needed)
-        # check febio.out files, xplt files ...
+        self.file_elm_dat = "{0}/{1}/{2}/{3}".format(jd, jn, self.parm['path'], default_elm_dat)
+        # contains simulation data
+        self.elm_data = {}
 
     def get_simid (self):
         """ returns the id assigned to the simulation.
@@ -245,6 +247,118 @@ class Simulation (object):
 
         # operation completed succesfully
         return True
+
+    ## ANALYSIS - ELEMENT DATA ##
+
+    def has_element_data(self):
+        """ check if element data exists for simulation.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if default element data file exists in simulation directory.
+        """
+        return (os.path.exists(self.file_elm_dat))
+
+    def parse_element_data(self, overwrite = True):
+        """ parse element data from file.
+
+        Arguments:
+        ----------
+        overwrite : bool
+            overwrite existing data stored in object.
+
+        Returns:
+        --------
+        None
+        """
+        if (not self.elm_data) or (overwrite):
+            self.elm_data = parse_element_data(self.file_elm_dat)
+
+    def get_element_data(self, overwrite = True):
+        """ returns the element data associated with the simulation.
+
+        Arguments:
+        ----------
+        overwrite : bool
+            overwrite existing data stored in object.
+
+        Returns:
+        --------
+        Dict[DataFrame]
+            dictionary which contains frames containing element data across simulation time for each property.
+        """
+        if not self.has_element_data(): return None
+        self.load_element_data(overwrite)
+        return self.elm_data
+
+    def element_data_has_property(self, prop):
+        """check if property exists within element data.
+
+        Arguments:
+        ----------
+        prop : str
+            propery to check for in element data keys list.
+
+        Returns:
+        --------
+        bool
+            'True' if property exists in element data, else 'False'.
+        """
+        return (prop in list(self.elm_data.keys()))
+
+    def get_properies_in_element_data(self):
+        """ returns list of properties stored within element data.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        List[str]
+            list of all properties stored within element data, if any.
+        """
+        return list(self.elm_data.keys())
+
+    def element_data_has_element(self, elm):
+        """ checks if element exists within elements that have element data.
+
+        Arguments:
+        ----------
+        elm : int
+            integer corresponding to element number
+
+        Returns:
+        --------
+        bool
+            'True' if element exists within list, else 'False'
+        """
+        return (elm in self.get_elements_in_element_data())
+
+    def get_elements_in_element_data(self):
+        """ returns elements which has element data.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        List[int]
+        """
+        if (not self.elm_dat):
+            return list(self.elm_data[self.get_properies_in_element_data()[0]].columns.values)
+        else:
+            return []
+
+    def get_steady_state_property_distribution (self):
+        """"""
+        pass
 
     ## ANALYSIS - HYSTERESIS ##
 

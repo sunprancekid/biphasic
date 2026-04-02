@@ -77,6 +77,23 @@ class Sweep (object):
         if jd is not None and jn is not None:
             self.add_sim_batch(jd, jn)
 
+    ## REDUNDENT ##
+    # in theory, these should be included with JOB
+    def get_simulation(self, n):
+        """ return simulation associated with integer.
+
+        Arguments:
+        ----------
+        n : int
+            corresponding to simulation number in job file
+
+        Returns:
+        --------
+        Simulation
+            initialized simulation object
+        """
+        return Simulation(self.jd, self.jn, n)
+
     ## SIMULATIONS ##
 
     def get_sim_num (self):
