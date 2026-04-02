@@ -107,7 +107,6 @@ class Model(object):
 
         # check if the file already exits
         savepath = saveto + saveas
-        print(savepath)
         if os.path.exists(savepath) and not overwrite:
             print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritte.".format(savepath))
             return False

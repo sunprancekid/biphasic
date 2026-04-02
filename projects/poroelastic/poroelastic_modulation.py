@@ -27,11 +27,11 @@ n_cycles = 10
 # number of steps per cycle
 n_steps = 60
 # loading depth (mm), unless otherwise specified
-default_loading_depth = 0.005
+default_loading_depth = 0.01
 # relaxation time (s), unless otherwise specified
 default_relaxation_time = 10000
 # oscillation amplitude (mm), unless otherwise specified
-default_oscillation_amplitude = 0.001
+default_oscillation_amplitude = 0.005
 # lowest oscillation period to test (s), unless otherwise specified
 default_period_low = 10.
 # highest oscillation period to test (s), unless otherwise specified
@@ -46,8 +46,8 @@ default_perm = 0.001
 scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 			   '0.08': 'models/uniax/scale/comp/0.08.feb',
 			  '0.125': 'models/uniax/scale/comp/0.125.feb',
-			   '0.20': 'models/uniax/scale/comp/0.20.feb',
-			   '0.50': 'models/uniax/scale/comp/0.50.feb',
+			   '0.20': 'models/uniax/scale/comp/0.2.feb',
+			   '0.50': 'models/uniax/scale/comp/0.5.feb',
 			   '1.00': 'models/uniax/scale/comp/1.0.feb'}
 
 
@@ -213,32 +213,40 @@ if __name__ == "__main__":
 	## SCRIPT
 	# for each key in the scale_dict
 	z_int = 0
-	for z in list(scale_dict.keys()):
+	for z, i in zip(list(scale_dict.keys()), range(len(scale_dict.keys()))):
 		## load model, update saving parameters
 		m = Model(scale_dict[z])
-		## TODO :: check that the elements are the same for each file (they should be)
-		m.add_element_data_to_logfile_output(elements = [1, 226, 451, 676, 901, 1126, 1351, 1576, 1601, 2026, 2251, 2576, 2701, 2926, 3151, 3376, 3601, 3826, 4051, 4276, 4501, 4726, 4951, 5176, 5401, 5626, 5851, 6076, 6301, 6526], properties = ['p', 'effective stress'], delim = ",", filename = 'elm.dat')
+		m.add_element_data_to_logfile_output(elements = [1, 226, 451, 676, 901, 1126, 1351, 1576, 1601, 2026, 2251, 2576, 2701, 2926, 3151, 3376, 3601, 3826, 4051, 4276, 4501, 4726, 4951, 5176, 5401, 5626, 5851, 6076, 6301, 6526], properties = ['p', 'effective stress', 'z'], delim = ",", filename = 'elm.dat')
 
 		## establish the job, parameters
-		j = Job ("{0}{1}/".format(jd, jn), 'z{0}'.format(z_int))
+		j = Job ("{0}{1}/".format(jd, jn), 'z{0}'.format(i))
 		constant_bulk_modulus(job = j)
 		constant_permeability(job = j)
 		# vary the time scale according to the anticipated maximum
-		ts = default_bulk * default_perm / pow(float(z), 2.)
-		print(ts)
-		frequency_sweep(job = j,
-				  period_low = ts / 100, # the lowest value is two orders of magnitude lower than the anticipated maximum
-				  period_high = ts * 100) # the highest value is two order of magnitude greater than the anticipated maximum
+		ts = 100 * pow(float(z), 2.) / (default_bulk * default_perm) # for beam compression, the normalized peak occurs at 100.
+		if ts < 1.: continue # if the time scale is too low, skip and continue
+		ts_period_low = ts / 100 # the lowest value to test is two orders of magnitude less than the anticipated maximum
+		if ts_period_low < 1.: ts_period_low = 1. # the lowest value to test is 1.
+		ts_period_high = ts * 100
+
+		## here, the loading depth oscilation amplitude, etc. depend on the length scale
+		loading_depth = default_loading_depth * (float(z) / 0.125)
+		oscillation_amplitude = default_oscillation_amplitude * (float(z) / 0.125)
+		frequency_sweep(job = j, period_low = ts_period_low, period_high = ts_period_high, loading_depth = loading_depth, oscillation_amplitude = oscillation_amplitude)
 
 		## save, quit
 		# save model to the directory
-		m.save_model(saveto = "{0}{1}/z{2}/".format(jd, jn, z_int), saveas = "{0}-z{1}.feb".format(jn, z_int))
+		m.save_model(saveto = "{0}{1}/z{2}/".format(jd, jn, i), saveas = "{0}-z{1}.feb".format(jn, i))
 		# generate parmeters
 		if not j.has_parameters():
 			j.generate_parameters()
 		# save config, parameter files
 		j.save_config()
 		j.save_parameters()
-		exit()
+		# exit()
+
+	# merge all parameter sets
+	# reset paths
+	# update index
 
 
