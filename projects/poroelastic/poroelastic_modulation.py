@@ -211,6 +211,9 @@ if __name__ == "__main__":
 	## TODO add model file to job, generate dictionaries and write feb file
 
 	## SCRIPT
+	# data frames for scaling job
+	df_parm = None
+	df_config = None
 	# for each key in the scale_dict
 	z_int = 0
 	for z, i in zip(list(scale_dict.keys()), range(len(scale_dict.keys()))):
@@ -234,7 +237,7 @@ if __name__ == "__main__":
 		oscillation_amplitude = default_oscillation_amplitude * (float(z) / 0.125)
 		frequency_sweep(job = j, period_low = ts_period_low, period_high = ts_period_high, loading_depth = loading_depth, oscillation_amplitude = oscillation_amplitude)
 
-		## save, quit
+		## save job, model
 		# save model to the directory
 		m.save_model(saveto = "{0}{1}/z{2}/".format(jd, jn, i), saveas = "{0}-z{1}.feb".format(jn, i))
 		# generate parmeters
@@ -243,10 +246,31 @@ if __name__ == "__main__":
 		# save config, parameter files
 		j.save_config()
 		j.save_parameters()
-		# exit()
 
-	# merge all parameter sets
-	# reset paths
-	# update index
+		## write sweep to job file
+		# copy the sweep parameter file
+		df_parm_tmp = pd.read_csv("{0}{1}/z{2}/z{2}.parm.csv".format(jd, jn, i))
+		# add scaling integer as parameter, update path
+		df_parm_tmp['z'] = [z for j in range(len(df_parm_tmp))]
+		for index, row in df_parm_tmp.iterrows():
+			if df_parm is not None:
+				df_parm_tmp.loc[index, 'n'] = int(df_parm.loc[len(df_parm) - 1, 'n']) + index + 1
+			df_parm_tmp.loc[index, 'path'] = "z{0}/{1}".format(i, df_parm_tmp.loc[index, 'path'])
+			df_parm_tmp.loc[index, 'id'] = "z{0}{1}".format(i, df_parm_tmp.loc[index, 'id'])
+		# update job parameter
+		if df_parm is None:
+			df_parm = df_parm_tmp
+		else:
+			df_parm = pd.concat([df_parm, df_parm_tmp], ignore_index = True, sort = False)
+
+		if df_config is None:
+			df_config = pd.read_csv("{0}{1}/z{2}/z{2}.config.csv".format(jd, jn, i))
+
+	# write parameter file, update config
+	df_parm.to_csv("{0}{1}/{1}.parm.csv".format(jd, jn), index = False)
+	df_config.loc[-1] = ['z', 'na', 'mm', 'scaling_value', '0', '0', '0', 'na', list(scale_dict.keys())[0], list(scale_dict.keys())[-1], 'na', 'na']
+	df_config.index = df_config.index + 1
+	df_config = df_config.sort_index()
+	df_config.to_csv("{0}{1}/{1}.config.csv".format(jd, jn), index = False)
 
 

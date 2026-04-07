@@ -381,7 +381,15 @@ class Simulation (object):
         DataFrame
             ...
         """
-        # TODO :: automatically parse data if it has not been loaded
+        # if the element data for the simulation has not already been loaded
+        if self.elm_data is None:
+            # check if the simulation has element data already
+            if not self.has_element_data():
+                print("ERROR :: Simulation.get_property_values() :: Simulation does not have element data.")
+                return None
+            # otherwise, load the data
+            self.parse_element_data()
+
         # check the property passed to the method
         if prop is None:
             print("ERROR :: Simulation.get_property_values() :: must specify method argument 'prop'.")
@@ -437,6 +445,7 @@ class Simulation (object):
             time = [float(time)]
         elif time is None:
             # use all time points in list
+            # TODO :: all items in list need to be type cast as flatoing point
             time = self.elm_data[prop]['Time'].tolist()
         else:
             # time should be either float or list float
