@@ -28,6 +28,10 @@ default_elm_dat = 'elm.dat'
 xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
 # prestress relaxation number of steps - xml path
 xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
+# default color map used for steady state property profile graphs
+# default_prop_profile_colormap = 'seismic'
+default_prop_profile_colormap = 'berlin'
+# default_prop_profile_colormap = 'bwr'
 
 ## METHODS
 # none
@@ -560,19 +564,175 @@ class Simulation (object):
                 # idx_propdf += 1
                 # if idx_propdf == len(self.elm_data[prop]): break
                 if idx_timelist == len(time): break
-            print(idx_timelist, rt_idx, idx_propdf)
+            # print(idx_timelist, rt_idx, idx_propdf)
             idx_propdf += 1
             if idx_propdf == len(self.elm_data[prop]): break
         # return the data frame
         return df_return
 
-    def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = None):
-        """"""
-        # according to period, determine start and end of second to last cycle
+    def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = 4, cmap = default_prop_profile_colormap):
+        """ display a particular property values against one spatial coordinate across oscillation period.
+
+        Arguments:
+        ----------
+        prop : str
+            property that exists in simulation element data.
+        ax : str
+            one of three spatial coordinates ('x', 'y', or 'z') that also exist in property data.
+        init : bool
+            use the initialial spatial coordinates (t = 0), rather than those changing with time.
+        ax_norm : float
+            normalize the axis length by the maximum value occuring in the data series.
+        n_sample : int (default is '5')
+            number of points to sample along period frequency
+        cmap : str
+            string representing accepted matplotlib color map, used when generating figure
+
+        Returns:
+        --------
+        None
+        """
+
+        # check that the element data has been loaded
+        if not (self.elm_data):
+            # check if the simulation has element data already
+            if not self.has_element_data():
+                print("ERROR :: Simulation.show_steady_state_property_profile() :: Simulation does not have element data.")
+                return None
+            # otherwise, load the data
+            self.parse_element_data()
+
+        # check that the property exists
+        if prop is None:
+            # must specify property values
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: must specify method argument 'prop'.")
+            return None
+        elif not isinstance(prop, str):
+            # prop must be strng
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: method argument 'prop' should be type 'str'.")
+            return None
+        elif not self.element_data_has_property(prop):
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: property '{0}' does not exist with element propery data ({1}).".format(prop, self.get_properties_in_element_data))
+            return None
+
+        # check that the axis is right and also exists in the element data
+        if ax is None or ax not in ['x', 'y', 'z']:
+            # must specify coordinates
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: must specify axis coordinate frame 'ax' as either 'x', 'y', or 'z'.")
+            return None
+        elif ax not in self.get_properties_in_element_data():
+            # axis data not in save element data
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: axis coordinate data '{0}' does not exist in element data.".format(ax))
+            return None
+
+        # check n_sample
+        if n_sample is None or not isinstance(n_sample, int) or n_sample <= 2:
+            # n_sample has not been provided correctly
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: must specify 'n_sample' as integer greater than 2.")
+            return None
+
+        # get the oscillation period
+        if self.has_key('OT'):
+            # get the value from the parameter file
+            period = self.get_key_value('OT')
+        else:
+            # simulation does not have an oscilation parameter, or uses a different key
+            print("ERROR :: Simulation.show_steady_state_property_profile() :: Unable to parse oscilation period 'OT' from config file.")
+            return None
+
+        # get relaxation time
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+
+
+        ## get the times corresponding to the start and end of the second to last cycle
+        # get all time, drop relaxation time
+        time = self.get_time_in_element_data()
+        # reduce or drop time
+        for i in range(len(time) - 1, -1, -1):
+            # transverse list in reverse order
+            if time[i] >= relax_time:
+                time[i] = time[i] - relax_time
+            else:
+                time.pop(i)
+        # determine the number of cycles
+        err = []
+        n_cyc = 1
+        while True:
+            err.append(time[-1] - n_cyc * period)
+            if len(err) > 1:
+                # is the error decreasing?
+                if abs(err[-1]) > abs(err[-2]):
+                    # error increased from the previous calculation
+                    # the previous integer was the closest to the period
+                    n_cyc -= 1
+                    break
+                else:
+                    n_cyc += 1
+        n_cyc -= 2 # use the second to last cycle
+        t_start = period * n_cyc
+        t_end = period * (n_cyc + 1)
+
+        ## get data
         # pick a few points that are distributed in time along the cycle
-        # condense data frame
-        # plot
-        pass
+        t = [ t_start + ((i) / (n_sample)) * (t_end - t_start) for i in range (1, n_sample + 1)]
+        for i in range(len(t)):
+            t[i] = t[i] + relax_time
+        # get the property and axis data corresponding to the time points
+        p = self.get_property_values(prop = prop, time = t)
+        if init:
+            # use the coordinates at time zero
+            z = self.get_property_values(prop = ax, time = 0)
+        else:
+            z = self.get_property_values(prop = ax, time = t)
+
+        # condense data frame, plot
+        df_plot = pd.DataFrame()
+        for i in range(len(p)):
+            # establish index used for ax
+            j = i
+            if init:
+                j = 0
+            # append the data set to plot df
+            label = (i + 1) / (n_sample)
+            df_plot = pd.concat([df_plot, pd.DataFrame.from_dict({'prop': p.loc[i,1:].values.flatten().tolist(), 'ax_coor': z.loc[j,1:].values.flatten().tolist(), 'time': [label for k in range(len(self.get_elements_in_element_data()))]})])
+
+
+        ## plot
+        # estbalish labels
+        xaxis_label = ""
+        if ax == 'x':
+            xaxis_label = "X-Axis Position (mm)"
+        elif ax == 'y':
+            xaxis_label = "Y-Axis Position (mm)"
+        elif ax == 'z':
+            xaxis_label = "Z-Axis Position (mm)"
+        if init:
+            xaxis_label = "Initial {0}".format(xaxis_label)
+        yaxis_label = ""
+        if prop == 'p':
+            yaxis_label = "Fluid Pressure (MPa)"
+        elif prop == 'effective stress':
+            yaxis_label = "Effective Solid Stress (MPa)"
+        else:
+            yaxis_label = prop
+        #
+        fig = Figure()
+        fig.append_df(df_plot, ycol = 'prop', xcol = 'ax_coor', icol = 'time')
+        fig.set_cmap(cmap)
+        fig.set_subtitle_label("T = {0:.2f}".format(period))
+        fig.set_axis_label('x', xaxis_label)
+        fig.set_axis_label('y', yaxis_label)
+        fig.add_format("t / T = {:.2f}")
+        gen_plot(fig, show = True, save = False)
 
     ## ANALYSIS - HYSTERESIS ##
 
