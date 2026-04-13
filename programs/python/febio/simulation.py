@@ -724,7 +724,7 @@ class Simulation (object):
             yaxis_label = "Effective Solid Stress (MPa)"
         else:
             yaxis_label = prop
-        #
+        # generate and show figure
         fig = Figure()
         fig.append_df(df_plot, ycol = 'prop', xcol = 'ax_coor', icol = 'time')
         fig.set_cmap(cmap)
