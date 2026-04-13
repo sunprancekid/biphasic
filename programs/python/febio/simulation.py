@@ -294,7 +294,7 @@ class Simulation (object):
             dictionary which contains frames containing element data across simulation time for each property.
         """
         if not self.has_element_data(): return None
-        self.load_element_data(overwrite)
+        self.parse_element_data(overwrite)
         return self.elm_data
 
     def element_data_has_property(self, prop):
@@ -364,6 +364,63 @@ class Simulation (object):
         else:
             return []
 
+    def get_time_in_element_data(self, prop = None):
+        """ returns the time points associated with stored element property data.
+
+        Arguments:
+        ----------
+        prop : str (optional)
+            specify property corresponding to time point data to retrieve
+
+        Returns:
+        --------
+        List[float]
+            all time points in element data.
+        """
+        # check if the simulation has element data
+        if not (self.elm_data):
+            if self.has_element_data():
+                self.parse_element_data()
+            else:
+                print("ERROR :: Simulation.get_time_in_element_data() :: Simulaton does not have element data.")
+                return []
+        # check method arguments
+        if prop is None: 
+            prop = self.get_properties_in_element_data()[0]
+        elif not self.element_data_has_property(prop):
+            print("ERROR :: Simulation.get_time_in_element_data() :: simulation element data does not contain property '{0}'.".format(prop))
+            return []
+        # get data
+        if (self.elm_data):
+            time = self.elm_data[prop]['Time'].tolist()
+            for i in range(len(time)):
+                if not isinstance(time[i], float):
+                    time[i] = float(time[i])
+            return time
+        else:
+            return []
+
+    def element_data_has_time (self, t):
+        """ checks if floating point number exists within time series data.
+        
+        Arguments:
+        ----------
+        t : float 
+            floating point number greater than zero
+
+        Returns:
+        --------
+        bool
+            'True' if time point exists within element data, else 'False'.
+        """
+        time = self.get_time_in_element_data()
+        if (time):
+            # check the time point is greater than the min and max values
+            return (t <= max(time)) and (t >= min(time))
+        else:
+            # the list is empty
+            return False
+
     def get_property_values (self, prop = None, elm = None, time = None):
         """ get the values for one propery, with optional time and element specification.
 
@@ -382,7 +439,7 @@ class Simulation (object):
             ...
         """
         # if the element data for the simulation has not already been loaded
-        if self.elm_data is None:
+        if not (self.elm_data):
             # check if the simulation has element data already
             if not self.has_element_data():
                 print("ERROR :: Simulation.get_property_values() :: Simulation does not have element data.")
@@ -402,7 +459,6 @@ class Simulation (object):
             return None
 
         # check the specified elements
-        # TODO :: does not remove elements that are not in the list
         if isinstance(elm, list):
             # check all items in list
             for i in range(len(elm) - 1, -1, -1):
@@ -414,7 +470,7 @@ class Simulation (object):
                 # check if elm is in the list of accepted integer
                 if not self.element_data_has_element(elm[i]):
                     # if not, remove from the list
-                    print("ERROR :: Simulation.get_property_values() :: element is method argument list 'elm' ({0}, {1}) does not exist in element data for property '{2}', removing from list.".format(i, elm[i], prop))
+                    print("ERROR :: Simulation.get_property_values() :: element in method argument list 'elm' ({0}, {1}) does not exist in element data for property '{2}', removing from list.".format(i, elm[i], prop))
             # check that there are still items in the list
             if len(elm) == 0:
                 print("ERROR :: Simulation.get_property_values() :: element list 'elm' is empty.")
@@ -436,55 +492,79 @@ class Simulation (object):
             # check all points in the list
             for i in range(len(time) - 1, -1, -1):
                 # transverse the list in reverse order
-                pass
-        elif isinstance(time, float):
-            # turn float into list float
-            time = [time]
-        elif isinstance(time, int):
-            # turn int into list float
-            time = [float(time)]
-        elif time is None:
-            # use all time points in list
-            # TODO :: all items in list need to be type cast as flatoing point
-            time = self.elm_data[prop]['Time'].tolist()
+                # check that each item is a floating point number or an integer
+                if not (isinstance(time[i], float) or isinstance(time[i], int)):
+                    # the time point is not a floating point number or an integer
+                    print("ERROR :: Simulation.get_property_values() :: time point in method argument list 'time' ({0}, {1}) is not of type 'int' or 'float', removing.".format(i , time.pop(i)))
+                    continue
+                # if it is an integer, cast as floating point number
+                if isinstance(time[i], int):
+                    time[i] = float(time[i])
+                # check that the time point is within allowable range
+                if not self.element_data_has_time(time[i]):
+                    print("ERROR :: Simulation.get_property_values() :: time point in method argumet list 'time' ({0}, {1}) is outside the range of time points stored in the element data.".format(i, time.pop(i)))
+                    continue
+            if len(time) == 0:
+                print("ERROR :: Simulation.get_property_values() :: argument method time list 'time' is empty.")
+                return None
         else:
-            # time should be either float or list float
-            print("ERROR :: Simulation.get_propery_values() :: method argment 'time' must be either type 'float' or 'List[float]'.")
-            return None
+            ## TODO check that the time is within in the range
+            if isinstance(time, float):
+                # turn float into list float
+                time = [time]
+            elif isinstance(time, int):
+                # turn int into list float
+                time = [float(time)]
+            elif time is None:
+                # use all time points in list
+                # TODO :: all items in list need to be type cast as flatoing point
+                time = self.get_time_in_element_data(prop)
+            else:
+                # time should be either float or list float
+                print("ERROR :: Simulation.get_property_values() :: method argment 'time' must be either type 'float' or 'List[float]'.")
+                return None
 
-        ## go through each point in list, append to df_return if meets criteria
+        ## go through each point in element property list, append to df_return if meets criteria
         # NOTE :: this algorithm assumes that data in 'time' are ordered
         df_return = pd.DataFrame(columns = (['Time'] + elm)) # empty data frame
         # find the data that corresponds to the time point
         idx_timelist = 0 # current inedex in time list
-        rt_idx = 0 # current index for the return dataframe
-        # TODO :: change to while loop
-        for i in range(1, len(self.elm_data[prop])):
-            # check the time of the current row
-            if abs(float(self.elm_data[prop].loc[i, 'Time']) - time[idx_timelist]) > abs(float(self.elm_data[prop].loc[i - 1, 'Time']) - time[idx_timelist]):
-                # check if the parsed time is the same as the current time
-                print(df_return.head)
-                if (len(df_return) != 0) and (df_return.loc[rt_idx - 1, 'Time'] == self.elm_data[prop].loc[i - 1, 'Time']):
+        rt_idx = 0 # current index for the return dataframe\
+        idx_propdf = 1
+        while True:
+            # check if the current row in the property data frame meets the criteria
+        # for i in range(1, len(self.elm_data[prop])):
+            if abs(float(self.elm_data[prop].loc[idx_propdf, 'Time']) - time[idx_timelist]) > abs(float(self.elm_data[prop].loc[idx_propdf - 1, 'Time']) - time[idx_timelist]):
+                # here, the previous time has lower error than the current time
+                # the previous time point should be added to the return data frame
+                # first, check to see if the algo is attemping to add a time point that is already in the list
+                # print(df_return.head)
+                if len(df_return) != 0:
+                    print(df_return.loc[rt_idx - 1, 'Time'], self.elm_data[prop].loc[idx_propdf - 1, 'Time'])
+                if (len(df_return) != 0) and (df_return.loc[rt_idx - 1, 'Time'] == self.elm_data[prop].loc[idx_propdf - 1, 'Time']):
                     # here, the time points in 'time' are too close together,
                     # and the same data points from 'elm_data[prop]' will be added to the return
                     # matrix a second time. So skip time point in 'time'
                     # NOTE :: switching to while loop will help solve this bug
                     idx_timelist += 1
                     if idx_timelist == len(time): break
-                # the error between the current time and the desired time is increasing from the previous index
                 # append the current time point
                 df_return.loc[rt_idx] = [np.nan for i in range(len(elm) + 1)]
                 # return df_return
-                df_return.loc[rt_idx, 'Time'] = float(self.elm_data[prop].loc[i - 1, 'Time'])
+                df_return.loc[rt_idx, 'Time'] = float(self.elm_data[prop].loc[idx_propdf - 1, 'Time'])
                 for e in elm:
-                    df_return.loc[rt_idx, e] = self.elm_data[prop].loc[i - 1, e]
+                    df_return.loc[rt_idx, e] = self.elm_data[prop].loc[idx_propdf - 1, e]
                 # increment indicies
                 idx_timelist += 1
                 rt_idx += 1
+                # idx_propdf += 1
+                # if idx_propdf == len(self.elm_data[prop]): break
                 if idx_timelist == len(time): break
+            print(idx_timelist, rt_idx, idx_propdf)
+            idx_propdf += 1
+            if idx_propdf == len(self.elm_data[prop]): break
         # return the data frame
         return df_return
-
 
     def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = None):
         """"""
