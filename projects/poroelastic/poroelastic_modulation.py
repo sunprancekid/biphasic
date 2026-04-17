@@ -39,7 +39,7 @@ default_period_high = 100000. # one hundred thousand, 1e6
 # number of period values to test in between highest and lowest, unless otherwise specified
 default_period_n = 40
 # default constant bulk modulus
-default_bulk = 1.129
+default_bulk = 0.1129
 # default material permeability
 default_perm = 0.001
 # maps length scale to specific feb files
@@ -220,6 +220,7 @@ if __name__ == "__main__":
 		## load model, update saving parameters
 		m = Model(scale_dict[z])
 		m.add_element_data_to_logfile_output(elements = [1, 226, 451, 676, 901, 1126, 1351, 1576, 1601, 2026, 2251, 2576, 2701, 2926, 3151, 3376, 3601, 3826, 4051, 4276, 4501, 4726, 4951, 5176, 5401, 5626, 5851, 6076, 6301, 6526], properties = ['p', 'effective stress', 'z'], delim = ",", filename = 'elm.dat')
+		## TODO write model to directory
 
 		## establish the job, parameters
 		j = Job ("{0}{1}/".format(jd, jn), 'z{0}'.format(i))
@@ -227,7 +228,7 @@ if __name__ == "__main__":
 		constant_permeability(job = j)
 		# vary the time scale according to the anticipated maximum
 		ts = 100 * pow(float(z), 2.) / (default_bulk * default_perm) # for beam compression, the normalized peak occurs at 100.
-		if ts < 1.: continue # if the time scale is too low, skip and continue
+		if ts < 10.: continue # if the time scale is too low, skip and continue
 		ts_period_low = ts / 100 # the lowest value to test is two orders of magnitude less than the anticipated maximum
 		if ts_period_low < 1.: ts_period_low = 1. # the lowest value to test is 1.
 		ts_period_high = ts * 100
