@@ -41,7 +41,7 @@ default_period_n = 40
 # default constant bulk modulus
 default_bulk = 0.01129
 # default material permeability
-default_perm = 0.0001
+default_perm = 0.00001
 # maps length scale to specific feb files
 scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 			   '0.08': 'models/uniax/scale/comp/0.08.feb',
