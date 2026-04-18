@@ -39,7 +39,7 @@ default_period_high = 100000. # one hundred thousand, 1e6
 # number of period values to test in between highest and lowest, unless otherwise specified
 default_period_n = 40
 # default constant bulk modulus
-default_bulk = 1.129
+default_bulk = 0.1129
 # default material permeability
 default_perm = 0.01
 # maps length scale to specific feb files
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 			if df_parm is not None:
 				df_parm_tmp.loc[index, 'n'] = int(df_parm.loc[len(df_parm) - 1, 'n']) + index + 1
 			df_parm_tmp.loc[index, 'path'] = "z{0}/{1}".format(i, df_parm_tmp.loc[index, 'path'])
-			df_parm_tmp.loc[index, 'id'] = "z{0}{1}".format(i, df_parm_tmp.loc[index, 'id'])
+			df_parm_tmp.loc[index, 'id'] = "{1}".format(i, df_parm_tmp.loc[index, 'id'])
 		# update job parameter
 		if df_parm is None:
 			df_parm = df_parm_tmp

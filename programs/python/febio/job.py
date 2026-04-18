@@ -31,6 +31,8 @@ parameter_file_format = "{0}/{1}/{1}.parm.csv"
 parameter_header = ['n', 'id', 'path']
 # contains assumed scaling parameters for viscoelastic model
 viscoelastic_normalization_dict = {'E': [1, 0], 'gamma': [1, 0], 'tau': [0, 1], 'k': [1, 0]}
+# contains assumed scaling parameter for poroelastic model
+poroelastic_normalization_dict = {'E': [1, -1], 'K': [0, -1], 'z': [3, 2]}
 
 ## METHODS
 def gen_linear_scale_range (n, min_val, max_val):
