@@ -52,6 +52,81 @@ scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 
 
 ## METHODS
+def gen_scaling_poroelastic_frequency_sweep (simdir = None, job = None, emod = default_bulk, perm = default_perm):
+	"""
+
+	Arguments:
+	----------
+	None
+
+	Returns:
+	--------
+	None
+	"""
+
+	# data frames for scaling job
+	df_parm = None
+	df_config = None
+	# for each key in the scale_dict
+	z_int = 0
+	for z, i in zip(list(scale_dict.keys()), range(len(scale_dict.keys()))):
+		## load model, update saving parameters
+		m = Model(scale_dict[z])
+		m.add_element_data_to_logfile_output(elements = [1, 226, 451, 676, 901, 1126, 1351, 1576, 1601, 2026, 2251, 2576, 2701, 2926, 3151, 3376, 3601, 3826, 4051, 4276, 4501, 4726, 4951, 5176, 5401, 5626, 5851, 6076, 6301, 6526], properties = ['p', 'effective stress', 'z'], delim = ",", filename = 'elm.dat')
+		## TODO write model to directory
+
+		## establish the job, parameters
+		j = Job ("{0}{1}/".format(simdir, job), 'z{0}'.format(i))
+		constant_bulk_modulus(job = j, E_val = emod)
+		constant_permeability(job = j, K_val = perm)
+		# vary the time scale according to the anticipated maximum
+		ts = 100 * pow(float(z), 2.) / (default_bulk * default_perm) # for beam compression, the normalized peak occurs at 100.
+		if ts < 10.: continue # if the time scale is too low, skip and continue
+		ts_period_low = ts / 100 # the lowest value to test is two orders of magnitude less than the anticipated maximum
+		if ts_period_low < 1.: ts_period_low = 1. # the lowest value to test is 1.
+		ts_period_high = ts * 100
+
+		## here, the loading depth oscilation amplitude, etc. depend on the length scale
+		loading_depth = default_loading_depth * (float(z) / 0.125)
+		oscillation_amplitude = default_oscillation_amplitude * (float(z) / 0.125)
+		frequency_sweep(job = j, period_low = ts_period_low, period_high = ts_period_high, loading_depth = loading_depth, oscillation_amplitude = oscillation_amplitude)
+
+		## save job, model
+		# save model to the directory
+		m.save_model(saveto = "{0}{1}/z{2}/".format(simdir, job, i), saveas = "{0}-z{1}.feb".format(job, i))
+		# generate parmeters
+		if not j.has_parameters():
+			j.generate_parameters()
+		# save config, parameter files
+		j.save_config()
+		j.save_parameters()
+
+		## write sweep to job file
+		# copy the sweep parameter file
+		df_parm_tmp = pd.read_csv("{0}{1}/z{2}/z{2}.parm.csv".format(simdir, job, i))
+		# add scaling integer as parameter, update path
+		df_parm_tmp['z'] = [z for j in range(len(df_parm_tmp))]
+		for index, row in df_parm_tmp.iterrows():
+			if df_parm is not None:
+				df_parm_tmp.loc[index, 'n'] = int(df_parm.loc[len(df_parm) - 1, 'n']) + index + 1
+			df_parm_tmp.loc[index, 'path'] = "z{0}/{1}".format(i, df_parm_tmp.loc[index, 'path'])
+			df_parm_tmp.loc[index, 'id'] = "{1}".format(i, df_parm_tmp.loc[index, 'id'])
+		# update job parameter
+		if df_parm is None:
+			df_parm = df_parm_tmp
+		else:
+			df_parm = pd.concat([df_parm, df_parm_tmp], ignore_index = True, sort = False)
+
+		if df_config is None:
+			df_config = pd.read_csv("{0}{1}/z{2}/z{2}.config.csv".format(simdir, job, i))
+
+	# write parameter file, update config
+	df_parm.to_csv("{0}{1}/{1}.parm.csv".format(simdir, job), index = False)
+	df_config.loc[-1] = ['z', 'na', 'mm', 'scaling_value', '0', '0', '0', 'na', list(scale_dict.keys())[0], list(scale_dict.keys())[-1], 'na', 'na']
+	df_config.index = df_config.index + 1
+	df_config = df_config.sort_index()
+	df_config.to_csv("{0}{1}/{1}.config.csv".format(simdir, job), index = False)
+
 def constant_bulk_modulus (job, E_val = default_bulk):
 	""" specify constant bulk modulus.
 
@@ -211,67 +286,6 @@ if __name__ == "__main__":
 	## TODO add model file to job, generate dictionaries and write feb file
 
 	## SCRIPT
-	# data frames for scaling job
-	df_parm = None
-	df_config = None
-	# for each key in the scale_dict
-	z_int = 0
-	for z, i in zip(list(scale_dict.keys()), range(len(scale_dict.keys()))):
-		## load model, update saving parameters
-		m = Model(scale_dict[z])
-		m.add_element_data_to_logfile_output(elements = [1, 226, 451, 676, 901, 1126, 1351, 1576, 1601, 2026, 2251, 2576, 2701, 2926, 3151, 3376, 3601, 3826, 4051, 4276, 4501, 4726, 4951, 5176, 5401, 5626, 5851, 6076, 6301, 6526], properties = ['p', 'effective stress', 'z'], delim = ",", filename = 'elm.dat')
-		## TODO write model to directory
-
-		## establish the job, parameters
-		j = Job ("{0}{1}/".format(jd, jn), 'z{0}'.format(i))
-		constant_bulk_modulus(job = j)
-		constant_permeability(job = j)
-		# vary the time scale according to the anticipated maximum
-		ts = 100 * pow(float(z), 2.) / (default_bulk * default_perm) # for beam compression, the normalized peak occurs at 100.
-		if ts < 10.: continue # if the time scale is too low, skip and continue
-		ts_period_low = ts / 100 # the lowest value to test is two orders of magnitude less than the anticipated maximum
-		if ts_period_low < 1.: ts_period_low = 1. # the lowest value to test is 1.
-		ts_period_high = ts * 100
-
-		## here, the loading depth oscilation amplitude, etc. depend on the length scale
-		loading_depth = default_loading_depth * (float(z) / 0.125)
-		oscillation_amplitude = default_oscillation_amplitude * (float(z) / 0.125)
-		frequency_sweep(job = j, period_low = ts_period_low, period_high = ts_period_high, loading_depth = loading_depth, oscillation_amplitude = oscillation_amplitude)
-
-		## save job, model
-		# save model to the directory
-		m.save_model(saveto = "{0}{1}/z{2}/".format(jd, jn, i), saveas = "{0}-z{1}.feb".format(jn, i))
-		# generate parmeters
-		if not j.has_parameters():
-			j.generate_parameters()
-		# save config, parameter files
-		j.save_config()
-		j.save_parameters()
-
-		## write sweep to job file
-		# copy the sweep parameter file
-		df_parm_tmp = pd.read_csv("{0}{1}/z{2}/z{2}.parm.csv".format(jd, jn, i))
-		# add scaling integer as parameter, update path
-		df_parm_tmp['z'] = [z for j in range(len(df_parm_tmp))]
-		for index, row in df_parm_tmp.iterrows():
-			if df_parm is not None:
-				df_parm_tmp.loc[index, 'n'] = int(df_parm.loc[len(df_parm) - 1, 'n']) + index + 1
-			df_parm_tmp.loc[index, 'path'] = "z{0}/{1}".format(i, df_parm_tmp.loc[index, 'path'])
-			df_parm_tmp.loc[index, 'id'] = "{1}".format(i, df_parm_tmp.loc[index, 'id'])
-		# update job parameter
-		if df_parm is None:
-			df_parm = df_parm_tmp
-		else:
-			df_parm = pd.concat([df_parm, df_parm_tmp], ignore_index = True, sort = False)
-
-		if df_config is None:
-			df_config = pd.read_csv("{0}{1}/z{2}/z{2}.config.csv".format(jd, jn, i))
-
-	# write parameter file, update config
-	df_parm.to_csv("{0}{1}/{1}.parm.csv".format(jd, jn), index = False)
-	df_config.loc[-1] = ['z', 'na', 'mm', 'scaling_value', '0', '0', '0', 'na', list(scale_dict.keys())[0], list(scale_dict.keys())[-1], 'na', 'na']
-	df_config.index = df_config.index + 1
-	df_config = df_config.sort_index()
-	df_config.to_csv("{0}{1}/{1}.config.csv".format(jd, jn), index = False)
+	gen_scaling_poroelastic_frequency_sweep(simdir = jd, job = jn)
 
 
