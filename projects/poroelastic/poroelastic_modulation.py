@@ -52,7 +52,7 @@ scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 
 
 ## METHODS
-def gen_scaling_poroelastic_frequency_sweep (simdir = None, job = None, emod = default_bulk, perm = default_perm):
+def gen_simulations (simdir = None, job = None, emod = default_bulk, perm = default_perm):
 	"""
 
 	Arguments:
@@ -80,7 +80,7 @@ def gen_scaling_poroelastic_frequency_sweep (simdir = None, job = None, emod = d
 		constant_bulk_modulus(job = j, E_val = emod)
 		constant_permeability(job = j, K_val = perm)
 		# vary the time scale according to the anticipated maximum
-		ts = 100 * pow(float(z), 2.) / (default_bulk * default_perm) # for beam compression, the normalized peak occurs at 100.
+		ts = 100 * pow(float(z), 2.) / (emod * perm) # for beam compression, the normalized peak occurs at 100.
 		if ts < 10.: continue # if the time scale is too low, skip and continue
 		ts_period_low = ts / 100 # the lowest value to test is two orders of magnitude less than the anticipated maximum
 		if ts_period_low < 1.: ts_period_low = 1. # the lowest value to test is 1.
