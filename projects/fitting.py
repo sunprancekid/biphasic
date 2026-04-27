@@ -12,23 +12,27 @@
 ## MODULES
 # native / conda
 import sys, os
+import pandas as pd
 # local
 from febio.job import Job
+from febio.sweep import Sweep
 from febio.feb.model import Model
+from plot.figure import Figure
+from plot.plot import gen_plot
 
 
 ## PARAMETERS
 ## SIMULATION PARAMETERS
 # default amplitude during oscillation phase
-default_oscillation_amplitude = 0.005
+default_oscillation_amplitude = 0.001
 # default relxation time between starting the oscillation phase
 default_relaxation_time = 10000
 # default loading depth during initial loading
-default_loading_depth = 0.01
+default_loading_depth = 0.005
 # default feb model for viscoleastic simulations
 default_feb_ve = "models/bend/bend_ve.feb"
 # default feb model for poroelastic simulations
-default_feb_pe = "models/bend/bend.feb"
+default_feb_pe = "models/bend/mesh/bend/bend_n15.feb"
 
 ## VISCOELASTIC MODEL
 # small gamma - n gamma to test
@@ -165,49 +169,145 @@ def gen_pe_sweep (emod = emod, perm = perm, osc_amp = default_oscillation_amplit
     m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
 
 
-## ARGUMENTS
-# first argument: simulation directory
-jd = sys.argv[1]
-# second argument: simulation set name
-jn = sys.argv[2]
+# analysi low gamma data
+def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
+    """ analyze the data
+
+    Arguments:
+    ----------
+    jd : str
+        path to job directory
+    jn : str
+        job name
+    show : bool
+        determines if graphs should be shown
+    save : bool
+        determines if graphs should be saved
+
+    Returns
+    -------
+    None
+    """
+    ## open simulation jobs
+    # check for the poroelastic simulation
+    simdir = "{0}{1}/".format(jd, jn)
+    if not os.path.exists(simdir + "pe"):
+        print("ERROR :: analysis_gamma_low() :: unable to find poroelastic data in ''.".format())
+    sweep_pe = Sweep(simdir, "pe")
+
+    # check for viscoelastic simulation data
+    sweep_ve = []
+    i = 0
+    while True:
+        if os.path.exists(simdir + "g-lo-{0}".format(i)):
+            sweep_ve.append(Sweep(simdir, "g-lo-{0}".format(i)))
+            i += 1
+        else:
+            break
+    # for i in range(len(sweep_ve)):
+    #     sweep_ve[i].show_phase_shift()
+
+    ## compare poroelasticity and viscoelasticity simulations
+    # frequency sweep
+    data = sweep_pe.get_hysteresis_work()
+    pe_label = "PE ($E$ = {0:.1e}, \n$K$ = {1:.1e}, $Z$ = {2:.1e})".format(sweep_pe.get_simulation(0).get_key_value('E'), sweep_pe.get_simulation(0).get_key_value('K'), 0.125)
+    data['label'] = [pe_label for i in range(len(data))]
+    for i in range(len(sweep_ve)):
+        d_ve = sweep_ve[i].get_hysteresis_work()
+        ve_label = "VE-{0} ($k$ = {1:.1e}, \n$\\gamma$ = {2:.1e}, $\\tau$ = {3:.1e})".format(i, sweep_ve[i].get_simulation(0).get_key_value('E'), sweep_ve[i].get_simulation(0).get_key_value('gamma'), sweep_ve[i].get_simulation(0).get_key_value('tau'))
+        d_ve['label'] = [ve_label.format(i) for j in range(len(d_ve))]
+        data = pd.concat([data, d_ve], ignore_index = True)
+    fig = Figure()
+    fig.append_df(data, xcol = 'f', ycol = 8, icol = 'label')
+    fig.set_axis_scale('x', log = True)
+    # fig.set_axis_scale('y', log = True)
+    fig.set_axis_label('x', "Oscillation Frequency ($Hz$)")
+    fig.set_axis_label('y', "Measured Energy Loss ($J$)")
+    # fig.set_axis_minimum_value('y', data[8].min())
+    # fig.set_axis_maximum_value('y', data[8].max())
+    gen_plot(fig, show = show, save = save)
+
+    # phase shift
+    data = sweep_pe.get_phase_shift()
+    data['label'] = [pe_label for i in range(len(data))]
+    for i in range(len(sweep_ve)):
+        d_ve = sweep_ve[i].get_phase_shift()
+        ve_label = "VE-{0} ($k$ = {1:.1e}, \n$\\gamma$ = {2:.1e}, $\\tau$ = {3:.1e})".format(i, sweep_ve[i].get_simulation(0).get_key_value('E'), sweep_ve[i].get_simulation(0).get_key_value('gamma'), sweep_ve[i].get_simulation(0).get_key_value('tau'))
+        d_ve['label'] = [ve_label.format(i) for j in range(len(d_ve))]
+        data = pd.concat([data, d_ve], ignore_index = True)
+    fig = Figure()
+    fig.append_df(data, xcol = 'f', ycol = 8, icol = 'label')
+    fig.set_axis_scale('x', log = True)
+    # fig.set_axis_scale('y', log = True)
+    fig.set_axis_label('x', "Oscillation Frequency ($Hz$)")
+    fig.set_axis_label('y', "Phase Shift (degrees, $^{{\\circ}}$)")
+    # fig.set_axis_minimum_value('y', data[8].min())
+    # fig.set_axis_maximum_value('y', data[8].max())
+    gen_plot(fig, show = show, save = save)
+
+    # dynamic modulus
+    data = sweep_pe.get_dynamic_modulus()
+    data['label'] = [pe_label for i in range(len(data))]
+    for i in range(len(sweep_ve)):
+        d_ve = sweep_ve[i].get_dynamic_modulus()
+        ve_label = "VE-{0} ($k$ = {1:.1e}, \n$\\gamma$ = {2:.1e}, $\\tau$ = {3:.1e})".format(i, sweep_ve[i].get_simulation(0).get_key_value('E'), sweep_ve[i].get_simulation(0).get_key_value('gamma'), sweep_ve[i].get_simulation(0).get_key_value('tau'))
+        d_ve['label'] = [ve_label.format(i) for j in range(len(d_ve))]
+        data = pd.concat([data, d_ve], ignore_index = True)
+    fig = Figure()
+    fig.append_df(data, xcol = 'f', ycol = 8, icol = 'label')
+    fig.set_axis_scale('x', log = True)
+    # fig.set_axis_scale('y', log = True)
+    fig.set_axis_label('x', "Oscillation Frequency ($Hz$)")
+    fig.set_axis_label('y', "Dynamic Modulus ($Pa$)")
+    # fig.set_axis_minimum_value('y', data[8].min())
+    # fig.set_axis_maximum_value('y', data[8].max())
+    gen_plot(fig, show = show, save = save)
+
+if __name__ == "__main__":
+
+    ## ARGUMENTS
+    # first argument: simulation directory
+    jd = sys.argv[1]
+    # second argument: simulation set name
+    jn = sys.argv[2]
 
 
-## SCRIPT
+    ## SCRIPT
 
-## POROELASTICITY
-# set the poroelastic model parameters, the time and energy scales are then known
-poro_tau = pow(z, 2.) / (emod * perm)
-poro_amp = emod * pow(z, 3.)
-# generate the poroelasticity simulation
-gen_pe_sweep (min_period = poro_tau / 100., max_period = poro_tau * 100, n_period = 40, jd = "{0}{1}/".format(jd, jn), jn = "pe")
+    ## POROELASTICITY
+    # set the poroelastic model parameters, the time and energy scales are then known
+    poro_tau = pow(z, 2.) / (emod * perm)
+    poro_amp = emod * pow(z, 3.)
+    # generate the poroelasticity simulation
+    gen_pe_sweep (min_period = poro_tau / 100., max_period = poro_tau * 100, n_period = 40, jd = "{0}{1}/".format(jd, jn), jn = "pe")
 
-## VISCOELASTICITY
-# pick the viscoelastic model parameters (both large and small)
-# vary gamma betweem three values which are sufficiently "small"
-for i in range(n_small):
-    # establish the viscoelasticity parameters
-    g_val = min_small_gamma + ((i) / (n_small - 1)) * (max_small_gamma - min_small_gamma)
-    t_val = poro_tau
-    e_val = poro_amp / (pow(z, 3.) * emod)
-    # generate simulation
-    gen_ve_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
+    ## VISCOELASTICITY
+    # pick the viscoelastic model parameters (both large and small)
+    # vary gamma betweem three values which are sufficiently "small"
+    for i in range(n_small):
+        # establish the viscoelasticity parameters
+        g_val = min_small_gamma + ((i) / (n_small - 1)) * (max_small_gamma - min_small_gamma)
+        t_val = poro_tau
+        e_val = poro_amp / (pow(z, 3.) * emod)
+        # generate simulation
+        gen_ve_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
 
-# vary gamma between three values which are sufficiently "large"
-# use gamma to determine emod
-for i in range(n_large):
-    # establish viscoelasticity parameters
-    g_val = min_large_gamma + ((i) / (n_large - 1)) * (max_large_gamma - min_large_gamma)
-    t_val = poro_tau / g_val
-    e_val = poro_amp / pow(z, 3.)
-    # generate simulation
-    gen_ve_sweep (emod = emod, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-hi-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
+    # vary gamma between three values which are sufficiently "large"
+    # use gamma to determine emod
+    for i in range(n_large):
+        # establish viscoelasticity parameters
+        g_val = min_large_gamma + ((i) / (n_large - 1)) * (max_large_gamma - min_large_gamma)
+        t_val = poro_tau / g_val
+        e_val = poro_amp / pow(z, 3.)
+        # generate simulation
+        gen_ve_sweep (emod = emod, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-hi-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
 
-# (run simulations)
-# compare the following:
-# - prestress relaxation
-# - frequency sweep
-# - phase shift
-# - dynamic modulus
-# - loss modulus 
-# - storage modulus
-# - hysteresis curve
+    # (run simulations)
+    # compare the following:
+    # - prestress relaxation
+    # - frequency sweep
+    # - phase shift
+    # - dynamic modulus
+    # - loss modulus
+    # - storage modulus
+    # - hysteresis curve
