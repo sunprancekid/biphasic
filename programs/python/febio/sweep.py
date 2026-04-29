@@ -324,6 +324,20 @@ class Sweep (object):
         fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
         gen_plot(fig, show = True, save = save)
 
+    def get_resonance_time_scale (self, period = False):
+        """ returns the frequency at which the sweep has an amplitude maximum.
+
+        Parameters:
+        -----------
+        period : bool
+            if True, returns timescale as period rather than frequency.
+
+        Returns:
+        --------
+        float
+            resonant timescale of sweep
+        """
+        pass
 
     ## ANALYSIS - PHASE SHIFT ##
 
@@ -501,6 +515,38 @@ class Sweep (object):
         fig.set_yaxis_label("Dynamic Modulus ($Pa$)")
         fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'dynamic_modulus')
         gen_plot(fig, show = True, save = save)
+
+    ## ANALYSIS - ELEMENT VALUES ##
+
+    def get_steady_state_element_property_values (self, prop = None):
+        """ returns the steady state element values for all simulations.
+
+        Parameters:
+        -----------
+        prop : str
+            element property contained in simulation data.
+
+        Returns:
+        --------
+        df
+
+        """
+        pass
+
+    def show_steady_state_element_property_profile (self, prop = None, ax = None, show = True, save = False):
+        """ display the steady steady profile for a property at a certain time point.
+
+        Parameters:
+        -----------
+        prop : str
+        ax : str
+
+
+        Returns:
+        --------
+        None
+        """
+        pass
 
 
 ## ARGUMENTS

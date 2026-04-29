@@ -232,7 +232,7 @@ def calculate_complex_mod (period, time, pos, force):
     fig = Figure()
     fig.load_data(df, xcol = 'x', ycol = 'y', icol = 'l')
     fig.set_subtitle_label("$\\delta = {0:.4f}, Y' = {1:.2f}$".format(delta[sub_int], dymod[sub_int]))
-    gen_plot(fig, show = False, save = False)
+    gen_plot(fig, show = True, save = False)
 
     return delta, dymod
 

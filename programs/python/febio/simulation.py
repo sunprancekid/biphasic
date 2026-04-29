@@ -790,6 +790,27 @@ class Simulation (object):
         ## return to user
         return delta, dymod
 
+    def show_stress_strain_lag (self, cycle, norm = False, show = True, save = False):
+        """ display the stress-strain lag for a give cycle.
+
+        Arguments:
+        ----------
+        cycle : int
+            oscillation cycle number.
+        norm : bool (optional, default is 'False')
+            if True, normalize the stress / strain values so that they are on a relative scale.
+        show : bool (optional, default is 'True')
+            if True, display figure with strss-strain data against time.
+        save : bool (optional, default is 'False')
+            if True, figure and dataset are saved to simulation folder.
+
+        Returns:
+        -------
+        Figure
+            object containing data, figure formatting.
+        """
+        pass
+
     def parse_prestress_work (self):
         """ calculate the work performed during the prestress phase
 
