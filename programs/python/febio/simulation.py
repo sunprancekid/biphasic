@@ -426,7 +426,7 @@ class Simulation (object):
             return False
 
     def get_property_values (self, prop = None, elm = None, time = None):
-        """ get the values for one propery, with optional time and element specification.
+        """ get the values for one propery, at a specified simulation time and element.
 
         Arguments:
         ----------
@@ -533,7 +533,7 @@ class Simulation (object):
         df_return = pd.DataFrame(columns = (['Time'] + elm)) # empty data frame
         # find the data that corresponds to the time point
         idx_timelist = 0 # current inedex in time list
-        rt_idx = 0 # current index for the return dataframe\
+        rt_idx = 0 # current index for the return dataframe
         idx_propdf = 1
         while True:
             # check if the current row in the property data frame meets the criteria
@@ -569,6 +569,104 @@ class Simulation (object):
             if idx_propdf == len(self.elm_data[prop]): break
         # return the data frame
         return df_return
+
+    def get_steady_state_propery_values (self, prop = None, elm = None, reduced_time = None, cycle = None):
+        """ get the property value for one or more elements at a specified point in time along oscillation profile.
+
+        Arguments:
+        ----------
+        prop : str
+            string desciribing property which is stored in element data file.
+        elm : int or List[int]
+            one or more elements containing property data (if unspecified, data for all elements are returned).
+        reduced_time : float between zero and one
+            time point along reduced simulation oscillation profile.
+        cycle : int
+            specific cycle number to return data for (if unspecified, second to last cycle is returned).
+
+        Returns:
+        --------
+        DataFrame
+            contains property values for specified (or all) elements at time point in simulation oscillation cycle.
+        """
+        ## CHECK ARGUMENTS AND OBJECT STATE
+        # check element data
+        if not (self.elm_data):
+            # check if the simulation has element data already
+            if not self.has_element_data():
+                print("ERROR :: Simulation.get_steady_state_property_values() :: Simulation does not have element data.")
+                return None
+            # otherwise, load the data
+            self.parse_element_data()
+
+        # check property in element data
+        if prop is None:
+            print("ERROR :: Simulation.get_steady_state_property_values() :: must specify method argument 'prop'.")
+            return None
+        elif not isinstance(prop, str):
+            print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'prop' should be type 'str'.")
+            return None
+        elif not self.element_data_has_property(prop):
+            print("ERROR :: Simulation.get_steady_state_property_values() :: property '{0}' does not exist with element propery data.".format(prop))
+            return None
+
+        # check elements in element data
+        if isinstance(elm, list):
+            # check all items in list
+            for i in range(len(elm) - 1, -1, -1):
+                # transverse list in reverse order
+                # check elm is an integer
+                if not isinstance(elm[i], int):
+                    # remove from list
+                    print("ERROR :: Simulation.get_steady_state_property_values() :: element in list 'elm' ({0}, {1}) is not type integer, removing.".format(i, elm[i]))
+                # check if elm is in the list of accepted integer
+                if not self.element_data_has_element(elm[i]):
+                    # if not, remove from the list
+                    print("ERROR :: Simulation.get_steady_state_property_values() :: element in method argument list 'elm' ({0}, {1}) does not exist in element data for property '{2}', removing from list.".format(i, elm[i], prop))
+            # check that there are still items in the list
+            if len(elm) == 0:
+                print("ERROR :: Simulation.get_steady_state_property_values() :: element list 'elm' is empty.")
+                return None
+        elif isinstance(elm, int):
+            # turn int into list int
+            elm = [elm]
+        elif elm is None:
+            # if unspecified, elm is all elements corresponding to property
+            elm = self.get_elements_in_element_data(prop)
+        else:
+            # elm should either be int or list int
+            print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'elm' must be either type 'int' or 'List[int]'.")
+            return None
+
+        # check reduced time
+        if reduced_time is None:
+            print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'reduced_time' must be specified as type 'float' between 0. and 1., inclusive.")
+        elif isinstance(reduced_time, float) and ((reduced_time < 0.) or (reduced_time > 1.)):
+            print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'reduced_time' must be specified as type 'float' between 0. and 1., inclusive.")
+
+        # check cycle
+        if cycle is None:
+            # TODO determine the second to last cycle and assign it
+            cycle = 8
+        elif isinstance(cycle, int) and (cycle <= 0):
+            print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'cycle' must be specified as type 'int' 1 or greater.")
+
+        ## GET DATA, RETURN
+        # get period, relaxation time from simulation
+        period = self.get_key_value('OT')
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+        # use cycle, reduced time to determine the simulation time point
+        t = relax_time + period * (cycle - 1 + reduced_time)
+        return self.get_property_values(prop = prop, elm = elm, time = t)
 
     def show_steady_state_property_profile (self, prop = None, ax = None, init = True, ax_norm = None, n_sample = 4, cmap = default_prop_profile_colormap):
         """ display a particular property values against one spatial coordinate across oscillation period.
