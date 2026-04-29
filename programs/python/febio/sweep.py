@@ -518,19 +518,27 @@ class Sweep (object):
 
     ## ANALYSIS - ELEMENT VALUES ##
 
-    def get_steady_state_element_property_values (self, prop = None):
-        """ returns the steady state element values for all simulations.
+    def get_steady_state_element_property_values (self, prop = None, elm = None, reduced_time = None, cycle = None):
+        """ returns the steady state element values for all simulations at a certain time point.
 
         Parameters:
         -----------
         prop : str
             element property contained in simulation data.
+        elm : int or List[int]
+            elmements which contain property values in property data.
+        reduced_time : float between 0. and 1.
+            time point along periodic simulation oscillation, where 0. corresponds to the beginning and 1. to the end.
+        cycle : int (optional)
+            specify a specific cycle number to extract steady state data from.
 
         Returns:
         --------
-        df
-
+        DataFrame
+            ...
         """
+        ## TODO check cycle numbers in simulation
+        ## TODO extract
         pass
 
     def show_steady_state_element_property_profile (self, prop = None, ax = None, show = True, save = False):
