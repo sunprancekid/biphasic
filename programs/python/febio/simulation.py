@@ -790,13 +790,13 @@ class Simulation (object):
         ## return to user
         return delta, dymod
 
-    def show_stress_strain_lag (self, cycle, norm = False, show = True, save = False):
+    def show_displacement_force_lag (self, cycle, norm = False, show = True, save = False):
         """ display the stress-strain lag for a give cycle.
 
         Arguments:
         ----------
         cycle : int
-            oscillation cycle number.
+            oscillation cycle number, must be one or greater.
         norm : bool (optional, default is 'False')
             if True, normalize the stress / strain values so that they are on a relative scale.
         show : bool (optional, default is 'True')
@@ -809,14 +809,67 @@ class Simulation (object):
         Figure
             object containing data, figure formatting.
         """
-        pass
+        # get the period, relaxation time from the simulation key
+        period = self.get_key_value('OT')
+        if self.has_key('RT'):
+            relax_time = self.get_key_value('RT')
+        else:
+            # get the relaxation time from the feb file
+            # step size
+            steps = float(self.get_feb_path_value(xml_relax_num_step))
+            # number of steps
+            size = float(self.get_feb_path_value(xml_relax_step_size))
+            # calculate the relaxation time
+            relax_time = size * steps
+        # according to the cycle number, get the starting and stopping times for the cycle
+        t_start = relax_time + period * (cycle - 1)
+        t_end   = relax_time + period * (cycle)
+        # parse the displacement and force data
+        time = self.get_outfile()['t'].to_list()
+        pos = self.get_outfile()['disp'].to_list()
+        force = self.get_outfile()['F_mag'].to_list()
+        # get the displacement and force data corresponding to the cycle
+        f_plot = []
+        p_plot = []
+        t_plot = []
+        for i in range(len(time)):
+            if (time[i] <= t_end) and (time[i] >= t_start):
+                t_plot.append(time[i])
+                p_plot.append(-pos[i]) # NOTE negative position
+                f_plot.append(force[i])
+        # normalize data if requested
+        if norm:
+            # normalize the position, force data if requested
+            max_force = max(f_plot)
+            min_force = min(f_plot)
+            max_position = max(p_plot)
+            min_position = min(p_plot)
+            for i in range(len(f_plot)):
+                f_plot[i] = (f_plot[i] - min_force) / (max_force - min_force)
+                p_plot[i] = (p_plot[i] - min_position) / (max_position - min_position)
+            f_label = "Normalized Force \n($F_{{max}}$ = {:.1e}, $F_{{min}}$ = {:.1e})".format(max_force, min_force)
+            p_label = "Normalized Position \n($x_{{max}}$ = {:.1e}, $x_{{min}}$ = {:.1e})".format(max_position, min_position)
+        else:
+            f_label = "Force"
+            p_label = "Position"
+
+
+        ## PLOT
+        fig = Figure()
+        fig.append_lists (xlist = t_plot, ylist = f_plot, label = f_label)
+        fig.append_lists (xlist = t_plot, ylist = p_plot, label = p_label)
+        fig.set_axis_label('x', "Simulation Time (seconds)")
+        fig.set_axis_label('y', "Force / Position")
+        fig.set_saveas(savedir = self.sd, filename = "force-displacement-c{0}".format(cycle))
+        fig.save_data()
+        gen_plot(fig, show = show, save = save)
 
     def parse_prestress_work (self):
         """ calculate the work performed during the prestress phase
 
         Parameters:
         -----------
-        None
+        None4
 
         Returns:
         --------
