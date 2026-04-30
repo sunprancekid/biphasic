@@ -784,17 +784,9 @@ class Simulation (object):
 
         ## GET DATA, RETURN
         # get period, relaxation time from simulation
-        period = self.get_key_value('OT')
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
+        
         # use cycle, reduced time to determine the simulation time point
         t = relax_time + period * (cycle - 1 + reduced_time)
         return self.get_property_values(prop = prop, elm = elm, time = t)
@@ -860,26 +852,9 @@ class Simulation (object):
             print("ERROR :: Simulation.show_steady_state_property_profile() :: must specify 'n_sample' as integer greater than 2.")
             return None
 
-        # get the oscillation period
-        if self.has_key('OT'):
-            # get the value from the parameter file
-            period = self.get_key_value('OT')
-        else:
-            # simulation does not have an oscilation parameter, or uses a different key
-            print("ERROR :: Simulation.show_steady_state_property_profile() :: Unable to parse oscilation period 'OT' from config file.")
-            return None
-
-        # get relaxation time
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        # get the oscillation period and relaxation time
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
 
 
         ## get the times corresponding to the start and end of the second to last cycle
@@ -981,22 +956,10 @@ class Simulation (object):
         ## TODO :: move module above once hysteresis has been completely refactored
         from febio.analysis.hysteresis import calculate_complex_mod
 
-        ## get data# get the relaxation time and oscaillation period
-        if self.has_key('OT'):
-            period = self.get_key_value('OT')
-        else:
-            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
-
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        ## get data
+        # get the relaxation time and oscaillation period
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
 
         # get the time and work from the outfile
         time = self.get_outfile()['t'].to_list()
@@ -1039,17 +1002,9 @@ class Simulation (object):
             object containing data, figure formatting.
         """
         # get the period, relaxation time from the simulation key
-        period = self.get_key_value('OT')
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
+
         # according to the cycle number, get the starting and stopping times for the cycle
         t_start = relax_time + period * (cycle - 1)
         t_end   = relax_time + period * (cycle)
@@ -1107,16 +1062,7 @@ class Simulation (object):
         """
         ## get relevant the data
         # get the relaxation time
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        relax_time = self.get_relaxation_phase_length()
 
         # get the time and work performed
         time = self.get_outfile()['t'].to_list()
@@ -1162,16 +1108,7 @@ class Simulation (object):
         """
         ## get the relevant data
         # get the relaxation time
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        relax_time = self.get_relaxation_phase_length()
 
         # get the time and work performed
         time = self.get_outfile()['t'].to_list()
@@ -1224,21 +1161,8 @@ class Simulation (object):
         ## TODO :: if the hystersis file already exists in the directory, just load the data from there
 
         # get the relaxation time and oscaillation period
-        if self.has_key('OT'):
-            period = self.get_key_value('OT')
-        else:
-            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
-
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
 
         # get the time and work from the outfile
         if recalculate:
@@ -1290,21 +1214,8 @@ class Simulation (object):
 
         ## get the relevant data
         # get the period and the relaxation time
-        if self.has_key('OT'):
-            period = self.get_key_value('OT')
-        else:
-            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
-
-        if self.has_key('RT'):
-            relax_time = self.get_key_value('RT')
-        else:
-            # get the relaxation time from the feb file
-            # step size
-            steps = float(self.get_feb_path_value(xml_relax_num_step))
-            # number of steps
-            size = float(self.get_feb_path_value(xml_relax_step_size))
-            # calculate the relaxation time
-            relax_time = size * steps
+        period = self.get_oscillation_phase_period()
+        relax_time = self.get_relaxation_phase_length()
 
         # get the time and work from the outfile
         time = self.get_outfile()['t'].to_list()
@@ -1356,15 +1267,8 @@ class Simulation (object):
         List[float]
             list of work performed by cyclic loading each cycle
         """
-        # parse the period
-        if self.has_key('OT'):
-            period = self.get_key_value('OT')
-        else:
-            print("ERROR :: Simulation.prase_hystersis_work() :: Unable to parse oscilation period 'OT' from config file.")
         # get the hysteresis work
         hys = self.parse_hysteresis_work()
-
-        print(hys)
 
         # display and save
         df = pd.DataFrame.from_dict({'cycle': list(range(len(hys))), 'hys': hys})
