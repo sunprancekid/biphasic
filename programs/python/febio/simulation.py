@@ -253,6 +253,137 @@ class Simulation (object):
         # operation completed succesfully
         return True
 
+    ## SIMULATION PROPERTY - OSCILLATION ## 
+
+    def has_oscillation_phase (self):
+        """ determines if simulation has oscillation phase.
+
+        The oscillation phase is determined by the config key 'OT',
+        which contains the oscillation period. If the period key does
+        not exist in the config file, then the simulation does not have
+        an oscillation phase during the simulation. 
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if 'OT' exists in the config file, else 'False'.
+        """
+        return self.has_key('OT')
+
+    def get_oscillation_phase_period (self):
+        """ returns the oscillation phase period, if it exists.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        float
+            time assigned to simulation oscillation phase in simulation seconds.
+        """
+        if self.has_oscillation_phase():
+            return self.get_key_value('OT')
+        else:
+            print("ERROR :: Simulation.get_oscillation_phase_period() :: simulation does not have a oscillation phase.")
+            return None
+
+    def get_number_oscillation_cycles (self):
+        """ returns the number of cycles in the oscillation phase.
+
+        The number of cycles is determined by the total simulation
+        length. First the relaxation time is removed (if there is 
+        a relaxation phase), then the remaining simulation length is
+        divided by the oscillation period.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        int
+            number of complete cycles
+        """
+        # establish simulation period and relaxation time
+        if not self.has_oscillation_phase():
+            print("ERROR :: Simulation.get_number_oscillation_cycles() :: simulation does not have oscillation phase.")
+        period = self.get_oscillation_phase_period()
+        # get the simulation length
+        time = max(self.get_outfile()['t'].to_list())
+        time = time - self.get_relaxation_phase_length()
+        # determine the number of cycles
+        err = []
+        n_cyc = 1
+        while True:
+            err.append(time - n_cyc * period)
+            if len(err) > 1:
+                # is the error decreasing?
+                if abs(err[-1]) > abs(err[-2]):
+                    # error increased from the previous calculation
+                    # the previous integer was the closest to the period
+                    n_cyc -= 1
+                    break
+                else:
+                    n_cyc += 1
+            else:
+                n_cyc += 1
+        return n_cyc
+
+    ## SIMULATION PROPERTY - RELAXATION PEROID ##
+
+    def has_relaxation_phase (self):
+        """ determines if the simulation had a relaxation phase.
+
+        The relaxation phase is determined by the existance of a key
+        for the relaxation time ('RT) in the simulation config file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if the relaxation key exists, else 'False'.
+        """
+        return self.has_key('RT') or (self.feb_has_path(xml_relax_num_step) and self.feb_has_path(xml_relax_step_size))
+
+    def get_relaxation_phase_length (self):
+        """returns the length of the relaxation phase.
+
+        For most simulations, the relaxation phase is stored in the 
+        config file with the relaxation key. For depricated version, a
+        relaxation value was not parameterized and instead stored within 
+        the model file (hard coded).
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        float
+            length of relxation phase in simulation seconds.
+        """
+        if self.has_relaxation_phase():
+            if self.has_relaxation_phase():
+                return self.get_key_value('RT')
+            else:
+                # get the relaxation time from the feb file
+                # step size
+                steps = float(self.get_feb_path_value(xml_relax_num_step))
+                # number of steps
+                size = float(self.get_feb_path_value(xml_relax_step_size))
+                # calculate the relaxation time
+                return size * steps
+        else:
+            return 0.
+
     ## ANALYSIS - ELEMENT DATA ##
 
     def has_element_data(self):
