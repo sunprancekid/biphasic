@@ -701,7 +701,7 @@ class Simulation (object):
         # return the data frame
         return df_return
 
-    def get_steady_state_propery_values (self, prop = None, elm = None, reduced_time = None, cycle = None):
+    def get_steady_state_property_values (self, prop = None, elm = None, reduced_time = None, cycle = None):
         """ get the property value for one or more elements at a specified point in time along oscillation profile.
 
         Arguments:
@@ -777,8 +777,11 @@ class Simulation (object):
 
         # check cycle
         if cycle is None:
-            # TODO determine the second to last cycle and assign it
-            cycle = 8
+            cycle = self.get_number_oscillation_cycles()
+            if cycle > 5:
+                cycle -= 2
+            elif cycle > 2:
+                cycle -= 1
         elif isinstance(cycle, int) and (cycle <= 0):
             print("ERROR :: Simulation.get_steady_state_property_values() :: method argument 'cycle' must be specified as type 'int' 1 or greater.")
 
@@ -786,7 +789,7 @@ class Simulation (object):
         # get period, relaxation time from simulation
         period = self.get_oscillation_phase_period()
         relax_time = self.get_relaxation_phase_length()
-        
+
         # use cycle, reduced time to determine the simulation time point
         t = relax_time + period * (cycle - 1 + reduced_time)
         return self.get_property_values(prop = prop, elm = elm, time = t)

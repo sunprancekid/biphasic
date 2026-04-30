@@ -535,11 +535,28 @@ class Sweep (object):
         Returns:
         --------
         DataFrame
-            ...
+            contains simulation number, element number, property value, and simulation period
         """
-        ## TODO check cycle numbers in simulation
-        ## TODO extract
-        pass
+        df = pd.DataFrame.from_dict({})
+        # iterate through simulations
+        for i in range(self.get_sim_num()):
+            sim = self.get_simulation(i)
+            period = sim.get_oscillation_phase_period() # simulation oscillation period
+            temp_df = sim.get_steady_state_property_values (prop = prop, elm = elm, reduced_time = reduced_time, cycle = cycle)
+            # transform data frame
+            prop_list = []
+            elements = []
+            for j in list(temp_df.columns.values):
+                if j != 'Time':
+                    elements.append(j)
+                    prop_list.append(temp_df.iloc[0][j])
+            temp_df = pd.DataFrame.from_dict({'sim': [i for k in range(len(prop_list))], 'elm': elements, prop: prop_list, 'period': [period for k in range(len(prop_list))]})
+            # append data frame and repeat
+            if i == 0:
+                df = temp_df
+            else:
+                df = pd.concat([df, temp_df], ignore_index = True)
+        return df
 
     def show_steady_state_element_property_profile (self, prop = None, ax = None, show = True, save = False):
         """ display the steady steady profile for a property at a certain time point.
