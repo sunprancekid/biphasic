@@ -94,6 +94,21 @@ class Sweep (object):
         """
         return Simulation(self.jd, self.jn, n)
 
+    def has_simulation(self, n):
+        """ check if simulation integer exists within the simulation list.
+
+        Arguments:
+        ----------
+        n : int
+            simulation integer to check for within Sweep
+
+        Returns:
+        --------
+        bool
+            'True' if the simulation exists within the object, else 'False'.
+        """
+        return (n < self.get_sim_num())
+
     ## SIMULATIONS ##
 
     def get_sim_num (self):
@@ -518,11 +533,13 @@ class Sweep (object):
 
     ## ANALYSIS - ELEMENT VALUES ##
 
-    def get_steady_state_element_property_values (self, prop = None, elm = None, reduced_time = None, cycle = None):
+    def get_steady_state_element_property_values (self, sim = None, prop = None, elm = None, reduced_time = None, cycle = None):
         """ returns the steady state element values for all simulations at a certain time point.
 
         Parameters:
         -----------
+        sim : int or List[int]
+            subset of simulations within Sweep object, identified by their integer number
         prop : str
             element property contained in simulation data.
         elm : int or List[int]
@@ -537,12 +554,32 @@ class Sweep (object):
         DataFrame
             contains simulation number, element number, property value, and simulation period
         """
+        # if any simulations were specified
+        if sim is None:
+            sim = [i for i in range(self.get_sim_num())]
+        elif isinstance(sim, int):
+            # if the simulation specified is just one integer
+            # repackage as a list
+            sim = [sim]
+        elif isinstance(sim, list):
+            # check each item in the list
+            for i in range(len(sim) -1, -1, -1):
+                # remove items that are not integers, or that are not in the simulation list
+                if (not isinstance(sim[i], int)):
+                    print("ERROR :: Simulation.get_steady_state_element_property_values() :: item number '{0}' in method argument 'sim' ('{1}') is not of type 'int', removing from list.".format(i, sim.pop(i)))
+                elif (not self.has_simulation(sim[i])):
+                    print("ERROR :: Simulation.get_steady_state_element_property_values() :: item number '{0}' in method argument 'sim' corresponds to an integer that does not exist within the object.".format(i, sim.pop(i)))
+            # check if there are any items in the list
+            if (len(sim) == 0):
+                print("ERROR :: Simulation.get_steady_state_element_property_values() :: method argument 'sim' is an empty list.")
+                return None
+
         df = pd.DataFrame.from_dict({})
         # iterate through simulations
-        for i in range(self.get_sim_num()):
-            sim = self.get_simulation(i)
-            period = sim.get_oscillation_phase_period() # simulation oscillation period
-            temp_df = sim.get_steady_state_property_values (prop = prop, elm = elm, reduced_time = reduced_time, cycle = cycle)
+        for i in sim:
+            s = self.get_simulation(i)
+            period = s.get_oscillation_phase_period() # simulation oscillation period
+            temp_df = s.get_steady_state_property_values (prop = prop, elm = elm, reduced_time = reduced_time, cycle = cycle)
             # transform data frame
             prop_list = []
             elements = []
