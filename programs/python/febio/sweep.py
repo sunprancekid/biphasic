@@ -247,6 +247,21 @@ class Sweep (object):
         # turn off path check
         self.check_paths = True
 
+    def get_maximum_timescale (self, period = False):
+        """ returns the largest frequency in the sweep (or smallest period).
+
+        Arguments:
+        ----------
+        period : bool
+            return time scale are oscillation period rather than frequency.
+
+        Returns:
+        --------
+        float
+            value corresponding to timescale (either frequency or period, as specified)
+        """
+        pass
+
     ## ANALYSIS - HYSTERESIS WORK ##
 
     def get_hysteresis_work (self, cycles = None):
@@ -339,20 +354,29 @@ class Sweep (object):
         fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
         gen_plot(fig, show = True, save = save)
 
-    def get_resonance_time_scale (self, period = False):
-        """ returns the frequency at which the sweep has an amplitude maximum.
+    def get_resonant_simulation_int (self):
+        """ returns the simulation number at which the sweep has an amplitude maximum.
 
         Parameters:
         -----------
-        period : bool
-            if True, returns timescale as period rather than frequency.
+        None
 
         Returns:
         --------
-        float
-            resonant timescale of sweep
+        int
+            integer corresponding to simulation with greatest amplitude within sweep
         """
-        pass
+        # get the hysterseis work
+        h = self.get_hysteresis_work()
+        # get second to last cycle
+        c = len(h.columns.values) - 4
+        m_idx = 0 # index corresponding to simulation with greatest amplitude
+        # search through all simulations, find index with greatest dissipated energy
+        for i in range(1, len(h)):
+            if h[c][i] > h[c][i - 1]:
+                m_idx = i
+        # NOTE here some jobs index from 1 and some from zero, would be good to check this.
+        return m_idx + 1
 
     ## ANALYSIS - PHASE SHIFT ##
 
@@ -595,19 +619,51 @@ class Sweep (object):
                 df = pd.concat([df, temp_df], ignore_index = True)
         return df
 
-    def show_steady_state_element_property_profile (self, prop = None, ax = None, show = True, save = False):
+    def show_steady_state_element_property_profile (self, sim = None, prop = None, elm = None, ax = None, show = True, save = False):
         """ display the steady steady profile for a property at a certain time point.
 
         Parameters:
         -----------
+        sim : int or List[int]
+            subset of simulations within Sweep object, identified by their integer number
         prop : str
+            element property contained in simulation data.
         ax : str
+            one of three spatial coordinates ('x', 'y', or 'z') that also exist in element property data.
+        elm : int or List[int]
+            elmements which contain property values in property data.
+        reduced_time : float between 0. and 1.
+            time point along periodic simulation oscillation, where 0. corresponds to the beginning and 1. to the end.
+        cycle : int (optional)
+            specify a specific cycle number to extract steady state data from.
 
 
         Returns:
         --------
         None
         """
+        # check if any simulations were specified
+        if sim is None:
+            # get simulations centering around the resonant simulation
+            r = self.get_resonant_simulation()
+            # find some simulation which are at timescales greater than and lower than the resonant time scale
+        elif isinstance(sim, int):
+            # if the simulation specified is just one integer
+            # repackage as a list
+            sim = [sim]
+        elif isinstance(sim, list):
+            # check each item in the list
+            for i in range(len(sim) -1, -1, -1):
+                # remove items that are not integers, or that are not in the simulation list
+                if (not isinstance(sim[i], int)):
+                    print("ERROR :: Simulation.show_steady_state_element_property_profile() :: item number '{0}' in method argument 'sim' ('{1}') is not of type 'int', removing from list.".format(i, sim.pop(i)))
+                elif (not self.has_simulation(sim[i])):
+                    print("ERROR :: Simulation.show_steady_state_element_property_profile() :: item number '{0}' in method argument 'sim' corresponds to an integer that does not exist within the object.".format(i, sim.pop(i)))
+            # check if there are any items in the list
+            if (len(sim) == 0):
+                print("ERROR :: Simulation.show_steady_state_element_property_profile() :: method argument 'sim' is an empty list.")
+                return None
+        # get the resonant simulation
         pass
 
 
