@@ -96,7 +96,7 @@ def gen_ve_frequency_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp =
 
     # import methods from viscoleastic mod file
     # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
-    from febio.viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
+    from viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
 
     # check parameters
     # create job, assign parameters
@@ -151,7 +151,7 @@ def gen_pe_sweep (emod = emod, perm = perm, osc_amp = default_oscillation_amplit
 
     # load modules
     # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
-    from febio.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+    from poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
 
     # set job parameters
     j = Job(jd, jn)
@@ -204,7 +204,7 @@ def gen_ve_gamma_sweep (emod = None, tau_1 = None, osc_amp = default_oscillation
     """
     # import methods from viscoleastic mod file
     # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
-    from febio.viscoelastic_modulation import constant_bulk_modulus, constant_tau, vary_gamma, constant_oscillation_parameters
+    from viscoelastic_modulation import constant_bulk_modulus, constant_tau, vary_gamma, constant_oscillation_parameters
 
     # check parameters
     # create job, assign parameters
