@@ -59,7 +59,7 @@ z = 0.125
 
 ## METHODS
 # generate viscoelastic simulation using parameters, base feb file
-def gen_ve_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_period = None, max_period = None, n_period = None, jd = None, jn = None, feb_file = default_feb_ve):
+def gen_ve_frequency_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_period = None, max_period = None, n_period = None, jd = None, jn = None, feb_file = default_feb_ve):
     """
 
     Arguments:
@@ -96,7 +96,7 @@ def gen_ve_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp = default_o
 
     # import methods from viscoleastic mod file
     # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
-    from viscoelastic.viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
+    from febio.viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
 
     # check parameters
     # create job, assign parameters
@@ -151,7 +151,7 @@ def gen_pe_sweep (emod = emod, perm = perm, osc_amp = default_oscillation_amplit
 
     # load modules
     # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
-    from poroelastic.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+    from febio.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
 
     # set job parameters
     j = Job(jd, jn)
@@ -168,6 +168,60 @@ def gen_pe_sweep (emod = emod, perm = perm, osc_amp = default_oscillation_amplit
     j.save_parameters()
     m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
 
+def gen_ve_gamma_sweep (emod = None, tau_1 = None, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, oscillation_period = None, min_gamma = None, max_gamma = None, n_gamma = None, jd = None, jn = None, feb_file = None):
+    """ generate viscoelastic simulations at fixed time scales that vary in their parameter gamma.
+
+    Arguments:
+    ----------
+    emod : float
+        value of elastic modulus parameter for material model
+    tau_1 : float
+        value of time constant for material model
+    osc_amp : float
+        value of oscillation amplitude parameter for simulation
+    relax_time : float
+        value of relaxation time (time between loading and oscillation) for simulation
+    load_depth : float
+        value of loading depth during loading phase during simulation
+    oscillation_period : float
+        timescale of periodic oscillation during simulation
+    min_gamma : float
+        minimum gamma value which are tested
+    max_gamma : float
+        maximum gamma value which are tested
+    n_gamma : int
+        number of gamma values between minimum and maximum which are tested
+    jd : str
+        path to location to initialize the job directory
+    jn : str
+        name assigned to job
+    feb_file : str
+        path to base febio model
+
+    Returns:
+    --------
+    None
+    """
+    # import methods from viscoleastic mod file
+    # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
+    from febio.viscoelastic_modulation import constant_bulk_modulus, constant_tau, vary_gamma, constant_oscillation_parameters
+
+    # check parameters
+    # create job, assign parameters
+    j = Job(jd, jn)
+    constant_bulk_modulus(job = j, E_val = emod)
+    constant_gamma (job = j, g_val = gamma_1)
+    constant_oscillation_parameters (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, oscillation_period = oscillation_period)
+    vary_gamma (job = j, g_low = min_gamma, g_high = max_gamma, g_n = n_gamma)
+
+    # append model
+    m = Model(feb_file)
+
+    # save
+    j.generate_parameters()
+    j.save_config()
+    j.save_parameters()
+    m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
 
 # analysi low gamma data
 def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
@@ -290,7 +344,7 @@ if __name__ == "__main__":
         t_val = poro_tau
         e_val = poro_amp / (pow(z, 3.) * emod)
         # generate simulation
-        gen_ve_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
+        gen_ve_frequency_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
 
     # vary gamma between three values which are sufficiently "large"
     # use gamma to determine emod

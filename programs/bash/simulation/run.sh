@@ -57,6 +57,8 @@ declare -i BOOL_XPLT=0
 declare -i BOOL_DEL_FEB=0
 # determines if a feb file has been specified
 declare -i BOOL_FEB=0
+# determines if an optimization file has been specified
+declare -i BOOL_OPT=0
 
 ## FUNCTIONS
 # display options, exit
@@ -87,6 +89,7 @@ help () {
     echo -e " -c  << ARG >>\t| OPTIONAL: specify a check file: if the file exists within the simulation subdirectory, the script will skip submitting / runnning this simulation."
     echo -e " -f  << ARG >>\t| OPTIONAL: specify a FEB file, generate feb file before execution."
     echo -e " -n  << ARG >>\t| OPTIONAL: submit single job corresponding to integer in parameter file."
+    echo -e " -o  << ARG >>\t| OPTIONAL: submit febio job with optimization file."
     echo -e ""
     # exit
     exit $exitcode
@@ -327,7 +330,7 @@ submit_batch () {
 
 ## OPTIONS
 # parse options
-while getopts "hvlsd:j:c:f:n:xy" opt
+while getopts "hvlsd:j:c:f:n:xyo:" opt
 do
     case $opt in
         h) # display help options and exit zero
@@ -357,6 +360,9 @@ do
             declare -i BOOL_XPLT=1 ;;
         y) # delete feb file post simulation
             declare -i BOOL_DEL_FEB=1 ;;
+        o) # include optimization file
+            declare -i BOOL_OPT=1
+            OPT_FILE=${OPTARG} ;;
         ?) # unknown option
             help $NONZEROEXITCODE
     esac 

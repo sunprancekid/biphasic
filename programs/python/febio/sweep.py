@@ -619,7 +619,7 @@ class Sweep (object):
                 df = pd.concat([df, temp_df], ignore_index = True)
         return df
 
-    def show_steady_state_element_property_profile (self, sim = None, prop = None, elm = None, ax = None, show = True, save = False):
+    def show_steady_state_element_property_profile (self, sim = None, prop = None, elm = None, ax = None, reduced_time = 0.75, show = True, save = False):
         """ display the steady steady profile for a property at a certain time point.
 
         Parameters:
@@ -640,12 +640,18 @@ class Sweep (object):
 
         Returns:
         --------
-        None
+        Figure
+            Figure object containing data and formatting.
         """
+        ## check method arguments
         # check if any simulations were specified
         if sim is None:
             # get simulations centering around the resonant simulation
-            r = self.get_resonant_simulation()
+            res_int = self.get_resonant_simulation_int()
+            max_int = self.get_sim_num() - 1
+            mid_low = math.floor((res_int - 1) / 2)
+            mid_high = math.ceil(res_int + (max_int - res_int) / 2)
+            sim = [1, mid_low, self.get_resonant_simulation_int(), mid_high, self.get_sim_num() - 1]
             # find some simulation which are at timescales greater than and lower than the resonant time scale
         elif isinstance(sim, int):
             # if the simulation specified is just one integer
@@ -663,8 +669,35 @@ class Sweep (object):
             if (len(sim) == 0):
                 print("ERROR :: Simulation.show_steady_state_element_property_profile() :: method argument 'sim' is an empty list.")
                 return None
-        # get the resonant simulation
-        pass
+
+        # check the axis that was specified
+        if ax is None or ax not in ['z', 'y', 'x']:
+            ## error
+            print("ERROR :: Simulation.show_steady_state_element_property_profile() :: method argument 'ax' not specified or not specified as an allowable axis.")
+            return None
+            ## TODO check for axis in element property data
+
+        # get data, generate figure
+        fig = Figure()
+        df_prop = self.get_steady_state_element_property_values(sim = sim, prop = prop, elm = elm, reduced_time = reduced_time)
+        df_ax = self.get_steady_state_element_property_values(sim = sim, prop = ax, elm = elm, reduced_time = reduced_time)
+        for i in df_prop['period'].unique():
+            x_dat, y_dat = [], []
+            df_prop_tmp = df_prop.loc[df_prop['period'] == i]
+            df_ax_tmp = df_ax.loc[df_ax['period'] == i]
+            for idx, row in df_prop_tmp.iterrows():
+                x_dat.append(df_ax_tmp[ax][idx])
+                y_dat.append(df_prop_tmp[prop][idx])
+            fig.append_lists(xlist = x_dat, ylist = y_dat, label = "f = {:.2e}".format(2 * math.pi / i))
+        # add formatting, show the figure
+        fig.set_axis_label('x', ax)
+        fig.set_axis_label('y', prop)
+        fig.set_subtitle_label("$T_{{res}}$ = {:.2e}".format(self.get_simulation(self.get_resonant_simulation_int()).get_key_value('OT')))
+        if save:
+            fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = "{0}-{1}".format(prop.replace(" ", "-"), ax))
+        gen_plot(fig, show = show, save = save)
+        # return the figure with the data
+        return fig
 
 
 ## ARGUMENTS

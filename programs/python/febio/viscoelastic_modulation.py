@@ -231,6 +231,103 @@ def constant_tau (job, t_val = default_t_val):
 		units = 'seconds',
 		description = "tau_1")
 
+def constant_oscillation_parameters (job, loading_depth = default_loading_depth, relaxation_time = default_relaxation_time, oscillation_amplitude = default_oscillation_amplitude, oscillation_period = None):
+	""" add pre-stress and oscillation frequency to job.
+
+	Parameters:
+	-----------
+	job : Job
+		contains job parameters.
+	loading_depth : float (default is 'default_loading_depth')
+		depth of prestress (in mm)
+	relaxation_time : float (default is 'default_relaxation_time')
+		length prestress holding before starting oscillation sequence
+	oscillation_amplitude : float (default is 'default_oscillation amplitude')
+		oscllation amplitude (in mm)
+	oscillation_period : float
+		oscilation period
+
+	Returns:
+	--------
+	Job
+		job provided to method as argument with additional parameters
+	"""
+	# add loading routine - constant
+	job.add_constant_parameter(val = loading_depth,
+		key = 'LD',
+		xml = "Step/step[@id='1']/Rigid/rigid_bc[@name='tip_displacement']/value",
+		description = "loading_discplacement",
+		units = "mm",
+		related = False)
+	# add oscillation amplitude - constant
+	job.add_constant_parameter(val = oscillation_amplitude,
+		key = 'OA',
+		xml = "Step/step[@id='2']/Rigid/rigid_bc[@name='tip_oscillation']/value",
+		units = "mm",
+		related = False)
+	job.add_constant_parameter(val = 0.1,
+		key = 'RTss',
+		xml = "Step/step[@id='1']/Control/step_size",
+		units = None,
+		description = 'loading_step_size',
+		related = False)
+	job.add_constant_parameter(val = "RT / RTss",
+		key = 'RTn',
+		xml = "Step/step[@id='1']/Control/time_steps",
+		units = None,
+		description = 'loading_number_steps',
+		related = True)
+	# add relaxation time - constant
+	## NOTE: this parameter needs to go have the other relaxation parameters due to overlapping keys / replacement dependencies
+	job.add_constant_parameter(val = relaxation_time,
+		key = 'RT',
+		xml = None,
+		units = 'seconds',
+		description = 'loading-hold-time',
+		related = False)
+	# add oscillation frequency
+	job.add_constant_parameter(val = oscillation_period,
+		key = 'OT',
+		xml = None,
+		units = 'seconds',
+		description = "oscillation_period",
+		related = False)
+	# oscillation equation
+	job.add_constant_parameter (val = "0.5*sin((2*{0}/OT)*(t-RT))".format(3.14159265359),
+		key = "OTMa",
+		xml = "LoadData/load_controller[@name='tip_oscillation_controller']/math",
+		units = None,
+		description = "tip_oscillation_equation",
+		related = True,
+		symbolic = True)
+	# number of cycles
+	job.add_constant_parameter(val = n_cycles,
+		key = "NCy",
+		description = "number_oscillation_cycles")
+	# number of nsteps per cycle
+	job.add_constant_parameter (val = n_steps,
+		key = "NOSs",
+		description = "number_steps_per_oscillation_cycle")
+	# total number of numerical steps
+	job.add_constant_parameter (val = "NCy * NOSs * 10",
+		key = "ON",
+		xml = "Step/step[@id='2']/Control/time_steps",
+		units = None,
+		description = "oscillation_total_numerical_steps",
+		related = True)
+	job.add_constant_parameter (val = "(OT) / (NOSs)",
+		key = "OSMx",
+		xml = "Step/step[@id='2']/Control/time_stepper[@type='default']/dtmax",
+		units = None,
+		description = "oscillation_max_step",
+		related = True)
+	job.add_constant_parameter (val = "(OT) / (NOSs * 10)",
+		key = "OSMn",
+		xml = "Step/step[@id='2']/Control/step_size",
+		units = None,
+		description = "oscillation_initial_step",
+		related = True)
+
 def frequency_sweep (job, loading_depth = default_loading_depth, relaxation_time = default_relaxation_time, oscillation_amplitude = default_oscillation_amplitude, period_low = default_period_low, period_high = default_period_high, period_n = default_period_n):
 	""" add pre-stress and oscillation frequency to job.
 
@@ -255,7 +352,6 @@ def frequency_sweep (job, loading_depth = default_loading_depth, relaxation_time
 	--------
 	Job
 		job provided to method as argument with additional parameters
-
 	"""
 	# add loading routine - constant
 	job.add_constant_parameter(val = loading_depth,

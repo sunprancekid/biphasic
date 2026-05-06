@@ -30,6 +30,8 @@ declare -i BOOL_RETURN=0
 declare -i BOOL_XPLT=0
 # boolean determining if the feb file should be deleted post-run
 declare -i BOOL_DEL_FEB=0
+# boolean for specifying the optimization file
+declare -i BOOL_OPT_FILE=0
 
 
 ## FUNCTIONS
@@ -55,6 +57,7 @@ help () {
     echo -e " -d  << ARG >>\t| MANDATORY: path to job directory, contains '.feb' file."
     echo -e " -j  << ARG >>\t| MANDATORY: job name, corresponds to '.feb' file name in \$DIR."
     echo -e " -f  << ARG >>\t| OPTIONAL: '.feb' file name, when it does not correspond to \$JOB."
+    echo -e " -o  << ARG >>\t| OPTIONAL: run febio with OPTIMIZATION file."
     echo -e
 
     exit $exit_code
@@ -162,7 +165,11 @@ gen_slurm_script () {
     echo "### JOB ###" >> $FILEPATH$FILENAME
     echo "echo \"Running ${SIMID} on host \$(hostname) in \$(pwd)\"" >> $FILEPATH$FILENAME
     echo "echo \"Job start time is \$(date).\"" >> $FILEPATH$FILENAME
-    echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
+    if [[ $BOOL_OPT_FILE -eq 0 ]]; then
+        echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
+    else
+        echo "srun febio4 -i ${FEB_FILE} -s ${OPT_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
+    fi
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
     if [[ $BOOL_XPLT -eq 1 ]]; then
         echo "rm *.xplt" >> $FILEPATH$FILENAME
@@ -203,7 +210,7 @@ sub_slurm_script () {
 
 ## OPTIONS
 # parse options
-while getopts "hd:j:f:rxy" option; do
+while getopts "hd:j:f:rxyo:" option; do
     case $option in
         h) # call help with nonzero exit code
             help 0 ;;
@@ -222,6 +229,9 @@ while getopts "hd:j:f:rxy" option; do
             declare -i BOOL_XPLT=1 ;;
         y) # delete feb file after running
             declare -i  BOOL_DEL_FEB=1 ;;
+        o) # add optimization routine to FEBIO sequence
+            declare -i BOOL_OPT_FILE=1 
+            OPT_FILE=${OPTARG} ;;
         ?) # default for unspecified option
             # call help with nonzero exit code
             help $NONZEROEXITCODE
