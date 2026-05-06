@@ -210,7 +210,7 @@ def gen_ve_gamma_sweep (emod = None, tau_1 = None, osc_amp = default_oscillation
     # create job, assign parameters
     j = Job(jd, jn)
     constant_bulk_modulus(job = j, E_val = emod)
-    constant_gamma (job = j, g_val = gamma_1)
+    constant_tau (job = j, t_val = tau_1)
     constant_oscillation_parameters (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, oscillation_period = oscillation_period)
     vary_gamma (job = j, g_low = min_gamma, g_high = max_gamma, g_n = n_gamma)
 
