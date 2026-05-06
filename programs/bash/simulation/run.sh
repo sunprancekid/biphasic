@@ -274,7 +274,8 @@ submit () {
             SLURM_FLAGS="${SLURM_FLAGS}-o ${OPT_FILE}"
         fi
         # submit the script from the local directory
-        echo declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
+        # declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
+        echo "$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
         echo "${JOB}${simint} (slurm id: ${simid}): $slurmid"
         return
     fi
