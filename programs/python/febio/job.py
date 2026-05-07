@@ -154,7 +154,6 @@ class Job (object):
             self.df_parm = None
 
     ## SIMULATION ##
-
     def has_simulation (self, n):
         """ determines if simulation number exists in job.
 

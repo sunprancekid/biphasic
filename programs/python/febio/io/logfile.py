@@ -20,6 +20,8 @@ DEBUG = False
 nonzero_exitcode = 120
 # default name for saving files
 default_savefile = "febio4.out.csv"
+# default name for saving files
+default_savefile_opt = "febio4.opt.csv"
 
 ## METHODS
 # from d (directory), f (file), and s (save file), return the directory and file name
@@ -245,6 +247,157 @@ def parse_element_data (f = None, elm = None, prop = None):
 						k = elm.index(h) # index corresponding to elm in df column
 						data_dict[i].loc[len(data_dict[i]) - 1, h] = float(l[1 + j])
 	return data_dict
+
+
+def extract_febio_opt (d = None, f = None, s = None):
+	""" extract results from febio optimization routine.
+
+	Arguments:
+	----------
+	d : str
+		directory which contains febio optimization log file
+	f : str
+		name of log file in directory ('d')
+	s : str
+		name of file to save results as in directory ('d')
+
+	Returns:
+	--------
+	bool
+		'True' if loading and saving was successful, else 'False'.
+	"""
+	# check that the paths and filenames are correct
+	d, f, s = parse_io (d, f, s)
+	# if the savefile name is still none, use the default
+	if s is None:
+		s = default_savefile_opt
+
+	## open optimization log file, parse information
+	with open(d + f, 'r') as f_io:
+		# initialize delimitting parameters
+		n_it = 1 # number of iterations that have been completed
+		n_opt_parm = 0 # number of parameters which were optimized
+		opt_parm = [] # contains the variables used for the optimized parameters
+		opt_val = [[] for i in range(1)] # contains the values used for the
+		has_opt_parameters = False # the optimizable parameters have been determined
+		n_data = 0
+		has_n_data = False # the number of optimized data points have been determined
+		obj_val = []
+		reg_coeff = []
+		has_final = False # a final, optimal value has been determined
+
+		# loop through all lines in optimization file
+		while True:
+
+			# get the next line
+			l = f_io.readline()
+			# if the line is empty, the end of the file has been reached
+			if not l:
+				break
+			l = l.strip() # remove newline character
+
+			# check if the line matches iteration format
+			# n_it += 1
+			if l == "----- Iteration: {0} -----".format(n_it):
+
+				## PARAMETER ADJUSTMENT VALUES
+				# get the next line
+				l = f_io.readline().strip()
+				# get optimized parameter values
+				if not has_opt_parameters:
+					# get the parameters which were optimized
+					while 'fem' in l:
+						n_opt_parm += 1
+						opt_parm.append(l.split(" ")[0].split(".")[-1])
+						opt_val[0].append(float(l.split(" ")[2]))
+						# go to the next line
+						l = f_io.readline().strip()
+					# the optimization parameters have been parsed
+					has_opt_parameters = True
+				else:
+					opt_val.append([])
+					for i in range(n_opt_parm):
+						opt_val[n_it - 1].append(float(l.split(" ")[2]))
+						# go to the next line
+						l = f_io.readline().strip()
+
+				## OPTIMIZATION DATA
+				if not has_n_data:
+					# if the optimization data has not been parsed yet
+					# skip through the data while also counting the number of data points
+					while "objective" not in l:
+						n_data += 1
+						l = f_io.readline().strip()
+					# the end of the data points have been reached
+					has_n_data = True
+				else:
+					# skip through the optimization data point without counting them
+					for i in range(n_data):
+						l = f_io.readline().strip()
+
+				# SCORING
+				# get the objective value
+				obj_val.append(float(l.split(" ")[2]))
+				l = f_io.readline()
+				# get the regression coefficient
+				reg_coeff.append(float(l.split(" ")[2]))
+
+				# iterate iterations
+				n_it += 1
+			elif l == "P A R A M E T E R   O P T I M I Z A T I O N   R E S U L T S":
+				# end of the optimization with the final results
+				# skip lines until the results
+				while "objective" not in l:
+					l = f_io.readline().strip()
+
+				# the final objective value
+				obj_val.append(float(l.split(" ")[9]))
+				l = f_io.readline().strip()
+				l = f_io.readline().strip()
+
+				# the final regression coefficient
+				reg_coeff.append(float(l.split(" ")[12]))
+				l = f_io.readline().strip()
+				l = f_io.readline().strip()
+				l = f_io.readline().strip()
+				l = f_io.readline().strip()
+
+				# get the optimzed values
+				opt_val.append([])
+				for i in range(n_opt_parm):
+					opt_val[n_it - 1].append(float(l.split(" ")[2]))
+					l = f_io.readline().strip()
+
+				has_final = True
+
+	# done with file, save data
+	## write io to formatted file within same directory
+	# write the out information
+	if s is None:
+		# overwrite the file, if none has been previded
+		s = f
+
+	with open(d + s, 'w') as s_io:
+		header = "n"
+		for i in range(n_opt_parm):
+			header += ",{0}".format(opt_parm[i])
+		header += ",obj_val,reg_coeff"
+		s_io.writelines(header + "\n")
+		for i in range(len(opt_val) - 1):
+			line = "{0}".format(i + 1)
+			for j in range(len(opt_val[i])):
+				line += ",{0}".format(opt_val[i][j])
+			line += ",{0}".format(obj_val[i])
+			line += ",{0}".format(reg_coeff[i])
+			s_io.writelines(line + "\n")
+		# add the final values, if requested
+		if has_final:
+			final = "f"
+			for i in range(len(opt_val[n_it - 1])):
+				final += ",{0}".format(opt_val[n_it - 1][i])
+			final += ",{0}".format(obj_val[-1])
+			final += ",{0}".format(reg_coeff[-1])
+			s_io.writelines(final + "\n")
 
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):
