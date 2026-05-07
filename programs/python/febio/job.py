@@ -109,7 +109,8 @@ class Job (object):
         - when generating parameters, LD and OT are created last
         - when creating directories, sub-jobs are created in which constant parameters 
             are added (variable in main job) and only parameters dealing with oscillation are
-            varied
+            variedclass Job (object):
+
         - main job has special config files which point to individual sweeps
     ## TODO :: add parameters to existing jobs without having to re-run everything
     ## TODO :: re-calculate certain values upon request (e.g. if re-running)
