@@ -556,7 +556,6 @@ class Job (object):
         self.df_config.loc[len(self.df_config.index)] = parm
 
     ## SCALING ANALYSIS ##
-
     def show_hysteresis(self, n = None, show = True, save = False):
         """ show hystersis loops for multiple simulations in job.
 
