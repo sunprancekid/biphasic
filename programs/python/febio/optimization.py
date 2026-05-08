@@ -28,9 +28,9 @@ class Optimization (object):
     """ handles sets of jobs in which one or more parameters are being optimized.
 
     ## TODO get the optimization results from each simulation.
-    ## TODO save the results in the job directory
-    ## TODO display optimization results
-    ## TODO initialize simulation with job parameters AND optimized parameters
+    ## TODO save the results in the job directory.
+    ## TODO display optimization results.
+    ## TODO initialize simulation with job parameters AND optimized parameters.
 
     Attributes:
     -----------
@@ -72,6 +72,36 @@ class Optimization (object):
             self.df_parm = None
 
 
+    def get_optimization_results(self):
+        """ for each simulation in the job set, parse the optimization results.
+
+        the results are returned as a dataframe, and saved to the job directory.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        DataFrame
+            contains results of optimization from each job set.
+        """
+        pass
+
+    def generate_optimized_model (self, m, n):
+        """ creates optimized model file from the results of an optimization job.
+
+        Arguments:
+        ----------
+        m : str
+        n : int
+
+        Returns:
+        --------
+        Model
+        """
+        pass
+
     ## CONFIG ##
 
     def has_config(self):
@@ -107,25 +137,6 @@ class Optimization (object):
                 # append an empty list to the column
                 self.df_config[h] = ['na' for i in range(len(self.df_config.index))]
                 ## TODO :: there is an option to get the information pertaining to each key from the parm file for config files that already exist and use an older version ...
-
-    def save_config (self, overwrite = False):
-        """ save the config file to the job directory.
-
-        Parameters:
-        -----------
-        overwrite : bool (default 'False')
-            if the config file exists, will not overwrite unless 'True'
-
-        Returns:
-        --------
-        None
-        """
-        if not self.has_config() or overwrite:
-            if not os.path.exists("{0}/{1}".format(self.jd, self.jn)):
-                os.makedirs("{0}/{1}".format(self.jd, self.jn))
-            self.df_config.to_csv(config_file_format.format(self.jd, self.jn), index = False)
-        else:
-            print("ERROR :: Job.save_config() :: Config file '{0}' already exists. Unable to write without 'overwrite'.".format(config_file_format.format(self.jd, self.jn)))
 
     ## PARAMETERS ##
 
