@@ -266,6 +266,8 @@ def extract_febio_opt (d = None, f = None, s = None):
 	bool
 		'True' if loading and saving was successful, else 'False'.
 	"""
+	# check that the loading file exists
+	if not os.path.exists(d + f): return False
 	# check that the paths and filenames are correct
 	d, f, s = parse_io (d, f, s)
 	# if the savefile name is still none, use the default
@@ -308,7 +310,7 @@ def extract_febio_opt (d = None, f = None, s = None):
 					# get the parameters which were optimized
 					while 'fem' in l:
 						n_opt_parm += 1
-						opt_parm.append(l.split(" ")[0].split(".")[-1])
+						opt_parm.append(l.split(" ")[0].split(".")[-1] + "_opt")
 						opt_val[0].append(float(l.split(" ")[2]))
 						# go to the next line
 						l = f_io.readline().strip()
@@ -351,12 +353,12 @@ def extract_febio_opt (d = None, f = None, s = None):
 					l = f_io.readline().strip()
 
 				# the final objective value
-				obj_val.append(float(l.split(" ")[9]))
+				obj_val.append(float(l.split(" ")[-1]))
 				l = f_io.readline().strip()
 				l = f_io.readline().strip()
 
 				# the final regression coefficient
-				reg_coeff.append(float(l.split(" ")[12]))
+				reg_coeff.append(float(l.split(" ")[-1]))
 				l = f_io.readline().strip()
 				l = f_io.readline().strip()
 				l = f_io.readline().strip()
@@ -398,6 +400,9 @@ def extract_febio_opt (d = None, f = None, s = None):
 			final += ",{0}".format(obj_val[-1])
 			final += ",{0}".format(reg_coeff[-1])
 			s_io.writelines(final + "\n")
+
+	return True
+
 
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):

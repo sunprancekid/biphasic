@@ -11,14 +11,20 @@
 ## MODULES
 # native / conda
 import sys, os
+import pandas as pd
+import numpy as np
 # local
-# none
+from febio.io.logfile import extract_febio_opt as opt_io
 
 ## PARAMETERS
 # format of config file
 config_file_format = "{0}/{1}/{1}.config.csv"
 # format of parameter file
 parameter_file_format = "{0}/{1}/{1}.parm.csv"
+# header used for config files
+config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 'symbolic', 'val', 'min_val', 'max_val', 'n_val', 'log']
+# header used for summary file
+summary_header = ['n', 'id']
 
 ## METHODS
 # none
@@ -41,7 +47,7 @@ class Optimization (object):
     None
     """
 
-    def __init__ (jd, jn):
+    def __init__ (self, jd, jn):
         """ initialize optimization object.
 
         Arguments:
@@ -71,7 +77,6 @@ class Optimization (object):
         else:
             self.df_parm = None
 
-
     def get_optimization_results(self):
         """ for each simulation in the job set, parse the optimization results.
 
@@ -86,7 +91,25 @@ class Optimization (object):
         DataFrame
             contains results of optimization from each job set.
         """
-        pass
+        df_sum = None
+        for idx, row in self.df_parm.iterrows():
+            # attempt to parse the results and save them as csv
+            opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
+            print(opt_dir)
+            if not os.path.exists(opt_dir + 'febio4.opt.csv'):
+                success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.job.out')
+                if not success: continue
+            # append the optimization results to the summary data frame
+            df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
+            if df_sum is None:
+                # the summary dataframe has not been initialized yet
+                df_sum = self.df_parm.copy(deep = True)
+                for j in list(df_opt_res.columns.values)[1:]:
+                    df_sum[j] = [np.nan for k in range(len(df_sum))]
+            for j in list(df_opt_res.columns.values)[1:]:
+                df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
+        df_sum.to_csv("{0}{1}/{1}.opt-sum.csv".format(self.jd, self.jn))
+
 
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.
