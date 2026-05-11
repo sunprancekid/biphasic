@@ -351,7 +351,9 @@ class Sweep (object):
         else:
             fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Dissipated Energy (J)")
-        fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
+        if save:
+            fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
+            fig.save_data()
         gen_plot(fig, show = True, save = save)
 
     def get_resonant_simulation_int (self):
