@@ -50,7 +50,7 @@ max_large_gamma = 5000.
 
 # POROELASTIC MODEL
 # permeability
-perm = 0.01
+perm = 0.001
 # elastic modulus
 emod = 0.5
 # length scale
@@ -352,23 +352,23 @@ if __name__ == "__main__":
     ## VISCOELASTICITY
     # pick the viscoelastic model parameters (both large and small)
     # vary gamma betweem three values which are sufficiently "small"
-    for i in range(n_small):
-        # establish the viscoelasticity parameters
-        g_val = min_small_gamma + ((i) / (n_small - 1)) * (max_small_gamma - min_small_gamma)
-        t_val = poro_tau
-        e_val = poro_amp / (pow(z, 3.) * emod)
-        # generate simulation
-        gen_ve_frequency_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
-
-    # vary gamma between three values which are sufficiently "large"
-    # use gamma to determine emod
-    for i in range(n_large):
-        # establish viscoelasticity parameters
-        g_val = min_large_gamma + ((i) / (n_large - 1)) * (max_large_gamma - min_large_gamma)
-        t_val = poro_tau / g_val
-        e_val = poro_amp / pow(z, 3.)
-        # generate simulation
-        gen_ve_sweep (emod = emod, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-hi-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
+    # for i in range(n_small):
+    #     # establish the viscoelasticity parameters
+    #     g_val = min_small_gamma + ((i) / (n_small - 1)) * (max_small_gamma - min_small_gamma)
+    #     t_val = poro_tau
+    #     e_val = poro_amp / (pow(z, 3.) * emod)
+    #     # generate simulation
+    #     gen_ve_frequency_sweep (emod = e_val, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-lo-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
+    #
+    # # vary gamma between three values which are sufficiently "large"
+    # # use gamma to determine emod
+    # for i in range(n_large):
+    #     # establish viscoelasticity parameters
+    #     g_val = min_large_gamma + ((i) / (n_large - 1)) * (max_large_gamma - min_large_gamma)
+    #     t_val = poro_tau / g_val
+    #     e_val = poro_amp / pow(z, 3.)
+    #     # generate simulation
+    #     gen_ve_sweep (emod = emod, tau_1 = t_val, gamma_1 = g_val, jd = "{0}{1}/".format(jd, jn), jn = "g-hi-{0}".format(i), min_period = poro_tau / 100., max_period = poro_tau * 100., n_period = 40)
 
     # (run simulations)
     # compare the following:
