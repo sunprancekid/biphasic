@@ -8,7 +8,7 @@ contains model files and programs for febio simulations
 	- to check installation success, run `febio --version` from command line.
 2. install python package management tool [miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install/overview).
 3. download and install visualization software [plotfig](https://github.com/sunprancekid/plotfig).
-4. update conda environment: `conda ...`
+4. update conda environment: `conda env create -f conda-env.yml`
 5. add local python code to envionrment:
 	- febio software management: run `conda develope -e programs/python/` 
 	- visualization software: run `conda develope -e path/to/plotfig/`
