@@ -77,14 +77,15 @@ class Optimization (object):
         else:
             self.df_parm = None
 
-    def get_optimization_results(self):
+    def get_optimization_results(self, save = False):
         """ for each simulation in the job set, parse the optimization results.
 
         the results are returned as a dataframe, and saved to the job directory.
 
         Arguments:
         ----------
-        None
+        save : bool (optional, default is 'False')
+            saves the optimization results to the job directory as a csv file.
 
         Returns:
         --------
@@ -108,7 +109,10 @@ class Optimization (object):
                     df_sum[j] = [np.nan for k in range(len(df_sum))]
             for j in list(df_opt_res.columns.values)[1:]:
                 df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
-        df_sum.to_csv("{0}{1}/{1}.opt-sum.csv".format(self.jd, self.jn))
+        if save:
+            df_sum.to_csv("{0}{1}/{1}.opt-sum.csv".format(self.jd, self.jn))
+
+        return df_sum
 
 
     def generate_optimized_model (self, m, n):
