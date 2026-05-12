@@ -322,6 +322,7 @@ def extract_febio_opt (d = None, f = None, s = None):
 						opt_val[n_it - 1].append(float(l.split(" ")[2]))
 						# go to the next line
 						l = f_io.readline().strip()
+						print(l)
 
 				## OPTIMIZATION DATA
 				if not has_n_data:
@@ -330,12 +331,14 @@ def extract_febio_opt (d = None, f = None, s = None):
 					while "objective" not in l:
 						n_data += 1
 						l = f_io.readline().strip()
+						print(l)
 					# the end of the data points have been reached
 					has_n_data = True
 				else:
 					# skip through the optimization data point without counting them
 					for i in range(n_data):
 						l = f_io.readline().strip()
+						print(l)
 
 				# SCORING
 				# get the objective value
