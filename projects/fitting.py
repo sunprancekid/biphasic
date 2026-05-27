@@ -100,8 +100,8 @@ def gen_ve_frequency_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp =
 
     # check parameters
     # create job, assign parameters
-    j = Job(jd, jn)
-    constant_bulk_modulus(job = j, E_val = emod)
+    j = Job (jd, jn)
+    constant_bulk_modulus (job = j, E_val = emod)
     constant_gamma (job = j, g_val = gamma_1)
     constant_tau (job = j, t_val = tau_1)
     frequency_sweep (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
@@ -236,7 +236,7 @@ def gen_ve_emod_tau_sweep ():
     """
     pass
 
-# analysi low gamma data
+# analysis low gamma data
 def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
     """ analyze the data
 
@@ -329,6 +329,77 @@ def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
     # fig.set_axis_minimum_value('y', data[8].min())
     # fig.set_axis_maximum_value('y', data[8].max())
     gen_plot(fig, show = show, save = save)
+
+# first step in fitting sequence
+def step_one ():
+    """ first step in fitting sequence.
+
+    during the first step, the a poroelastic model is generated, and the resonant
+    properties are determined over a range of time scales.
+
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    pass
+
+# second step in fitting sequence
+def step_two ():
+    """ second step in fitting sequence, once first step is finished.
+
+    during the second step, a viscoelastic model is fit to the poroelastic
+    stress-strain data at each time scale.
+
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    pass
+
+# third step in fitting sequence
+def step_three ():
+    """ third step is fitting sequence, once the second step is finished.
+
+    during the third step, the optimal viscoelastic parameters are parsed
+    from each optimization model. the optimized model is rerun to confirm
+    the validity of the parameters.
+
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    pass
+
+# fourth step in fitting sequence
+def step_four ():
+    """ fourth step in fitting sequence, once the third step is finished.
+
+    during the fourth step, the optimizal parameters for the viscoelastic
+    fitting are plotted against the timescale. The properties of the
+    simulated material (e.g. loss modulus) are compared for the poroelastic
+    model and the optimized viscoelastic model.
+
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    pass
 
 if __name__ == "__main__":
 
