@@ -16,7 +16,8 @@ import pandas as pd
 # local
 from febio.job import Job
 from febio.sweep import Sweep
-from febio.feb.model import Model
+from febio.feb.model_file import ModelFile
+from febio.feb.optimization_file import OptimizationFile as OptFile
 from plot.figure import Figure
 from plot.plot import gen_plot
 

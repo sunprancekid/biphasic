@@ -179,7 +179,7 @@ def calculate_complex_mod (period, time, pos, force):
     l = []
     sub_int = n_cyc - 1
     ## loop through all cycles
-    for i in range(n_cyc):
+    for i in range(n_cyc):cycle
 
         ## get max and min stress / strain for cycle
         max_strain[i] = max(strain[i])

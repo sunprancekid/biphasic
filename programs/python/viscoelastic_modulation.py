@@ -14,7 +14,7 @@ import sys, os
 import pandas as pd
 # local
 from febio.job import Job
-from febio.feb.model import Model
+from febio.feb.model_file import ModelFile
 
 
 ## PARAMETERS

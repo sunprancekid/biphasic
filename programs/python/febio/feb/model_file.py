@@ -24,7 +24,7 @@ ELM_PROP = ['p']
 
 ## CLASSES
 # model class
-class Model(object):
+class ModelFile(object):
 
     """ handles xml formatted feb model files.
 
