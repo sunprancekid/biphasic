@@ -316,7 +316,7 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
         path to base poroelastic model to use for simulation set
 
     Returns:
-    -----------
+    --------
     None
     """
     # based on the poroelastic model, determine the time scales
@@ -358,10 +358,23 @@ def step_two ():
     ----------
     None
 
-    Parameters:
-    -----------
+    Results:
+    --------
     None
     """
+    # check that the poroelastic simulations exist, loop through each one
+    if not os.path.exists(""):
+        print("ERROR :: fitting.step_two() :: ...")
+        exit()
+    job_pe = Job() # set of poroelastic simulations
+    for i in range(job_pe.get_sim_num()):
+        # check the that simulation finished
+        # open each simulation, save the final stress-strain, hysteresis data
+        s_pe = job_pe.get_simulation(i)
+        f_d = s_pe.get_force_displacement_lag(cycle = s_pe.get_cycle_number())
+        # s_pe.show_force_displacement_lag(cycle = s_pe.get_cycle_number(), show = False, save = True)
+        # generate optimization job
+        # write the viscoelastic model, optimization file to the job directory
     pass
 
 # third step in fitting sequence
@@ -376,8 +389,8 @@ def step_three ():
     ----------
     None
 
-    Parameters:
-    -----------
+    Results:
+    --------
     None
     """
     pass
@@ -395,8 +408,8 @@ def step_four ():
     ----------
     None
 
-    Parameters:
-    -----------
+    Results:
+    --------
     None
     """
     pass
