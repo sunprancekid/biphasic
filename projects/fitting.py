@@ -50,11 +50,13 @@ max_large_gamma = 5000.
 
 # POROELASTIC MODEL
 # permeability
-perm = 0.001
+default_perm = 0.001
 # elastic modulus
-emod = 0.5
+default_emod = 0.5
 # length scale
-z = 0.125
+default_z = 0.125
+# sweep
+default_n_period = 40
 
 
 ## METHODS
@@ -108,59 +110,6 @@ def gen_ve_frequency_sweep (emod = None, tau_1 = None, gamma_1 = None, osc_amp =
 
     # append model
     m = Model(feb_file)
-
-    # save
-    j.generate_parameters()
-    j.save_config()
-    j.save_parameters()
-    m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
-
-# generate poroelastic frequency sweep using parameters, base feb file
-def gen_pe_sweep (emod = emod, perm = perm, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_period = None, max_period = None, n_period = None, jd = None, jn = None, feb_file = default_feb_pe):
-    """
-
-    Arguments:
-    ----------
-    emod : float
-        value of elastic modulus used in material model
-    perm : float
-        value of permeability using in material model
-    osc_amp : float
-        amplitude during oscillation phase
-    relax_time : float
-        time between loading and oscillation phase
-    load_depth : float
-        depth of initial indentation before relxation and oscillation phases
-    min_period : float
-        minimum oscilation period to test
-    max_period : float
-        maximum oscillation period to test
-    n_period : int
-        number of unique period values between minimum and maximum to test
-    jd : str
-        path to location to save simulation directory
-    jn : str
-        name of simulation set
-    feb_file : str
-        path to base poroelastic model to use for simulation set
-
-    Returns:
-    --------
-    None
-    """
-
-    # load modules
-    # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
-    from poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
-
-    # set job parameters
-    j = Job(jd, jn)
-    constant_bulk_modulus (job = j, E_val = emod)
-    constant_permeability (job = j, K_val = perm)
-    frequency_sweep (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
-
-    # load model
-    m = Model (feb_file)
 
     # save
     j.generate_parameters()
@@ -331,7 +280,7 @@ def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
     gen_plot(fig, show = show, save = save)
 
 # first step in fitting sequence
-def step_one ():
+def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, n_period = default_n_period, min_period = None, max_period = None, feb_file = default_feb_pe):
     """ first step in fitting sequence.
 
     during the first step, the a poroelastic model is generated, and the resonant
@@ -339,13 +288,64 @@ def step_one ():
 
     Arguments:
     ----------
-    None
+    jd : str
+        path to location to save simulation directory
+    jn : str
+        name of simulation set
+    emod : float (optional, default is 'default_emod')
+        value of elastic modulus used in material model
+    perm : float (optional, default is 'default_perm')
+        value of permeability using in material model
+    z : float (optional, default iis 'default_z')
+        value of model length scale (must match length scale of feb model)
+    osc_amp : float (optional, default is 'default_oscillation_amplitude')
+        amplitude during oscillation phase
+    relax_time : float (optional, default is 'default_relaxation_time')
+        time between loading and oscillation phase
+    load_depth : float (optional, default is 'default_loading_depth')
+        depth of initial indentation before relxation and oscillation phases
+    n_period : int (optional, default is 'default_n_period')
+        number of unique period values between minimum and maximum to test
+    min_period : float (optional)
+        minimum oscilation period to test (if unspecified, minimum period is
+        two orders of magnitude less than the resonant timescale)
+    max_period : float (optional)
+        maximum oscillation period to test (if unspecified, maximum period is
+        two orders of magnitude greater than the resonant timescale)
+    feb_file : str (optional, default is 'default_feb_pe')
+        path to base poroelastic model to use for simulation set
 
-    Parameters:
+    Returns:
     -----------
     None
     """
-    pass
+    # based on the poroelastic model, determine the time scales
+    poro_tau = pow(z, 2.) / (emod * perm)
+    poro_amp = emod * pow(z, 3.)
+
+    # use time scales to set minimum, maximum period
+    if min_period is None: min_period = poro_tau / 100
+    if max_period is None: max_period = poro_tau * 100
+
+    # load modules
+    # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
+    from poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+
+    # set job parameters
+    j = Job(jd, jn)
+    constant_bulk_modulus (job = j, E_val = emod)
+    constant_permeability (job = j, K_val = perm)
+    frequency_sweep (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
+
+    # load model
+    m = Model (feb_file)
+
+    # save
+    j.generate_parameters()
+    j.save_config()
+    j.save_parameters()
+    m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
+
 
 # second step in fitting sequence
 def step_two ():
@@ -413,11 +413,8 @@ if __name__ == "__main__":
     ## SCRIPT
 
     ## POROELASTICITY
-    # set the poroelastic model parameters, the time and energy scales are then known
-    poro_tau = pow(z, 2.) / (emod * perm)
-    poro_amp = emod * pow(z, 3.)
     # generate the poroelasticity simulation
-    gen_pe_sweep (min_period = poro_tau / 100., max_period = poro_tau * 100, n_period = 40, jd = "{0}{1}/".format(jd, jn), jn = "pe")
+    step_one (jd = "{0}{1}/".format(jd, jn), jn = "pe")
 
     ## VISCOELASTICITY
     # pick the viscoelastic model parameters (both large and small)
