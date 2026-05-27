@@ -223,7 +223,6 @@ def gen_ve_gamma_sweep (emod = None, tau_1 = None, osc_amp = default_oscillation
     j.save_parameters()
     m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
 
-
 def gen_ve_emod_tau_sweep ():
     """ vary elastic modulus and time scale parameters while gamma remains fixed.
 
