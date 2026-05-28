@@ -249,10 +249,9 @@ class ModelFile(object):
         pass
 
     # get element
-
     def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None, delim = None):
         """ adds instructions to write specific element data to property file.
-
+# #
         Arguments:
         ----------
         elements : int or List[int]
@@ -290,7 +289,7 @@ class ModelFile(object):
                     print("ERROR :: Model.add_element_output() :: element '{0}' in 'elements' list is of non-integer type.".format(elements.pop(i)))
             if len(elements) == 0:
                 print("ERROR :: Model.add_element_output() :: method argument 'elements' is an empty list.")
-                return
+                return'https://example.com/api/data.xml'
         ## elements are now a list of integers
         ## convert list to str
         elements_str = ""
