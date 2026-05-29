@@ -18,7 +18,10 @@ import xml.etree.ElementTree as ET # handles xml formatting
 # none
 
 ## PARAMTERS
-# none
+# default objective tolerance
+default_objective_tolerance = 0.00001
+# xml path for objective tolerance
+xmlpath_objective_tolerance = "Options/obj_tol"
 
 
 ## METHODS
@@ -30,7 +33,10 @@ def rec_elm_tree (root, abs_path = None, sl = None):
     ----------
     root : element
         element with sub-elements
-    abs_path :
+    abs_path : str
+        absolute path to root
+    sl : List[str]
+        string list containing paths in root
 
     Returns:
     --------
@@ -50,12 +56,75 @@ def rec_elm_tree (root, abs_path = None, sl = None):
         cld_att = str(child.attrib)
         if not child.attrib:
             cld_att = ""
-        sl.append(abs_path + root.tag + "/" + child.tag + " " + cld_txt + " " + cld_att)
+        nxt_path = ""
+        if abs_path == " ":
+            nxt_path = abs_path + root.tag
+        else:
+            nxt_path = abs_path + "/" + root.tag
+        sl.append(nxt_path + "/" + child.tag + " " + cld_txt + " " + cld_att)
         subelm_list = root.findall(child.tag + "/")
         if not (subelm_list is None or (isinstance(subelm_list, list) and len(subelm_list) == 0)):
             # sl.append(root.tag + "/" + child.tag + " ... (x{0})".format(len(subelm_list)))
-            rec_elm_tree(child, abs_path = abs_path, sl = sl)
+            rec_elm_tree(child, abs_path = nxt_path, sl = sl)
     return sl
+
+# checks if path exists in element tree
+def tree_has_path (root, elm_path):
+    """ determines if xml path exists in root tree.
+
+    Arguments:
+    ----------
+    root : Element
+        contains element tree
+    elm_path : str
+        xml path to check for in root tree
+
+    Returns:
+    --------
+    bool
+        'True' if element path exists in root, else 'False'
+    """
+    if elm_path is None:
+        return False
+    elm = root.findall(elm_path)
+    if elm is None or (isinstance(elm, list) and len(elm) == 0):
+        return False
+    else:
+        return True
+
+# add element to tree
+def add_element_to_tree(root, elm_path, tag, value = None, attributes = None):
+    """ adds element to tree. if the element already exists, properties are replaced.
+
+    Arguments:
+    ----------
+    root : Element
+        element tree which contains sub-elements
+    elm_path : str
+        element path which exists in root tree, location where new element is stored
+    tag : str
+        name of new element in element tree
+    value : str
+        value which is stored in new element
+    attributes : dict
+        attributes associated with element
+
+    Returns:
+    --------
+    bool
+        'True' if addition operation was successful, else 'False'
+    """
+    # check that element path exists in root
+    if not tree_has_path(root, elm_path): return False
+    # check that tag does not exist in element path
+    if tree_has_path (root, elm_path + "/" + tag):
+        # if it does, replace the values and attributes
+        for elm in root.findall(elm_path + "/" tag):
+            elm.text = str(value)
+        return True
+    else:
+        # if it does not, add new subelement to tree with attributes and values
+        pass
 
 
 ## CLASSES
@@ -71,6 +140,8 @@ class OptimizationFile (object):
     --------
     __init__():
         initialize object
+    __str__():
+        return string representation of optimization file xml tree
     load_optimization_file():
         load existing file into object
 
@@ -115,7 +186,7 @@ class OptimizationFile (object):
         for i in range(len(l)):
             # append element absolute path
             s += l[i]
-            # add newline character if not last
+            # add newline character if not last string
             if i != len(l) - 1: s += "\n"
         # return string
         return s
@@ -155,7 +226,7 @@ class OptimizationFile (object):
         pass
 
     def reset_optimization_file (self):
-        """ reset all madatory fields
+        """ reset all madatory fields.
 
         Arguments:
         ----------
@@ -165,6 +236,9 @@ class OptimizationFile (object):
         --------
         None
         """
+        # reset options
+        # reset parameters
+        # reset objective
         pass
 
     ## PARAMETERS
@@ -211,6 +285,42 @@ class OptimizationFile (object):
     ## OPTIONS
 
     # objective tolerence
+    def set_objective_tolerance (self, value):
+        """ assigns objective tolerance to optimization value
+
+        Arguments:
+        ----------
+        value : float
+            objective tolerance value (real number greater than 0)
+
+        Returns:
+        --------
+        None
+        """
+        # check if the xml file already has the correct path
+        if not tree_has_path(self.root, xmlpath_objective_tolerance):
+            # if not add it with value
+            # add_path_to_tree()
+            print("path does not exist.")
+            pass
+        else:
+            # otherwise adjust the value to the new one
+            for elm in self.root.findall(xmlpath_objective_tolerance):
+                elm.text = str(value)
+
+    def reset_objective_tolerance (self):
+        """ assigns default value to objective tolerance.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        self.set_objective_tolerance(default_objective_tolerance)
+
     # f_diff_scale
     # log_level
     # print_level

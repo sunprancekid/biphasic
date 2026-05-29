@@ -251,7 +251,7 @@ class ModelFile(object):
     # get element
     def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None, delim = None):
         """ adds instructions to write specific element data to property file.
-# #
+
         Arguments:
         ----------
         elements : int or List[int]
