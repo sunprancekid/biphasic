@@ -19,10 +19,15 @@ import xml.etree.ElementTree as ET # handles xml formatting
 # none
 
 ## PARAMTERS
+## default values
 # default objective tolerance
 default_objective_tolerance = 0.00001
-# xml path for objective tolerance
-xmlpath_objective_tolerance = "Options/obj_tol"
+# default f_diff_scale value
+default_f_diff_scale = 0.01
+# default log_level value
+default_log_level = "LOG_FILE_AND_SCREEN"
+# default print_level value
+default_print_level = "PRINT_VERBOSE"
 
 
 ## METHODS
@@ -242,7 +247,7 @@ class OptimizationFile (object):
         pass
 
     def reset_optimization_file (self):
-        """ reset all madatory fields.
+        """ reset all mandatory fields.
 
         Arguments:
         ----------
@@ -318,6 +323,7 @@ class OptimizationFile (object):
         # adjust the value
         add_element_to_tree(self.root, "Options", "obj_tol", value = value, attributes = attributes)
 
+    # reset objective tolerance
     def reset_objective_tolerance (self):
         """ assigns default value to objective tolerance.
 
@@ -338,13 +344,15 @@ class OptimizationFile (object):
         Arguments:
         ----------
         value : float
+            'f_diff_scale' value (real number greater than 0)
         attributes : dict (optional, default is 'None')
+            replace previous attributes with new attributes
 
         Returns:
         --------
         None
         """
-        pass
+        add_element_to_tree(self.root, "Options", "f_diff_scale", value = value, attributes = attributes)
 
     # reset f_diff scale
     def reset_f_diff_scale (self):
@@ -358,12 +366,69 @@ class OptimizationFile (object):
         --------
         None
         """
-        pass
+        self.set_f_diff_scale(default_f_diff_scale)
 
-    # log_level
+    # set log_level field
     def set_log_level (self, value, attributes = None):
-        """ """
-    # print_level
+        """ sets log level to user specified value.
+
+        Arguments:
+        ----------
+        value : str
+            'log_level' value
+        attributes : dict (optional, default is 'None')
+            replace previous attributes with new attributes
+
+        Returns:
+        --------
+        None
+        """
+        add_element_to_tree(self.root, "Options", "log_level", value = value, attributes = attributes)
+
+    # reset log level field
+    def reset_log_level (self):
+        """ sets log level field to default value
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        self.set_log_level(default_log_level)
+
+    # set print_level field
+    def set_print_level (self, value, attributes = None):
+        """
+
+        Arguments:
+        ----------
+        value : str
+            'print_level' value
+        attributes : dict (optional, default is 'None')
+            replace previous attributes with new attributes
+
+        Returns:
+        --------
+        None
+        """
+        add_element_to_tree(self.root, "Options", "print_level", value = value, attributes = attributes)
+
+    # reset print level field
+    def reset_print_level (self):
+        """ resets print level to default value.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        self.set_log_level(default_print_level)
 
     ## DATA
 
