@@ -13,6 +13,7 @@
 # native, conda
 import sys, os
 import re # used for regular expression checking
+import copy
 import xml.etree.ElementTree as ET # handles xml formatting
 # local
 # none
@@ -106,7 +107,7 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None):
         name of new element in element tree
     value : str
         value which is stored in new element
-    attributes : dict
+    attributes : dictYou do not need to try/except while you are popping a key which is unavailable. Here is how you can do this.
         attributes associated with element
 
     Returns:
@@ -119,13 +120,28 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None):
     # check that tag does not exist in element path
     if tree_has_path (root, elm_path + "/" + tag):
         # if it does, replace the values and attributes
-        for elm in root.findall(elm_path + "/" tag):
-            elm.text = str(value)
+        for elm in root.findall(elm_path + "/" + tag):
+            # replace the value
+            if value is not None:
+                elm.text = str(value)
+            # remove the previous attributes
+            if attributes is not None:
+                old_attrib = copy.deepcopy(elm.attrib)
+                for a in old_attrib:
+                    elm.attrib.pop(a)
+                # add new attributes
+                for a in attributes:
+                    elm.set(a, attributes[a])
         return True
     else:
         # if it does not, add new subelement to tree with attributes and values
-        pass
-
+        # get element at path
+        elm = root.find(elm_path)
+        # append subelement
+        sub = ET.SubElement(elm, tag, attrib = attributes)
+        if value is not None:
+            sub.text = value
+        return True
 
 ## CLASSES
 # used for handling optimization files
@@ -285,28 +301,22 @@ class OptimizationFile (object):
     ## OPTIONS
 
     # objective tolerence
-    def set_objective_tolerance (self, value):
+    def set_objective_tolerance (self, value, attributes = None):
         """ assigns objective tolerance to optimization value
 
         Arguments:
         ----------
         value : float
             objective tolerance value (real number greater than 0)
+        attributes : dict (optional, default is 'None')
+            replace previous attributes with new attributes
 
         Returns:
         --------
         None
         """
-        # check if the xml file already has the correct path
-        if not tree_has_path(self.root, xmlpath_objective_tolerance):
-            # if not add it with value
-            # add_path_to_tree()
-            print("path does not exist.")
-            pass
-        else:
-            # otherwise adjust the value to the new one
-            for elm in self.root.findall(xmlpath_objective_tolerance):
-                elm.text = str(value)
+        # adjust the value
+        add_element_to_tree(self.root, "Options", "obj_tol", value = value, attributes = attributes)
 
     def reset_objective_tolerance (self):
         """ assigns default value to objective tolerance.
@@ -321,8 +331,38 @@ class OptimizationFile (object):
         """
         self.set_objective_tolerance(default_objective_tolerance)
 
-    # f_diff_scale
+    # set f_diff_scale
+    def set_f_diff_scale (self, value, attributes = None):
+        """ change fdiff scale value and attributes.
+
+        Arguments:
+        ----------
+        value : float
+        attributes : dict (optional, default is 'None')
+
+        Returns:
+        --------
+        None
+        """
+        pass
+
+    # reset f_diff scale
+    def reset_f_diff_scale (self):
+        """ assign 'f_diff_scale' parameter default value.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        pass
+
     # log_level
+    def set_log_level (self, value, attributes = None):
+        """ """
     # print_level
 
     ## DATA
