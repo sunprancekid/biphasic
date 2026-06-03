@@ -35,6 +35,7 @@ default_feb_ve = "models/bend/bend_ve.feb"
 # default feb model for poroelastic simulations
 default_feb_pe = "models/bend/mesh/bend/bend_n15.feb"
 
+## TODO :: depricated
 ## VISCOELASTIC MODEL
 # small gamma - n gamma to test
 n_small = 3
@@ -58,6 +59,25 @@ default_emod = 0.5
 default_z = 0.125
 # sweep
 default_n_period = 40
+
+## VISCOELASTIC OPTIMIZATION
+# path to objective function in feb file
+obj_fun = "fem.rigidbody('Material2').Fz"
+# gamma min, max, start, and name
+gamma_min = 0.001
+gamma_max = 100.
+gamma_start = 1.
+gamma_name = "fem.material('Material1').g1"
+# tau min, max, start, and name
+tau_min = 0.001
+tau_max = 100.
+tau_start = 1.
+tau_name = "fem.material('Material1').t1"
+# elastic modulus min, max, start, and name
+emod_min = 0.001
+emod_max = 100.
+emod_start = 1.
+emod_name = "fem.material('Material1').elastic.E"
 
 
 ## METHODS
@@ -333,23 +353,23 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     from poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
 
     # set job parameters
-    j = Job(jd, jn)
+    j = Job("{0}{1}".format(jd, jn), 'pe')
     constant_bulk_modulus (job = j, E_val = emod)
     constant_permeability (job = j, K_val = perm)
     frequency_sweep (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
 
     # load model
-    m = Model (feb_file)
+    m = ModelFile (feb_file)
 
     # save
     j.generate_parameters()
     j.save_config()
     j.save_parameters()
-    m.save_model (saveto = "{0}{1}/".format(jd, jn), saveas = "{0}.feb".format(jn))
+    m.save_model (saveto = "{0}{1}/pe/".format(jd, jn), saveas = "pe.feb".format(jn))
 
 
 # second step in fitting sequence
-def step_two ():
+def step_two (jd = None, jn = None):
     """ second step in fitting sequence, once first step is finished.
 
     during the second step, a viscoelastic model is fit to the poroelastic
@@ -357,25 +377,44 @@ def step_two ():
 
     Arguments:
     ----------
-    None
+    jd : str
+        path to directory which will contain job
+    jn : str
+        name of job in job directory
 
     Results:
     --------
     None
     """
     # check that the poroelastic simulations exist, loop through each one
-    if not os.path.exists(""):
-        print("ERROR :: fitting.step_two() :: ...")
-        exit()
-    job_pe = Job() # set of poroelastic simulations
+    if not os.path.exists("{0}/{1}/pe".format(jd, jn)):
+        print("ERROR :: fitting.step_two() :: Unable to find set of previous poroelastic simulations (''). Unable to perform next step of viscoelastic fitting..")
+        return
+
+    # loop through each poroelastic simulation, generation viscoelastic optimization
+    job_pe = Job("{0}{1}".format(jd, jn), 'pe')
+    job_pe = Job("{0}{1}".format(jd, jn), 'opt')
+    print(job_pe.get_sim_num())
+    exit()
     for i in range(job_pe.get_sim_num()):
         # check the that simulation finished
         # open each simulation, save the final stress-strain, hysteresis data
         s_pe = job_pe.get_simulation(i)
         f_d = s_pe.get_force_displacement_lag(cycle = s_pe.get_cycle_number())
         # s_pe.show_force_displacement_lag(cycle = s_pe.get_cycle_number(), show = False, save = True)
-        # generate optimization job
+
+        ## generate optimization job, add mandatory defaults
+        o = OptFile()
+        # optimization parameters
+        o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name)
+        o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name)
+        o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name)
+        # optimization function
+        o.set_objective_function(name = obj_fun)
+        # optimization data (from poroelastic simulation)
+        # append cyclic data to optimization file
         # write the viscoelastic model, optimization file to the job directory
+        o.save_optimization_file(filepath = "")
     pass
 
 # third step in fitting sequence
