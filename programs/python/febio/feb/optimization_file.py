@@ -232,8 +232,10 @@ class OptimizationFile (object):
         """
         if filepath is not None:
             self.load_optimization_file(filepath)
+            self.set_file_path(filepath)
         else:
             self.reset_optimization_file()
+            self.set_file_path()
 
     def __str__(self):
         """ return optimization file as string.
@@ -280,8 +282,47 @@ class OptimizationFile (object):
         self.root = self.tree.getroot()
         return True
 
-    def save_optimization_file (self, directory, filename):
+    def save_optimization_file (self, filepath = None):
+        """ saves optimization file in xml structure.
+
+        if the following fields are unspecified, optimization file will not save:
+            - parameter (OptimizationFile.add_parameter())
+            - objective function (OptimizationFile.set_optimization_function())
+            - objective data (OptimizationFile.add_data_pair())
+
+        Arguments:
+        ----------
+        filepath : str (optional if already specified, default is None)
+
+        Returns:
+        --------
+        bool
+            'True' if operation is successful, else 'False'
         """
+        # check that the optimization file contains all fields
+        if not self.has_parameters():
+            print("ERROR :: OptimizationFile.save_opdirectory, filenametimization_file() :: unable to save optimization file, optimization parameters are unspecified.")
+            return False
+        if not self.has_optimization_function():
+            print("ERROR :: OptimizationFile.save_optimization_file() :: unable to save optimization file, objective optimization function is unspecified.")
+            return False
+        if not self.has_data():
+            print("ERROR :: OptimizationFile.save_optimization_file() :: unable to save optimization file, objective optimization function data is unspecified.")
+            return False
+
+        # save the optimization file to the specified location
+        if not self.has_file_path() and filepath is None:
+            print("ERROR :: OptimizationFile.save_optimization_file() :: unable to save optimization file, filepath unspecified.")
+            return False
+        else:
+            # assign the filepath if specified
+            if filepath is not None:
+                self.set_file_path(filepath)
+            # save the file to specified location
+            return self.write_xml()
+
+    def write_xml(self):
+        """ saves xml file, filepath must be specified already.
 
         Arguments:
         ----------
@@ -289,9 +330,16 @@ class OptimizationFile (object):
 
         Returns:
         --------
-        None
+        bool
+            'True' if save operation was successful, else 'False'
         """
-        pass
+        # check that that file path is specified
+        if not self.has_file_path():
+            print("ERROR :: OptimizationFile.write_xml() :: must specify filepath (OptimizationFile.set_file_path()) before writing xml file.")
+            return False
+        # save the xml file to the specified location
+        self.root.write(self.filepath, encoding='ISO-8859-1', xml_declaration=True)
+
 
     def reset_optimization_file (self):
         """ reset all mandatory fields.
@@ -304,13 +352,50 @@ class OptimizationFile (object):
         --------
         None
         """
-        self.root = ET.Element("febio_optimize")
+        self.root = ET.Element("febio_optimize", attrib = {'version': "2.0"})
         # reset options
         self.reset_options()
         # reset parameters
         self.reset_parameters()
         # reset objective
-        pass
+        self.reset_objective()
+
+    def set_file_path (self, filepath = None):
+        """ designate the save location of the path.
+
+        Arguments:
+        ----------
+        filepath : str (optional, default is None)
+            path that exists in local file directory
+
+        Returns:
+        --------
+        None
+        """
+        if (filepath is not None) and (isinstance(filepath, str)):
+            # check that the file path exists
+            if not os.path.exists(filepath):
+                self.filepath = None
+            else:
+                # the path exists, assign it to the object
+                self.filepath = filepath
+        else:
+            # assign filepath as empty object
+            self.filepath = None
+
+    def has_file_path (self):
+        """ check if filepath assigned to object exists.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if the object has a filepath that exists and is not None
+        """
+        return (self.filepath is not None) and (os.path.exists(self.filepath))
 
     ## PARAMETERS
 
@@ -600,7 +685,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4f},{1:.4f}".format(x_val, y_val))
+        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4f},{1:.4f}".format(x_val, y_val), duplicate = True)
 
     def add_data_list (self, x_list, y_list):
         """ append a list of data points to data list.
@@ -626,7 +711,7 @@ class OptimizationFile (object):
             self.add_data_pair(x_list[i], y_list[i])
 
     def get_data (self):
-        """
+        """ returns data assigned to optimization file.
 
         Arguments:
         ----------
@@ -634,7 +719,8 @@ class OptimizationFile (object):
 
         Returns:
         --------
-        None
+        DataFrame
+            data with columns 'x' and 'y' corresponding to x and y-values.
         """
         pass
 
@@ -669,8 +755,22 @@ class OptimizationFile (object):
         # add empty tree to optimization file
         add_element_to_tree(self.root, "Objective", "fnc", value = "", attributes = {'type': 'parameter'})
 
-    def set_optimization_function (self):
+    def set_optimization_function (self, name):
+        """ assigns function in 'feb' which data should be optimized to fit, corresponds to data points.
+
+        Arguments:
+        ----------
+        name : str
+            points to function in 'feb' file (e.g. "fem.rigidbody('Material2').Fz")
+
+        Returns:
+        --------
+        None
         """
+        add_element_to_tree(self.root, "Objective/fnc", "param", attributes = {'name': name})
+
+    def get_optimization_function (self):
+        """ returns optimization function.
 
         Arguments:
         ----------
@@ -681,18 +781,6 @@ class OptimizationFile (object):
         None
         """
         pass
-
-    def get_optimization_function (self):
-        """
-
-        Arguments:
-        ----------
-        None
-
-        Returns:
-        --------
-        None
-        """
 
     def has_optimization_function (self):
         """
