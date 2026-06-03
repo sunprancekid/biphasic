@@ -182,7 +182,7 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None, du
 
 # remove element from tree
 def remove_element_from_tree (root, elm_path):
-    """
+    """  removes element from element tree 'root'
 
     Arguments:
     ----------
@@ -197,22 +197,83 @@ def remove_element_from_tree (root, elm_path):
 ## CLASSES
 # used for handling optimization files
 class OptimizationFile (object):
-    """ handles, generates optimization files for febio.
+    """ handles, generates optimization files for febio optimization routines.
+
+    for more information of the organization of optimization files, see the link below.
+
+    https://help.febio.org/docs/FEBioUser-4-1/UM41-Section-7.1.html
 
     Attributes:
     -----------
-    None
+    self.root : Element
+        list of elements contained in optimization file
+    self.filepath : str
+        location to save / load files.
 
     Methods:
     --------
-        return
     __init__():
         initialize object
     __str__():
         return string representation of optimization file xml tree
     load_optimization_file():
         load existing file into object
-
+    save_optimization_file():
+        saves optimization file to specified location in xml format.
+    write_xml():
+        writes xml file in specified location.
+    reset_optimization_file():
+        resets all fields to defaults, or removes mandatory fields if defaults are unspecified.
+    set_file_path():
+        assigns designated save location of xml file.
+    has_file_path():
+        determines if 'filepath' has been specified by the user.
+    reset_parameters():
+        remove all parameters in parameters section (no defaults).
+    add_parameters():
+        append parameters to parameters section.
+    has_parameters():
+        check if optimization parameters have been assigned in parameters section
+    set_options():
+        assign new values to one or more fields in options section.
+    reset_options():
+        assign default options to all fields in options section.
+    set_objective_tolerance():
+        assign new value to 'obj_tol' field in options section.
+    reset_objective_tolerance():
+        assign default value to 'obj_tol' field in options section.
+    set_f_diff_scale():
+        assign new value to 'f_diff_scale' field in options section.
+    reset_f_diff_scale():
+        assgin default value to 'f_diff_scale' field in options section.
+    set_log_level():
+        assign new value to 'log_level' field in options section.
+    reset_log_level():
+        assign default value to 'log_level' field in options section.
+    set_print_level():
+        assign new value to 'print_level' field in options section.
+    reset_print_level():
+        assign default value to 'print_level' field in options section.
+    reset_objective():
+        removes all mandatory fields from objective section.
+    reset_data():
+        removes data from objective section (no default).
+    add_data_pair():
+        add single pair of x, y values to data in object section.
+    add_data_list():
+        add data to objective section as list of x, y values.
+    get_data():
+        returns data assigned to optimization routine.
+    has_data():
+        determines if data has been assigned to optimization routine.
+    reset_optimization_function():
+        remove optimization function from tree, if it exists (no default).
+    set_optimization_function():
+        assigns or updates optimization function assigned to optimization routine.
+    get_optimization_function():
+        returns the optimization function assigned to the optimization routine.
+    has_optimization_function():
+        determines if optimization function has been specified in element tree.
     """
 
     def __init__ (self, filepath = None):
@@ -339,7 +400,6 @@ class OptimizationFile (object):
             return False
         # save the xml file to the specified location
         self.root.write(self.filepath, encoding='ISO-8859-1', xml_declaration=True)
-
 
     def reset_optimization_file (self):
         """ reset all mandatory fields.
