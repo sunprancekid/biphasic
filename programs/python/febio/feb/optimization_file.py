@@ -12,7 +12,6 @@
 ## MODULES
 # native, conda
 import sys, os
-import re # used for regular expression checking
 import copy
 import xml.etree.ElementTree as ET # handles xml formatting
 # local
@@ -99,13 +98,13 @@ def tree_has_path (root, elm_path):
         return True
 
 # add element to tree
-def add_element_to_tree(root, elm_path, tag, value = None, attributes = None):
+def add_element_to_tree(root, elm_path, tag, value = None, attributes = None, duplicate = False):
     """ adds element to tree. if the element already exists, properties are replaced.
 
     Arguments:
     ----------
     root : Element
-        element tree which contains sub-elements
+        element tree which sub-elements can be added to
     elm_path : str
         element path which exists in root tree, location where new element is stored
     tag : str
@@ -114,39 +113,86 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None):
         value which is stored in new element
     attributes : dictYou do not need to try/except while you are popping a key which is unavailable. Here is how you can do this.
         attributes associated with element
+    duplicate : bool (optional, default is 'False')
+        if 'True', adds duplicate tag to elm path if it already exists
 
     Returns:
     --------
     bool
         'True' if addition operation was successful, else 'False'
     """
-    # check that element path exists in root
-    if not tree_has_path(root, elm_path): return False
-    # check that tag does not exist in element path
-    if tree_has_path (root, elm_path + "/" + tag):
-        # if it does, replace the values and attributes
-        for elm in root.findall(elm_path + "/" + tag):
-            # replace the value
+    # if an element path has been specified
+    if elm_path:
+        print(elm_path)
+        # check that the path exists
+        if not tree_has_path(root, elm_path): return False
+        # check that tag does not exist in element path
+        if (not duplicate) and tree_has_path (root, elm_path + "/" + tag):
+            # if it does, replace the values and attributes
+            for elm in root.findall(elm_path + "/" + tag):
+                # replace the value
+                if value is not None:
+                    elm.text = str(value)
+                # remove the previous attributes
+                if attributes is not None:
+                    old_attrib = copy.deepcopy(elm.attrib)
+                    for a in old_attrib:
+                        elm.attrib.pop(a)
+                    # add new attributes
+                    for a in attributes:
+                        elm.set(a, attributes[a])
+            return True
+        else:
+            # if it does not, add new subelement to tree with attributes and values
+            # get element at path
+            elm = root.find(elm_path)
+            # append subelement
+            if attributes:
+                sub = ET.SubElement(elm, tag, attrib = attributes)
+            else:
+                sub = ET.SubElement(elm, tag)
             if value is not None:
-                elm.text = str(value)
-            # remove the previous attributes
-            if attributes is not None:
-                old_attrib = copy.deepcopy(elm.attrib)
-                for a in old_attrib:
-                    elm.attrib.pop(a)
-                # add new attributes
-                for a in attributes:
-                    elm.set(a, attributes[a])
-        return True
-    else:
-        # if it does not, add new subelement to tree with attributes and values
-        # get element at path
-        elm = root.find(elm_path)
-        # append subelement
-        sub = ET.SubElement(elm, tag, attrib = attributes)
-        if value is not None:
-            sub.text = value
-        return True
+                sub.text = value
+            return True
+    else: # the element path is an empty string, append tag to root
+        if (not duplicate) and tree_has_path(root, tag):
+            # replace the attributes of tag
+            for elm in root.findall(tag):
+                # replace the value
+                if value is not None:
+                    elm.text = str(value)
+                # remove the previous attributes
+                if attributes is not None:
+                    old_attrib = copy.deepcopy(elm.attrib)
+                    for a in old_attrib:
+                        elm.attrib.pop(a)
+                    # add new attributes
+                    for a in attributes:
+                        elm.set(a, attributes[a])
+            return True
+        else:
+            # add new sub element to root
+            if attributes:
+                sub = ET.SubElement(root, tag, attrib = attributes)
+            else:
+                sub = ET.SubElement(root, tag)
+            if value is not None:
+                sub.text = str(value)
+            return True
+
+# remove element from tree
+def remove_element_from_tree (root, elm_path):
+    """
+
+    Arguments:
+    ----------
+    root : Element
+        element tree with sub elements
+    elm_path : str
+        path to element that should be removed, exists in root
+    """
+    for elm in root.findall(elm_path):
+        root.remove(elm)
 
 ## CLASSES
 # used for handling optimization files
@@ -159,6 +205,7 @@ class OptimizationFile (object):
 
     Methods:
     --------
+        return
     __init__():
         initialize object
     __str__():
@@ -257,15 +304,18 @@ class OptimizationFile (object):
         --------
         None
         """
+        self.root = ET.Element("febio_optimize")
         # reset options
+        self.reset_options()
         # reset parameters
+        self.reset_parameters()
         # reset objective
         pass
 
     ## PARAMETERS
 
     def reset_parameters (self):
-        """
+        """ remove any parameters assigned to root.
 
         Arguments:
         ----------
@@ -275,23 +325,84 @@ class OptimizationFile (object):
         -----------
         None
         """
-        pass
+        # remove previous parameters from list
+        if tree_has_path(self.root, "Parameters"):
+            remove_element_from_tree(self.root, "Parameters")
+        # add new parameters branch to root
+        add_element_to_tree(self.root, "", "Parameters", value = "")
 
     def add_parameters (self, name, min_val, max_val, start_val):
-        """
+        """ add parameter to tree
+
+        NOTE: for more about paraemters, see below.
+
+        https://help.febio.org/docs/FEBioUser-4-1/UM41-Subsection-7.1.3.html
 
         Arguments:
         ----------
-        None
+        name : str
+            path to model parameter in 'feb' file
+        min_val : float
+            minimum possible value to assign to parameter during optimization
+        max_val : float
+            maximum possible value to assign to parameter during optimization
+        start_val : float
+            initial value assigned during parameter during optimization
 
         Returns:
         --------
         None
         """
-        pass
+        # todo :: boolean for duplicates
+        add_element_to_tree(self.root, "Parameters", "parm", value = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val), attributes = {"name": name})
 
     def has_parameters (self):
+        """ determines if any parameters has been specified.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if optimization file has parameters, else 'False'
         """
+        return tree_has_path(self.root, "Parameters/param")
+
+    ## OPTIONS
+
+    # set options
+    def set_options (self, obj_tol = None, f_diff_scale = None, log_level = None, print_level = None):
+        """ update certain options. unspecified options are left unchanged.
+
+        NOTE: only levmar type optimization are performed.
+
+        Read more here: https://help.febio.org/docs/FEBioUser-4-1/UM41-Subsection-7.1.2.html
+
+        Arguments:
+        ----------
+        obj_tol : float (optional, default is 'None')
+            objective tolerance value
+        f_diff_scale : float (optional, default is 'None')
+            forward difference scale factor value
+        log_level : str (optional, default is 'None')
+            log_level value
+        print_level : str (optional, default is 'None')
+            print_level value
+
+        Returns:
+        --------
+        None
+        """
+        if obj_tol is not None: self.set_objective_tolerance(obj_tol)
+        if f_diff_scale is not None: self.set_f_diff_scale(f_diff_scale)
+        if log_level is not None: self.set_log_level(log_level)
+        if print_level is not None: self.set_print_level(print_level)
+
+    # reset options
+    def reset_options(self):
+        """ set all options to their default values.
 
         Arguments:
         ----------
@@ -301,9 +412,11 @@ class OptimizationFile (object):
         --------
         None
         """
-        pass
-
-    ## OPTIONS
+        add_element_to_tree(self.root, "" , "Options", value = "", attributes = {"type" : "levmar"})
+        self.reset_objective_tolerance()
+        self.reset_f_diff_scale()
+        self.reset_log_level()
+        self.reset_print_level()
 
     # objective tolerence
     def set_objective_tolerance (self, value, attributes = None):
@@ -428,9 +541,22 @@ class OptimizationFile (object):
         --------
         None
         """
-        self.set_log_level(default_print_level)
+        self.set_print_level(default_print_level)
 
     ## DATA
+
+    def reset_data (self):
+        """
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        pass
 
     def add_data (self, df):
         """
