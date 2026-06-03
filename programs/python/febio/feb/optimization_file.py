@@ -546,7 +546,7 @@ class OptimizationFile (object):
     ## DATA
 
     def reset_data (self):
-        """
+        """ remove any data attached to optimization file as well as optimization function.
 
         Arguments:
         ----------
@@ -584,6 +584,20 @@ class OptimizationFile (object):
         """
         pass
 
+    def has_data (self):
+        """
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if data points have been attached to optimization, else 'False'.
+        """
+        pass
+
     def set_optimization_function (self):
         """
 
@@ -609,6 +623,19 @@ class OptimizationFile (object):
         None
         """
 
+    def has_optimization_function (self):
+        """
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if optimization function has been attached to file, else 'False'.
+        """
+        pass
 
 ## ARGUMENTS
 # none
