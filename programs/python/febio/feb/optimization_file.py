@@ -545,8 +545,32 @@ class OptimizationFile (object):
 
     ## DATA
 
+    def reset_objective (self):
+        """ reset objective section.
+
+        NOTE :: here, only 'data-fit' is used (see link below).
+
+        https://help.febio.org/docs/FEBioUser-4-1/UM41-Subsection-7.1.4.html
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # remove objective
+        if tree_has_path(self.root, "Objective"):
+            remove_element_from_tree(self.root, "Objective")
+        # add objective
+        add_element_to_tree (self.root, "", "Objective", value = "", attributes = {'type': 'data-fit'})
+        # reset data, objective function
+        self.reset_optimization_function()
+        self.reset_data()
+
     def reset_data (self):
-        """ remove any data attached to optimization file as well as optimization function.
+        """ remove data from optimization model.
 
         Arguments:
         ----------
@@ -556,20 +580,50 @@ class OptimizationFile (object):
         --------
         None
         """
-        pass
+        # remove data if it exists on the root tree already
+        if tree_has_path(self.root, "Objective/data"):
+            remove_element_from_tree(self.root, "Obhttps://help.febio.org/docs/FEBioUser-4-1/UM41-Subsection-7.1.4.htmljective/data")
+        # add empty sub-tree
+        add_element_to_tree(self.root, "Objective", "data", value = "")
 
-    def add_data (self, df):
-        """
+    def add_data_pair (self, x_val, y_val):
+        """ append single data set to data points.
 
         Arguments:
         ----------
-        None
+        x_val : float
+            x value
+        y_val : float
+            y value
 
         Returns:
         --------
         None
         """
-        pass
+        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4f},{1:.4f}".format(x_val, y_val))
+
+    def add_data_list (self, x_list, y_list):
+        """ append a list of data points to data list.
+
+        Arguments:
+        ----------
+        x_list : List[float]
+            list of floats, same length as 'y_list'
+        y_list : List[float]
+            list of floats, same length as 'x_list'
+
+        Returns:
+        --------
+        None
+        """
+        # check that the list of values are the same length
+        if len(x_list) != len(y_list):
+            print("ERROR :: OptimizationFile.add_data_list() :: length of arguments 'x_list' and 'y_list' are unequal.")
+            return
+
+        # loop through each pair, append
+        for i in range(len(x_list)):
+            self.add_data_pair(x_list[i], y_list[i])
 
     def get_data (self):
         """
@@ -596,7 +650,24 @@ class OptimizationFile (object):
         bool
             'True' if data points have been attached to optimization, else 'False'.
         """
-        pass
+        return tree_has_path(self.root, "Objective/data/pt")
+
+    def reset_optimization_function (self):
+        """ resets optimization function assigned to optimization file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # remove function if it already exists in the tree
+        if tree_has_path (self.root, "Objective/fnc"):
+            remove_element_from_tree (self.root, "Objective/fnc")
+        # add empty tree to optimization file
+        add_element_to_tree(self.root, "Objective", "fnc", value = "", attributes = {'type': 'parameter'})
 
     def set_optimization_function (self):
         """
