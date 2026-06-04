@@ -672,13 +672,15 @@ class Job (object):
 
     ## MODEL ##
 
-    def generate_parameterized_models (m):
+    def generate_parameterized_models (self, m, overwrite = False):
         """ generates and saves models for each simulation set in job to simulation directory.
 
         Arguments:
         ----------
         m : str or ModelFile
             if string, path to loadable ModelFile object.
+        overwrite : bool
+            if 'True' overwrites existing model files in simulation directory.
 
         Returns:
         --------
@@ -686,11 +688,30 @@ class Job (object):
             'True' if operation was successful, else 'False'
         """
         # load model
-        # check that model has all paths specified in config file
+        if isinstance(m, str):
+            # the string should be a path to the model
+            m = ModelFile(m)
+        elif (not isinstance(m, ModelFile)):
+            print("ERROR :: Job.generate_parameterized_models() :: method argument 'm' must be either type 'ModelFile' or 'str'.")
+            return False
+
+        # check that model has all xml paths specified in config file
+        for idx, row in self.df_config.iterrows():
+            if (row['xml'] != 'na') and (not m.tree_has_element(row['xml'])):
+                print("ERROR :: Job.generate_parameterized_models :: xml path '{0}' for key '{1}' in job config '{2}' does not exist in model file.".format(row['xml'], row['key'], config_file_format.format(self.jd, self.jn)))
+                return False
+
         # loop through each simulation in job
-        # generate model file
-        # save to simulation directory
-        pass
+        for i in range(1, self.get_sim_num() + 1):
+            # generate model file
+            sm = self.parameterize_model(m = m, n = i)
+            s = Simulation(self.jd, self.jn, i)
+            # if the simulation directory does not exist already, make it
+            if not os.path.exists(s.get_simulation_directory()): os.makedirs(s.get_simulation_directory())
+            # save to simulation directory
+            sm.save_model(saveto = s.get_simulation_directory(), saveas = "{0}-{1}.opt".format(self.jn, i), overwrite = overwrite)
+
+        return True
 
     def parameterize_model (m, n):
         """ create model file which is parameterized to fit a specific simulation set.
@@ -707,10 +728,18 @@ class Job (object):
         ModelFile
             model with parameters adjusted to match simulation set.
         """
+        # load model
+        if isinstance(m, str):
+            # the string should be a path to the model
+            m = ModelFile(m)
+        elif (not isinstance(m, ModelFile)):
+            print("ERROR :: Job.parameterize_model() :: method argument 'm' must be either type 'ModelFile' or 'str'.")
+            return False
+
         # loop through each parameter in config file
         # get dependencies
         # augment
-        # return
+        # return model
         pass
 
     ## SCALING ANALYSIS ##

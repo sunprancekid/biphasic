@@ -18,7 +18,6 @@ from febio.job import Job
 from febio.sweep import Sweep
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
-from febio.feb.optimization_file import tree_has_path
 from plot.figure import Figure
 from plot.plot import gen_plot
 
@@ -412,14 +411,14 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
                      period_high = max_period,
                      period_n = job_pe.get_variable_parameter_number(key = 'OT'))
 
-    m_ve = Model(feb_file)
+    m_ve = ModelFile(feb_file)
     job_ve.generate_parameters()
     job_ve.save_config()
     job_ve.save_parameters()
-    m_ve.save_model(saveto = "{0}{1}/".format(jd, jn), saveas = "ve.feb", overwrite = True)
+    m_ve.save_model(saveto = "{0}{1}/opt/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
     # generate simulation specific models
-    job_ve.generate_parameterized_models(m = "{0}{1}/ve.feb".format(jd, jn))
+    print(job_ve.generate_parameterized_models(m = "{0}{1}/opt/ve.feb".format(jd, jn)))
     exit()
 
     # loop through each poroelastic simulation, generation viscoelastic optimization
