@@ -129,6 +129,20 @@ class Simulation (object):
         """
         return self.parm[k]
 
+    def get_simulation_path (self):
+        """ returns path to simulation directory.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+            path to simulation directory from 'jd'
+        """
+        return self.sd
+
     ## FEBFILE ##
 
     def feb_has_path (self, xml_path):

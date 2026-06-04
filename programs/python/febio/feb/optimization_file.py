@@ -205,7 +205,9 @@ class OptimizationFile (object):
     Attributes:
     -----------
     self.root : Element
-        list of elements contained in optimization file
+        root element in element tree
+    self.tree : ElementTree
+        all xml element containted in optimization file
     self.filepath : str
         location to save / load files.
 
@@ -365,7 +367,7 @@ class OptimizationFile (object):
             return False
         if not self.has_optimization_function():
             print("ERROR :: OptimizationFile.save_optimization_file() :: unable to save optimization file, objective optimization function is unspecified.")
-            return False
+            return Falseroot
         if not self.has_data():
             print("ERROR :: OptimizationFile.save_optimization_file() :: unable to save optimization file, objective optimization function data is unspecified.")
             return False
@@ -398,7 +400,7 @@ class OptimizationFile (object):
             print("ERROR :: OptimizationFile.write_xml() :: must specify filepath (OptimizationFile.set_file_path()) before writing xml file.")
             return False
         # save the xml file to the specified location
-        self.root.write(self.filepath, encoding='ISO-8859-1', xml_declaration=True)
+        self.tree.write(self.filepath, encoding='ISO-8859-1', xml_declaration=True)
 
     def reset_optimization_file (self):
         """ reset all mandatory fields.
@@ -411,7 +413,9 @@ class OptimizationFile (object):
         --------
         None
         """
+        # self.tree = ET(ET.Element("febio_optimize", attrib = {'version': "2.0"}))
         self.root = ET.Element("febio_optimize", attrib = {'version': "2.0"})
+        self.tree = ET.ElementTree(self.root)
         # reset options
         self.reset_options()
         # reset parameters
@@ -432,12 +436,7 @@ class OptimizationFile (object):
         None
         """
         if (filepath is not None) and (isinstance(filepath, str)):
-            # check that the file path exists
-            if not os.path.exists(filepath):
-                self.filepath = None
-            else:
-                # the path exists, assign it to the object
-                self.filepath = filepath
+            self.filepath = filepath
         else:
             # assign filepath as empty object
             self.filepath = None
@@ -454,7 +453,7 @@ class OptimizationFile (object):
         bool
             'True' if the object has a filepath that exists and is not None
         """
-        return (self.filepath is not None) and (os.path.exists(self.filepath))
+        return (self.filepath is not None)
 
     ## PARAMETERS
 
@@ -512,7 +511,7 @@ class OptimizationFile (object):
         bool
             'True' if optimization file has parameters, else 'False'
         """
-        return tree_has_path(self.root, "Parameters/param")
+        return tree_has_path(self.root, "Parameters/parm")
 
     ## OPTIONS
 
@@ -578,7 +577,7 @@ class OptimizationFile (object):
         None
         """
         # adjust the value
-        add_element_to_tree(self.root, "Options", "obj_tol", value = value, attributes = attributes)
+        add_element_to_tree(self.root, "Options", "obj_tol", value = "{0:.4e}".format(value), attributes = attributes)
 
     # reset objective tolerance
     def reset_objective_tolerance (self):
@@ -609,7 +608,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Options", "f_diff_scale", value = value, attributes = attributes)
+        add_element_to_tree(self.root, "Options", "f_diff_scale", value = "{0:.4e}".format(value), attributes = attributes)
 
     # reset f_diff scale
     def reset_f_diff_scale (self):
@@ -640,7 +639,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Options", "log_level", value = value, attributes = attributes)
+        add_element_to_tree(self.root, "Options", "log_level", value = "{0}".format(value), attributes = attributes)
 
     # reset log level field
     def reset_log_level (self):
@@ -671,7 +670,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Options", "print_level", value = value, attributes = attributes)
+        add_element_to_tree(self.root, "Options", "print_level", value = "{0}".format(value), attributes = attributes)
 
     # reset print level field
     def reset_print_level (self):
@@ -853,7 +852,7 @@ class OptimizationFile (object):
         bool
             'True' if optimization function has been attached to file, else 'False'.
         """
-        pass
+        return tree_has_path (self.root, "Objective/fnc/param")
 
 ## ARGUMENTS
 # none

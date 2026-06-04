@@ -18,6 +18,7 @@ from febio.job import Job
 from febio.sweep import Sweep
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
+from febio.feb.optimization_file import tree_has_path
 from plot.figure import Figure
 from plot.plot import gen_plot
 
@@ -397,7 +398,6 @@ def step_two (jd = None, jn = None):
     for i in range(1, job_pe.get_sim_num() + 1):
         # check the that simulation finished
         # open each simulation, save the final stress-strain, hysteresis data
-        print(job_pe.has_simulation(i))
         s_pe = job_pe.get_simulation(i)
         f_d = s_pe.get_displacement_force_lag ()
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
@@ -412,11 +412,14 @@ def step_two (jd = None, jn = None):
         o.set_optimization_function(name = obj_fun)
         # optimization data (from poroelastic simulation)
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list())
-        print(str(o))
-        exit()
         # append cyclic data to optimization file
-        # write the viscoelastic model, optimization file to the job directory
-        o.save_optimization_file(filepath = "")
+        o.save_optimization_file(filepath = "{0}pe-{1}.opt".format(s_pe.get_simulation_path(), i))
+
+        ## write the viscoelastic model, fix timescale
+
+
+
+        exit()
     pass
 
 # third step in fitting sequence
