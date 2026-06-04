@@ -399,10 +399,8 @@ def step_two (jd = None, jn = None):
         # open each simulation, save the final stress-strain, hysteresis data
         print(job_pe.has_simulation(i))
         s_pe = job_pe.get_simulation(i)
-        f_d = s_pe.get_force_displacement_lag(cycle = s_pe.get_cycle_number())
-        print(f_d)
-        exit()
-        # s_pe.show_force_displacement_lag(cycle = s_pe.get_cycle_number(), show = False, save = True)
+        f_d = s_pe.get_displacement_force_lag ()
+        f_d['f'] = -1 * f_d['f'] # transform force to negative value
 
         ## generate optimization job, add mandatory defaults
         o = OptFile()
@@ -411,8 +409,11 @@ def step_two (jd = None, jn = None):
         o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name)
         o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name)
         # optimization function
-        o.set_objective_function(name = obj_fun)
+        o.set_optimization_function(name = obj_fun)
         # optimization data (from poroelastic simulation)
+        o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list())
+        print(str(o))
+        exit()
         # append cyclic data to optimization file
         # write the viscoelastic model, optimization file to the job directory
         o.save_optimization_file(filepath = "")

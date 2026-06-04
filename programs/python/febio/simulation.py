@@ -1043,6 +1043,7 @@ class Simulation (object):
         # create dataframe and return
         df = pd.DataFrame.from_dict({'t': t_plot, 'x': p_plot, 'f': f_plot})
         return df
+        fig.set_axis_label('y', "Force / Position")
 
     def show_displacement_force_lag (self, cycle = None, norm = False, show = True, save = False):
         """ display the stress-strain lag for a give cycle.
