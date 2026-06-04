@@ -368,9 +368,8 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     j.save_parameters()
     m.save_model (saveto = "{0}{1}/pe/".format(jd, jn), saveas = "pe.feb".format(jn))
 
-
 # second step in fitting sequence
-def step_two (jd = None, jn = None):
+def step_two (jd = None, jn = None, feb_file = default_feb_ve):
     """ second step in fitting sequence, once first step is finished.
 
     during the second step, a viscoelastic model is fit to the poroelastic
@@ -382,6 +381,8 @@ def step_two (jd = None, jn = None):
         path to directory which will contain job
     jn : str
         name of job in job directory
+    feb_file : str
+        path to viscoelastic model
 
     Results:
     --------
@@ -392,32 +393,50 @@ def step_two (jd = None, jn = None):
         print("ERROR :: fitting.step_two() :: Unable to find set of previous poroelastic simulations (''). Unable to perform next step of viscoelastic fitting..")
         return
 
-    # loop through each poroelastic simulation, generation viscoelastic optimization
-    job_pe = Job("{0}{1}".format(jd, jn), 'pe')
+    # import methods from viscoleastic mod file
+    # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
+    from viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
+
+    # create viscoelastic job, generate parameters
     job_ve = Job("{0}{1}".format(jd, jn), 'opt')
+    # NOTE: it is important that parameters are exactly the same as the poroelastic model.
+    job_pe = Job("{0}{1}".format(jd, jn), 'pe')
+    # write pe parameters to ve job
+    # NOTE: here, elastic modulus, gamma and tau are varied during optimization, and therefore do not need to fixed
+    min_period, max_period = job_pe.get_variable_parameter_range(key = 'OT')
+    frequency_sweep (job = job_ve,
+                     loading_depth = job_pe.get_constant_parameter_value(key = 'LD'),
+                     relaxation_time = job_pe.get_constant_parameter_value(key = 'RT'),
+                     oscillation_amplitude = job_pe.get_constant_parameter_value(key = 'OA'),
+                     period_low = min_period,
+                     period_high = max_period,
+                     period_n = job_pe.get_variable_parameter_number(key = 'OT'))
+
+    # loop through each poroelastic simulation, generation viscoelastic optimization
     for i in range(1, job_pe.get_sim_num() + 1):
         # check the that simulation finished
         # open each simulation, save the final stress-strain, hysteresis data
-        s_pe = job_pe.get_simulation(i)
-        f_d = s_pe.get_displacement_force_lag ()
+        s = job_pe.get_simulation(i)
+        f_d = s.get_displacement_force_lag ()
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
 
         ## generate optimization job, add mandatory defaults
         o = OptFile()
-        # optimization parameters
+        # add optimization parameters
         o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name)
         o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name)
         o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name)
-        # optimization function
+        # add optimization function
         o.set_optimization_function(name = obj_fun)
-        # optimization data (from poroelastic simulation)
+        # add optimization data (from poroelastic simulation)
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list())
         # append cyclic data to optimization file
-        o.save_optimization_file(filepath = "{0}pe-{1}.opt".format(s_pe.get_simulation_path(), i))
+        o.save_optimization_file(filepath = "{0}pe-{1}.opt".format(s.get_simulation_path(), i))
 
         ## write the viscoelastic model, fix timescale
-
-
+        m = Model(feb_file)
+        # here, I need to write the model file with the same simulation conditions as the pe file
+        # alternatively, I can take the pe model, and remove the poroelastic parts and viscoelasticity
 
         exit()
     pass

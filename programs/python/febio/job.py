@@ -502,6 +502,74 @@ class Job (object):
                 config_header[11]: log}
         self.df_config.loc[len(self.df_config.index)] = parm
 
+    def get_variable_parameter_range (self, key = None, description = None):
+        """ looks for key in parameter file, returns range (min and max values).
+
+        if the key does not exist in the job, None types are returns. if the
+        key does not exist, but a description is provided, then a description
+        is used to find the parameter.
+
+        Arguments:
+        ----------
+        key : str
+            key value associated with parameter.
+        description : str
+            description associated with parameter.
+
+        Returns:
+        --------
+        int
+            minimum value associated with variable parameter
+        int
+            maximum value associated with variable parameter
+        """
+        has_key = False
+        has_descrip = False
+        # check if the key exists in the config file
+        if key in self.df_config['key'].tolist(): has_key = True
+        # check if the description exists in the config file
+        if description in self.df_config['description'].tolist(): has_descrip = True
+
+        # if neither key or description matches, return None
+        if (not has_key) and (not has_descrip): return None
+
+        # otherwise parse the constant value, and return
+        if has_key:
+            return self.df_config.loc[self.df_config['key'] == key]['min_val'].tolist()[0], self.df_config.loc[self.df_config['key'] == key]['max_val'].tolist()[0]
+        elif has_descrip:
+            return self.df_config.loc[self.df_config['description'] == description]['min_val'].tolist()[0], self.df_config.loc[self.df_config['description'] == description]['max_val'].tolist()[0]
+
+    def get_variable_parameter_number (self, key = None, description = None):
+        """ gets the variable number ('n_val') assigned to a variable parameter.
+
+        Arguments:
+        ----------
+        key : str
+            key value associated with parameter.
+        description : str
+            description associated with parameter.
+
+        Returns:
+        --------
+        int
+            minimum value associated with variable parameter
+        """
+        has_key = False
+        has_descrip = False
+        # check if the key exists in the config file
+        if key in self.df_config['key'].tolist(): has_key = True
+        # check if the description exists in the config file
+        if description in self.df_config['description'].tolist(): has_descrip = True
+
+        # if neither key or description matches, return None
+        if (not has_key) and (not has_descrip): return None
+
+        # otherwise parse the constant value, and return
+        if has_key:
+            return self.df_config.loc[self.df_config['key'] == key]['n_val'].tolist()[0]
+        elif has_descrip:
+            return self.df_config.loc[self.df_config['description'] == description]['n_val'].tolist()[0]
+
     def add_constant_parameter (self, val = None, key = None, xml = None, units = None, description = None, related = False, symbolic = False):
         """ add constant parameter to config file.
 
@@ -568,6 +636,37 @@ class Job (object):
                 config_header[10]: 'na',
                 config_header[11]: 'na'}
         self.df_config.loc[len(self.df_config.index)] = parm
+
+    def get_constant_parameter_value (self, key = None, description = None):
+        """ gets the constant value assigned to a parameter.
+
+        Arguments:
+        ----------
+        key : str
+            key value associated with parameter.
+        description : str
+            description associated with parameter.
+
+        Returns:
+        --------
+        float or str
+            value associated with parameter, either as float or string
+        """
+        has_key = False
+        has_descrip = False
+        # check if the key exists in the config file
+        if key in self.df_config['key'].tolist(): has_key = True
+        # check if the description exists in the config file
+        if description in self.df_config['description'].tolist(): has_descrip = True
+
+        # if neither key or description matches, return None
+        if (not has_key) and (not has_descrip): return None
+
+        # otherwise parse the constant value, and return
+        if has_key:
+            return self.df_config.loc[self.df_config['key'] == key]['val'].tolist()[0]
+        elif has_descrip:
+            return self.df_config.loc[self.df_config['description'] == description]['val'].tolist()[0]
 
     ## SCALING ANALYSIS ##
     def show_hysteresis(self, n = None, show = True, save = False):
