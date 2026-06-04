@@ -264,6 +264,26 @@ class Job (object):
 
     ## PARAMETERS ##
 
+    def get_key_value (self, key, n):
+        """ get key value corresponding to simulation set.
+
+        Arguments:
+        ----------
+        key : str
+            corresponds to parameter in config and parameter files
+        n : int
+            specific simulation integer in job
+
+        Returns:
+        --------
+        float or str
+            value corresponding to key stored in parameter / config files
+        """
+        # check that they key exists
+        # check that simulation integer is in job
+        # get key value
+        pass
+
     def has_parameters (self):
         """ check if the parameter file exists within the job directory.
 
@@ -687,6 +707,7 @@ class Job (object):
         bool
             'True' if operation was successful, else 'False'
         """
+        ## NOTE :: parameters and config files must already be generated for this to work.
         # load model
         if isinstance(m, str):
             # the string should be a path to the model
@@ -707,13 +728,15 @@ class Job (object):
             sm = self.parameterize_model(m = m, n = i)
             s = Simulation(self.jd, self.jn, i)
             # if the simulation directory does not exist already, make it
-            if not os.path.exists(s.get_simulation_directory()): os.makedirs(s.get_simulation_directory())
+            if not os.path.exists(s.get_simulation_path()): os.makedirs(s.get_simulation_path())
             # save to simulation directory
-            sm.save_model(saveto = s.get_simulation_directory(), saveas = "{0}-{1}.opt".format(self.jn, i), overwrite = overwrite)
+            sm.save_model(saveto = s.get_simulation_path(), saveas = "{0}-{1}.feb".format(self.jn, i), overwrite = overwrite)
+            # exit for debugging
+            exit()
 
         return True
 
-    def parameterize_model (m, n):
+    def parameterize_model (self, m, n):
         """ create model file which is parameterized to fit a specific simulation set.
 
         Arguments:
@@ -737,12 +760,29 @@ class Job (object):
             return False
 
         # loop through each parameter in config file
+        for idx, row in self.df_config.iterrows():
+            if row['xml'] == 'na': continue
+            ## TODO :: here, it possible to encapsulate this method into a routine that
+            ##         that is callable by the object (ergo, reusable)
+            if row['constant'] == 1:
+                # if the value is constant
+                if row['related'] == 0
+                    # the value is not related to any other values
+                    m.update_element_value(elm_path = row['xml'], value = row['val'])
+                else:
+                    # the parameter value is dependent on other parameters
+                    pass
+            else:
+                # the value is variable, use key to parse value from parameter file
+                m.update_element_value(elm_path = row['xml'], value = self.df_parm[row['key']][i])
+
         # get dependencies
         # augment
         # return model
-        pass
+        return m
 
     ## SCALING ANALYSIS ##
+
     def show_hysteresis(self, n = None, show = True, save = False):
         """ show hystersis loops for multiple simulations in job.
 

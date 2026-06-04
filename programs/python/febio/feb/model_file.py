@@ -195,6 +195,40 @@ class ModelFile(object):
         else:
             return True
 
+    # update element
+    def update_element_value (self, elm_path, value, format_str = "{0}"):
+        """ updates tag associated with element.
+
+        if element path correspondes to multiple elements, method aborts.
+
+        Arguments:
+        ----------
+        elm_path : str
+            path to element in model, there cannot be duplicate
+        value
+            value stored in element, can be any type but will be stored as string
+        format_str : str (optional, default is "{0}")
+            optional format string
+
+        Returns:
+        --------
+        bool
+            'True' if operation is successful, else 'False'
+        """
+        # check the element path
+        if not self.tree_has_element(elm_path):
+            print("ERROR :: ModelFile.update_element_value() :: model does not have any elements corresponding to '{0}'.".format(elm_path))
+            return False
+        elif self.tree_has_multiple_elements():
+            print("ERROR :: ModelFile.update_element_value() :: model has multiple elements corresponding to {0}.".format(elm_path))
+            return False
+
+        # get the element, update it's value
+        for elm in self.root.findall(elm_path):
+            elm.text = format_str.format(value)
+
+        return True
+
     # add element
     def add_element_to_tree (self, path = None, new_element = None, value = None, attributes = None, duplicate = False):
         """ adds element to model tree.
