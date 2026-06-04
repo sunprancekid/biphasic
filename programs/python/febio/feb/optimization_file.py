@@ -123,7 +123,6 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None, du
     """
     # if an element path has been specified
     if elm_path:
-        print(elm_path)
         # check that the path exists
         if not tree_has_path(root, elm_path): return False
         # check that tag does not exist in element path
@@ -499,7 +498,7 @@ class OptimizationFile (object):
         None
         """
         # todo :: boolean for duplicates
-        add_element_to_tree(self.root, "Parameters", "parm", value = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val), attributes = {"name": name})
+        add_element_to_tree(self.root, "Parameters", "parm", value = "{0:.4e},{1:.4e},{2:.4e}".format(start_val, min_val, max_val), attributes = {"name": name}, duplicate = True)
 
     def has_parameters (self):
         """ determines if any parameters has been specified.
@@ -745,7 +744,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4f},{1:.4f}".format(x_val, y_val), duplicate = True)
+        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4e},{1:.4e}".format(x_val, y_val), duplicate = True)
 
     def add_data_list (self, x_list, y_list):
         """ append a list of data points to data list.
