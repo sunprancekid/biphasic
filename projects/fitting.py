@@ -397,7 +397,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
     # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
     from viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
 
-    # create viscoelastic job, generate parameters
+    # create viscoelastic job and model, save parameters
     job_ve = Job("{0}{1}".format(jd, jn), 'opt')
     # NOTE: it is important that parameters are exactly the same as the poroelastic model.
     job_pe = Job("{0}{1}".format(jd, jn), 'pe')
@@ -411,6 +411,16 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
                      period_low = min_period,
                      period_high = max_period,
                      period_n = job_pe.get_variable_parameter_number(key = 'OT'))
+
+    m_ve = Model(feb_file)
+    job_ve.generate_parameters()
+    job_ve.save_config()
+    job_ve.save_parameters()
+    m_ve.save_model(saveto = "{0}{1}/".format(jd, jn), saveas = "ve.feb", overwrite = True)
+
+    # generate simulation specific models
+    job_ve.generate_parameterized_models(m = "{0}{1}/ve.feb".format(jd, jn))
+    exit()
 
     # loop through each poroelastic simulation, generation viscoelastic optimization
     for i in range(1, job_pe.get_sim_num() + 1):

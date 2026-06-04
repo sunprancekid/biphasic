@@ -14,6 +14,7 @@ import os, sys, math
 import pandas as pd
 # local
 from febio.simulation import Simulation
+from febio.feb.model_file import ModelFile
 from febio.analysis.scaling import scale
 from plot.figure import Figure
 from plot.plot import gen_plot
@@ -155,6 +156,7 @@ class Job (object):
             self.df_parm = None
 
     ## SIMULATION ##
+
     def has_simulation (self, n):
         """ determines if simulation number exists in job.
 
@@ -667,6 +669,49 @@ class Job (object):
             return self.df_config.loc[self.df_config['key'] == key]['val'].tolist()[0]
         elif has_descrip:
             return self.df_config.loc[self.df_config['description'] == description]['val'].tolist()[0]
+
+    ## MODEL ##
+
+    def generate_parameterized_models (m):
+        """ generates and saves models for each simulation set in job to simulation directory.
+
+        Arguments:
+        ----------
+        m : str or ModelFile
+            if string, path to loadable ModelFile object.
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'
+        """
+        # load model
+        # check that model has all paths specified in config file
+        # loop through each simulation in job
+        # generate model file
+        # save to simulation directory
+        pass
+
+    def parameterize_model (m, n):
+        """ create model file which is parameterized to fit a specific simulation set.
+
+        Arguments:
+        ----------
+        m : str or ModelFile
+            if string, path to loadable ModelFile
+        n : int
+            corresponds to specific simulation integer in job
+
+        Returns:
+        --------
+        ModelFile
+            model with parameters adjusted to match simulation set.
+        """
+        # loop through each parameter in config file
+        # get dependencies
+        # augment
+        # return
+        pass
 
     ## SCALING ANALYSIS ##
     def show_hysteresis(self, n = None, show = True, save = False):
