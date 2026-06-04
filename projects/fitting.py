@@ -393,14 +393,15 @@ def step_two (jd = None, jn = None):
 
     # loop through each poroelastic simulation, generation viscoelastic optimization
     job_pe = Job("{0}{1}".format(jd, jn), 'pe')
-    job_pe = Job("{0}{1}".format(jd, jn), 'opt')
-    print(job_pe.get_sim_num())
-    exit()
-    for i in range(job_pe.get_sim_num()):
+    job_ve = Job("{0}{1}".format(jd, jn), 'opt')
+    for i in range(1, job_pe.get_sim_num() + 1):
         # check the that simulation finished
         # open each simulation, save the final stress-strain, hysteresis data
+        print(job_pe.has_simulation(i))
         s_pe = job_pe.get_simulation(i)
         f_d = s_pe.get_force_displacement_lag(cycle = s_pe.get_cycle_number())
+        print(f_d)
+        exit()
         # s_pe.show_force_displacement_lag(cycle = s_pe.get_cycle_number(), show = False, save = True)
 
         ## generate optimization job, add mandatory defaults

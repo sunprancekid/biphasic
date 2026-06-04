@@ -191,6 +191,20 @@ class Job (object):
         else:
             return None
 
+    def get_sim_num(self):
+        """ returns the integer number of simulations associated with job.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        int
+            number of simulations associated with job.
+        """
+        return len(self.df_parm['n'].tolist())
+
     ## CONFIG ##
 
     def has_config(self):
