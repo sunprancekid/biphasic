@@ -985,28 +985,33 @@ class Simulation (object):
         ## return to user
         return delta, dymod
 
-    def show_displacement_force_lag (self, cycle, norm = False, show = True, save = False):
-        """ display the stress-strain lag for a give cycle.
+    def get_displacement_force_lag (self, cycle = None, norm = False):
+        """ get the displacement and force corresponding to a certain cycle of a simulation.
 
         Arguments:
         ----------
-        cycle : int
-            oscillation cycle number, must be one or greater.
+        cycle : int (optinal, default is second to last cycle)
+            cycle number
         norm : bool (optional, default is 'False')
-            if True, normalize the stress / strain values so that they are on a relative scale.
-        show : bool (optional, default is 'True')
-            if True, display figure with strss-strain data against time.
-        save : bool (optional, default is 'False')
-            if True, figure and dataset are saved to simulation folder.
+            if 'True', normalize stress / strain values so that they are on a relative scale
 
         Returns:
-        -------
-        Figure
-            object containing data, figure formatting.
+        --------
+        DataFrame
+            contains displacement, force data, columns headers are 't', 'x', 'f'
         """
         # get the period, relaxation time from the simulation key
         period = self.get_oscillation_phase_period()
         relax_time = self.get_relaxation_phase_length()
+
+        # determine the cycle number
+        if cycle is None or not isinstance(cycle, int) or (cycle < 1):
+            cycle = self.get_number_oscillation_cycles()
+            # decriment according to total
+            if cycle > 3:
+                cycle -= 2
+            elif cycle > 2:
+                cycle -= 1
 
         # according to the cycle number, get the starting and stopping times for the cycle
         t_start = relax_time + period * (cycle - 1)
@@ -1034,22 +1039,63 @@ class Simulation (object):
             for i in range(len(f_plot)):
                 f_plot[i] = (f_plot[i] - min_force) / (max_force - min_force)
                 p_plot[i] = (p_plot[i] - min_position) / (max_position - min_position)
-            f_label = "Normalized Force \n($F_{{max}}$ = {:.1e}, $F_{{min}}$ = {:.1e})".format(max_force, min_force)
-            p_label = "Normalized Position \n($x_{{max}}$ = {:.1e}, $x_{{min}}$ = {:.1e})".format(max_position, min_position)
+
+        # create dataframe and return
+        df = pd.DataFrame.from_dict({'t': t_plot, 'x': p_plot, 'f': f_plot})
+        return df
+
+    def show_displacement_force_lag (self, cycle = None, norm = False, show = True, save = False):
+        """ display the stress-strain lag for a give cycle.
+
+        Arguments:
+        ----------
+        cycle : int (optional, default is 'None')
+            oscillation cycle number, must be one or greater.
+        norm : bool (optional, default is 'False')
+            if True, normalize the stress / strain values so that they are on a relative scale.
+        show : bool (optional, default is 'True')
+            if True, display figure with strss-strain data against time.
+        save : bool (optional, default is 'False')
+            if True, figure and dataset are saved to simulation folder.
+
+        Returns:
+        -------
+        Figure
+            object containing data, figure formatting.
+        """
+        ## CHECK ARGUMENTS
+        # determine the cycle number
+        if cycle is None or not isinstance(cycle, int) or (cycle < 1):
+            cycle = self.get_number_oscillation_cycles()
+            # decriment according to total
+            if cycle > 3:
+                cycle -= 2
+            elif cycle > 2:
+                cycle -= 1
+
+        ## GET DATA
+        df = self.get_displacement_force_lag(cycle = cycle, norm = norm)
+        # establish labels
+        if norm:
+            f_label = "Normalized Force \n($F_{{max}}$ = {:.1e}, $F_{{min}}$ = {:.1e})".format(df['f'].max(), df['f'].min())
+            p_label = "Normalized Position \n($x_{{max}}$ = {:.1e}, $x_{{min}}$ = {:.1e})".format(df['x'].max(), df['x'].min())
         else:
             f_label = "Force"
             p_label = "Position"
 
-
         ## PLOT
         fig = Figure()
-        fig.append_lists (xlist = t_plot, ylist = f_plot, label = f_label)
-        fig.append_lists (xlist = t_plot, ylist = p_plot, label = p_label)
+        fig.append_df (df = df, xcol = 't', ycol = 'f', label = f_label)
+        fig.append_df (df = df, xcol = 't', ycol = 'x', label = p_label)
         fig.set_axis_label('x', "Simulation Time (seconds)")
         fig.set_axis_label('y', "Force / Position")
-        fig.set_saveas(savedir = self.sd, filename = "force-displacement-c{0}".format(cycle))
-        fig.save_data()
+        if save:
+            fig.set_saveas(savedir = self.sd, filename = "force-displacement-c{0}".format(cycle))
+            fig.save_data()
         gen_plot(fig, show = show, save = save)
+
+        # return figure
+        return fig
 
     def parse_prestress_work (self):
         """ calculate the work performed during the prestress phase
