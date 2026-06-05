@@ -219,6 +219,7 @@ submit () {
     # check that the directory contains a feb file
     local feb_list=( ${simdirstack}*.feb )
     if [[ ${#feb_list[@]} -eq 0 ]]; then
+        local feb_file=${simdirstack}${simid}.feb
         display_error "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
     elif [[ ${#feb_list[@]} -gt 1 ]]; then
         display_error "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
@@ -306,7 +307,7 @@ submit () {
             SLURM_FLAGS="${SLURM_FLAGS}-o ${local_opt} "
         fi
         # submit the script from the local directory
-        declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
+        declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${feb_file} -j ${JOB}-${simint} -r $SLURM_FLAGS )"
         # echo "$SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS"
         echo "${JOB}${simint} (slurm id: ${simid}): $slurmid"
         return
