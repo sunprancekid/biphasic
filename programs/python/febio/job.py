@@ -274,7 +274,7 @@ class Job (object):
         n : int
             specific simulation integer in job
 
-        Returns:
+        Returns:# save force displacement lag to simulation directory
         --------
         float or str
             value corresponding to key stored in parameter / config files

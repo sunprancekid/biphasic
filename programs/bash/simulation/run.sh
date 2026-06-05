@@ -226,11 +226,43 @@ submit () {
         local feb_file=${feb_list[0]}
     fi
 
+    # check if the directory contains an optimization file
+    declare -i HAS_OPT=0
+    local opt_list=( ${simdirstack}*.opt )
+    if [[ ${#opt_list[@]} -eq 0 ]]; then
+        # the liist length is zero
+        # no optimization files exist in the simulation directory
+        # check if a global optimization file was specified
+        if [[ $OPT_FILE -eq 1 ]]; then
+            # submit the simulation with the global optimization file
+            declare -i HAS_OPT=1
+            local local_opt=${OPT_FILE} # local opt is global opt
+        fi
+        # run without optimization
+    elif [[ ${#opt_list[@]} -gt 1 ]]; then
+        # the list length is greater than one
+        # multiple optimization files were detected
+        # throw error
+        display_error "multiple optimization files detected locally in simulation directory '${simdirstack}'. unable to submit simulation '${simid}'."
+    else
+        # the list length is one
+        # one optimization file was detected
+        # check that a global optimization was not specified
+        if [[ $BOOL_OPT -eq 1 ]]; then
+            # the global optimization file was specified but one was detected locally
+            # throw an error
+            display_error "optimization file detected locally in simulation directory '${simdirstack}', but global optimization file was specified '${OPT_FILE}'. unable to submit simulation '${simid}'."
+        fi
+        # submit the simulation with the local optimization file
+        declare -i HAS_OPT=1
+        local local_opt=${opt_list[0]}
+    fi
+
     # if there is a check file call, check for the file
     if [[ $BOOL_CHECKFILE -eq 1 ]]; then
         # check for regex
         # if specific check file doesn't eist, check for regex
-        local check_list=( ${simdirstack}$checkfile )
+        local check_list=( ${simdirstack}$checkfile )${OPT_FILE}
         if [[ ${#check_list[@]} -gt 0 ]]; then
             # report if verbose
             if [[ $BOOL_VERBOSE -eq 1 ]]; then
@@ -270,8 +302,8 @@ submit () {
         if [[ $BOOL_DEL_FEB -eq 1 ]]; then
             SLURM_FLAGS="${SLURM_FLAGS}-y "
         fi
-        if [[ $BOOL_OPT -eq 1 ]]; then
-            SLURM_FLAGS="${SLURM_FLAGS}-o ${OPT_FILE} "
+        if [[ $HAS_OPT -eq 1 ]]; then
+            SLURM_FLAGS="${SLURM_FLAGS}-o ${local_opt} "
         fi
         # submit the script from the local directory
         declare -i slurmid="$($SUB_SLURM -d ${simdirstack} -f ${simdirstack}${simid}.feb -j ${JOB}-${simint} -r $SLURM_FLAGS )"
