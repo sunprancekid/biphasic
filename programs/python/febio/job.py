@@ -280,9 +280,39 @@ class Job (object):
             value corresponding to key stored in parameter / config files
         """
         # check that they key exists
+        if not key in self.df_config['key'].tolist(): return None
         # check that simulation integer is in job
-        # get key value
-        pass
+        if not self.has_simulation(n): return None
+        ## get key value
+        # find the row in config that corresponds to the key
+        r = self.df_config.loc[self.df_config['key'] == key].reset_index(drop = True)
+        val = str(r['val'][0])
+        if r['constant'][0] == 1:
+            # the value is constant and does not depend on the simulation integer n
+            if not r['related'][0] == 1:
+                # the value is not related to any other values and can be parsed from config
+                return val
+            else:
+                # the parameter value is dependent on other parameters
+                # some of the value is symbolic
+                # determine which other keys exist in the value
+                for k in self.df_config['key'].tolist():
+                    # see if the key exists in the value
+                    if k == key: continue # skip the same key, value should not depend on itself
+                    if k in val:
+                        val = val.replace(k, str(self.get_key_value(k, n)))
+                if r['symbolic'][0] == 0:
+                    # evalute the expression
+                    return eval(val)
+                else:
+                    # return the symbolic expression
+                    return val
+        else:
+            # the value is variable and should be parsed from param
+            # the value depends on the simulation integer 'n'
+            # find the row that correspond to n
+            r = self.df_parm.loc[self.df_parm['n'] == n].reset_index(drop = True)
+            return r[key][0]
 
     def has_parameters (self):
         """ check if the parameter file exists within the job directory.
@@ -731,8 +761,6 @@ class Job (object):
             if not os.path.exists(s.get_simulation_path()): os.makedirs(s.get_simulation_path())
             # save to simulation directory
             sm.save_model(saveto = s.get_simulation_path(), saveas = "{0}-{1}.feb".format(self.jn, i), overwrite = overwrite)
-            # exit for debugging
-            exit()
 
         return True
 
@@ -761,24 +789,10 @@ class Job (object):
 
         # loop through each parameter in config file
         for idx, row in self.df_config.iterrows():
-            if row['xml'] == 'na': continue
-            ## TODO :: here, it possible to encapsulate this method into a routine that
-            ##         that is callable by the object (ergo, reusable)
-            if row['constant'] == 1:
-                # if the value is constant
-                if row['related'] == 0
-                    # the value is not related to any other values
-                    m.update_element_value(elm_path = row['xml'], value = row['val'])
-                else:
-                    # the parameter value is dependent on other parameters
-                    pass
-            else:
-                # the value is variable, use key to parse value from parameter file
-                m.update_element_value(elm_path = row['xml'], value = self.df_parm[row['key']][i])
+            if row['xml'] == 'na': continue # the key value is not written to the model file
+            # parse the key value from job / config
+            m.update_element_value(elm_path = row['xml'], value = self.get_key_value(row['key'], n))
 
-        # get dependencies
-        # augment
-        # return model
         return m
 
     ## SCALING ANALYSIS ##

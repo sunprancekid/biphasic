@@ -415,18 +415,20 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
     job_ve.generate_parameters()
     job_ve.save_config()
     job_ve.save_parameters()
-    m_ve.save_model(saveto = "{0}{1}/opt/".format(jd, jn), saveas = "ve.feb", overwrite = True)
+    m_ve.save_model(saveto = "{0}{1}/opt/".format(jd, jn), saveas = "opt.feb", overwrite = True)
 
-    # generate simulation specific models
-    print(job_ve.generate_parameterized_models(m = "{0}{1}/opt/ve.feb".format(jd, jn)))
-    exit()
+    # generate simulation specific models# write the stress-strain data to the simulation file just for viewing
+    job_ve.generate_parameterized_models(m = "{0}{1}/opt/opt.feb".format(jd, jn))
 
     # loop through each poroelastic simulation, generation viscoelastic optimization
     for i in range(1, job_pe.get_sim_num() + 1):
         # check the that simulation finished
         # open each simulation, save the final stress-strain, hysteresis data
-        s = job_pe.get_simulation(i)
-        f_d = s.get_displacement_force_lag ()
+        s_pe = job_pe.get_simulation(i)
+        s_ve = job_ve.get_simulation(i)
+        f_d = s_pe.get_displacement_force_lag ()
+        # save force displacement lag to simulation directory
+        s_pe.show_displacement_force_lag (norm = True, save = True, show = False)
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
 
         ## generate optimization job, add mandatory defaults
@@ -439,16 +441,9 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
         o.set_optimization_function(name = obj_fun)
         # add optimization data (from poroelastic simulation)
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list())
-        # append cyclic data to optimization file
-        o.save_optimization_file(filepath = "{0}pe-{1}.opt".format(s.get_simulation_path(), i))
-
-        ## write the viscoelastic model, fix timescale
-        m = Model(feb_file)
-        # here, I need to write the model file with the same simulation conditions as the pe file
-        # alternatively, I can take the pe model, and remove the poroelastic parts and viscoelasticity
-
-        exit()
-    pass
+        # append cyclic data to optimization file to the viscoelastic job with the poroelastic data
+        # here, the parameters for the poroelastic and viscoelastic jobs should be exactly the same
+        o.save_optimization_file(filepath = "{0}opt-{2}.opt".format(s_ve.get_simulation_path(), jn, i))
 
 # third step in fitting sequence
 def step_three ():
