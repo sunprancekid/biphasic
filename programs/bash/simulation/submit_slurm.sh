@@ -168,7 +168,7 @@ gen_slurm_script () {
     if [[ $BOOL_OPT_FILE -eq 0 ]]; then
         echo "srun febio4 ${FEB_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
     else
-        echo "srun febio4 -i ${FEB_FILE} -s ${OPT_FILE} > febio4.job.out 2>&1" >> $FILEPATH$FILENAME
+        echo "srun febio4 -i ${FEB_FILE} -s ${OPT_FILE} > febio4.opt.out 2>&1" >> $FILEPATH$FILENAME
     fi
     echo "echo \"Job end time is \$(date).\"" >> $FILEPATH$FILENAME
     if [[ $BOOL_XPLT -eq 1 ]]; then
