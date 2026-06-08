@@ -497,7 +497,7 @@ class OptimizationFile (object):
         None
         """
         # todo :: boolean for duplicates
-        add_element_to_tree(self.root, "Parameters", "parm", value = "{0:.4e},{1:.4e},{2:.4e}".format(start_val, min_val, max_val), attributes = {"name": name}, duplicate = True)
+        add_element_to_tree(self.root, "Parameters", "param", value = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val), attributes = {"name": name}, duplicate = True)
 
     def has_parameters (self):
         """ determines if any parameters has been specified.
@@ -511,7 +511,7 @@ class OptimizationFile (object):
         bool
             'True' if optimization file has parameters, else 'False'
         """
-        return tree_has_path(self.root, "Parameters/parm")
+        return tree_has_path(self.root, "Parameters/param")
 
     ## OPTIONS
 
@@ -577,7 +577,7 @@ class OptimizationFile (object):
         None
         """
         # adjust the value
-        add_element_to_tree(self.root, "Options", "obj_tol", value = "{0:.4e}".format(value), attributes = attributes)
+        add_element_to_tree(self.root, "Options", "obj_tol", value = "{0:.4f}".format(value), attributes = attributes)
 
     # reset objective tolerance
     def reset_objective_tolerance (self):
@@ -608,7 +608,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Options", "f_diff_scale", value = "{0:.4e}".format(value), attributes = attributes)
+        add_element_to_tree(self.root, "Options", "f_diff_scale", value = "{0:.4f}".format(value), attributes = attributes)
 
     # reset f_diff scale
     def reset_f_diff_scale (self):
@@ -743,7 +743,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4e},{1:.4e}".format(x_val, y_val), duplicate = True)
+        add_element_to_tree(self.root, "Objective/data", "pt", value = "{0:.4f},{1:.4e}".format(x_val, y_val), duplicate = True)
 
     def add_data_list (self, x_list, y_list):
         """ append a list of data points to data list.
