@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 # local
 from febio.io.logfile import extract_febio_opt as opt_io
+from febio.feb.optimizatino_file import OptimizationFile as OptFile
 
 ## PARAMETERS
 # format of config file
@@ -33,8 +34,6 @@ summary_header = ['n', 'id']
 class Optimization (object):
     """ handles sets of jobs in which one or more parameters are being optimized.
 
-    ## TODO get the optimization results from each simulation.
-    ## TODO save the results in the job directory.
     ## TODO display optimization results.
     ## TODO initialize simulation with job parameters AND optimized parameters.
 
@@ -127,6 +126,10 @@ class Optimization (object):
         --------
         Model
         """
+        # get the base model from the job directory
+        # add job parameters
+        # get the optimization results, add them to the model
+        # return the model to the user
         pass
 
     ## CONFIG ##

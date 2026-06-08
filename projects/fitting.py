@@ -461,6 +461,10 @@ def step_three ():
     --------
     None
     """
+    # open optimization jobs, parse results
+    # create a new job, same parameters as previous job.
+    # write the optimization file to the new job directory
+    # run the simulations
     pass
 
 # fourth step in fitting sequence
@@ -480,6 +484,13 @@ def step_four ():
     --------
     None
     """
+    # get the results for the set of simulation jobs
+    # between poroelasticity and viscoelasticity, compare the following properties
+    # resonant amplitude (-dW)
+    # phase shift (delta)
+    # dynamic modulus (G*)
+    # loss modulus (G'')
+    # storage modulus (G')
     pass
 
 if __name__ == "__main__":
