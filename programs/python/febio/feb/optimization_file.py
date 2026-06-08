@@ -13,6 +13,7 @@
 # native, conda
 import sys, os
 import copy
+import pandas as pd # DataFrame
 import xml.etree.ElementTree as ET # handles xml formatting
 # local
 # none
@@ -231,6 +232,8 @@ class OptimizationFile (object):
         determines if 'filepath' has been specified by the user.
     reset_parameters():
         remove all parameters in parameters section (no defaults).
+    get_parameters():
+        returns optimizable parameters specific to optimization file
     add_parameters():
         append parameters to parameters section.
     has_parameters():
@@ -473,6 +476,37 @@ class OptimizationFile (object):
             remove_element_from_tree(self.root, "Parameters")
         # add new parameters branch to root
         add_element_to_tree(self.root, "", "Parameters", value = "")
+
+    def get_parameters(self):
+        """ returns parameters which should be optimized during job.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        DataFrame
+            contains the optimization parameters, limits and paths
+        """
+        df = pd.DataFrame(columns = ['key', 'path', 'min', 'max', 'start'])
+        for elm in self.root.findall("Parameters/param"):
+            p = elm.attrib['name']
+            v = elm.text
+            path = p.split('.')
+            np = ""
+            for i in range(1, len(path)):
+                np += path[i]
+                if i == 1:
+                    np = np.replace("(", "[@name=")
+                    np = np.replace(")", "]")
+                if i < len(path) - 1:
+                    np += "/"
+            # print(np)
+            np = "Material/" + np
+            df_tmp = pd.DataFrame.from_dict({'key': [p.split('.')[-1]], 'path': [np], 'min': [v.split(',')[1]], 'max': [v.split(',')[2]], 'start': [v.split(',')[0]] })
+            df = pd.concat([df, df_tmp]).reset_index(drop = True)
+        return df
 
     def add_parameters (self, name, min_val, max_val, start_val):
         """ add parameter to tree

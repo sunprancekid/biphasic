@@ -15,7 +15,9 @@ import pandas as pd
 import numpy as np
 # local
 from febio.io.logfile import extract_febio_opt as opt_io
-from febio.feb.optimizatino_file import OptimizationFile as OptFile
+from febio.job import Job
+from febio.feb.optimization_file import OptimizationFile as OptFile
+from febio.feb.model_file import ModelFile as ModFile
 
 ## PARAMETERS
 # format of config file
@@ -114,23 +116,53 @@ class Optimization (object):
 
         return df_sum
 
-    def generate_optimized_model (self, m, n):
+    def generate_optimized_model (self, n, m = None):
         """ creates optimized model file from the results of an optimization job.
 
         Arguments:
         ----------
-        m : str
         n : int
+            integer corresponding to specific optimization job
+        m : str (optional, if unspecified, model stored with job is used)
+            path to model that optimization parameters should be added to
 
         Returns:
         --------
         Model
+            job which includes specific job para
+            # print(m.tree_has_element(row['path']))
+            # m.update_element_value(elm_path = row['path'], value = df_opt[row['key'] + "_opt"][len(df_opt) - 1])
+            # print(df_opt[row['key'] + "_opt"][len(df_opt) - 1])
+            # print(row['key'])meters and optimal parameters from optimization job
         """
         # get the base model from the job directory
-        # add job parameters
+        if m is None:
+            # replace m with the job stored in the file
+            m = "{0}{1}/{1}.feb".format(self.jd, self.jn)
+        # check if the model exists
+        if os.path.exists(m):
+            m = ModFile(m)
+        else:
+            # path does not exist
+            print("ERROR :: Optimization.generate_optimized_model() :: path to model file '{0}' does not exist or cannot be found. specify path to model 'm' as type str in method argument.".format(m))
+
+        # check that n exists
+        if (n < 1) or (n > self.df_parm['n'].max()):
+            # the integer specified is outside of the allowable range
+            print("ERROR :: Optimization.generate_optimized_model() :: method argument n '{0}' is outside the allowable range for this optimization job.".format(n))
+
+        # generate model with job parameters
+        j = Job(self.jd, self.jn)
+        m = j.parameterize_model(m = m, n = n)
+
         # get the optimization results, add them to the model
+        of = OptFile("{0}{1}/{2}{1}-{3}.opt".format(self.jd, self.jn, self.df_parm['path'][n - 1], n))
+        for index, row in of.get_parameters().iterrows():
+            # get the parameter optimial parameter from result file
+            df_opt = pd.read_csv("{0}{1}/{2}febio4.opt.csv".format(self.jd, self.jn, self.df_parm['path'][n - 1]))
+
         # return the model to the user
-        pass
+        return m
 
     ## CONFIG ##
 
