@@ -98,7 +98,8 @@ class Optimization (object):
             opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
             print(opt_dir)
             if not os.path.exists(opt_dir + 'febio4.opt.csv'):
-                success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.job.out')
+                success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.opt.out')
+                print(success)
                 if not success: continue
             # append the optimization results to the summary data frame
             df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
@@ -113,7 +114,6 @@ class Optimization (object):
             df_sum.to_csv("{0}{1}/{1}.opt-sum.csv".format(self.jd, self.jn))
 
         return df_sum
-
 
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.

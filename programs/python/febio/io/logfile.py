@@ -248,7 +248,6 @@ def parse_element_data (f = None, elm = None, prop = None):
 						data_dict[i].loc[len(data_dict[i]) - 1, h] = float(l[1 + j])
 	return data_dict
 
-
 def extract_febio_opt (d = None, f = None, s = None):
 	""" extract results from febio optimization routine.
 
@@ -405,7 +404,6 @@ def extract_febio_opt (d = None, f = None, s = None):
 			s_io.writelines(final + "\n")
 
 	return True
-
 
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):
