@@ -168,7 +168,6 @@ class ModelFile(object):
         """
         if elm_path is None:
             return False
-        print(elm_path)
         elm = self.root.findall(elm_path)
         if elm is None or (isinstance(elm, list) and len(elm) == 0):
             return False
