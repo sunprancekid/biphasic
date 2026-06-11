@@ -66,12 +66,12 @@ obj_fun = "fem.rigidbody('Material2').Fz"
 # gamma min, max, start, and name
 gamma_min = 0.001
 gamma_max = 10000.
-gamma_start = 100.
+gamma_start = 10.
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
 tau_min = 0.001
 tau_max = 10000.
-tau_start = 1.
+tau_start = 10.
 tau_name = "fem.material('Material1').t1"
 # elastic modulus min, max, start, and name
 emod_min = 0.001
