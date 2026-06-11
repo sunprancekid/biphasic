@@ -65,8 +65,8 @@ default_n_period = 40
 obj_fun = "fem.rigidbody('Material2').Fz"
 # gamma min, max, start, and name
 gamma_min = 0.001
-gamma_max = 100.
-gamma_start = 1.
+gamma_max = 10000.
+gamma_start = 100.
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
 tau_min = 0.001
