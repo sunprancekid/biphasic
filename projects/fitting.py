@@ -70,7 +70,7 @@ gamma_start = 100.
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
 tau_min = 0.001
-tau_max = 100.
+tau_max = 10000.
 tau_start = 1.
 tau_name = "fem.material('Material1').t1"
 # elastic modulus min, max, start, and name
@@ -418,7 +418,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
     m_ve.save_model(saveto = "{0}{1}/opt/".format(jd, jn), saveas = "opt.feb", overwrite = True)
 
     # generate simulation specific models# write the stress-strain data to the simulation file just for viewing
-    job_ve.generate_parameterized_models(m = "{0}{1}/opt/opt.feb".format(jd, jn))
+    job_ve.generate_parameterized_models(m = "{0}{1}/opt/opt.feb".format(jd, jn), overwrite = True)
 
     # loop through each poroelastic simulation, generation viscoelastic optimization
     for i in range(1, job_pe.get_sim_num() + 1):

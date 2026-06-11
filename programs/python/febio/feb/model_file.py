@@ -108,7 +108,7 @@ class ModelFile(object):
         # check if the file already exits
         savepath = saveto + saveas
         if os.path.exists(savepath) and not overwrite:
-            print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritte.".format(savepath))
+            print("ERROR :: Model.save_model() :: file '{0}' already exists and cannot be overwritten.".format(savepath))
             return False
 
         # write the tree to the file
