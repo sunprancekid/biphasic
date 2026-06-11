@@ -263,8 +263,9 @@ submit () {
     if [[ $BOOL_CHECKFILE -eq 1 ]]; then
         # check for regex
         # if specific check file doesn't eist, check for regex
-        local check_list=( ${simdirstack}$checkfile )${OPT_FILE}
-        if [[ ${#check_list[@]} -gt 0 ]]; then
+        # local check_list=( ${simdirstack}$CHECKFILE )
+        local check_file=${simdirstack}${CHECKFILE}
+        if [[ -f $check_file ]]; then
             # report if verbose
             if [[ $BOOL_VERBOSE -eq 1 ]]; then
                 display_verbose "files found in '${simdirstack}' matching check file '${CHECKFILE}'. skipping .."

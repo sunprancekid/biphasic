@@ -260,4 +260,4 @@ fi
 gen_slurm_script
 
 # submit slurm script
-# sub_slurm_script
+sub_slurm_script
