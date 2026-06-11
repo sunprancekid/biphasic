@@ -469,7 +469,6 @@ class Sweep (object):
         fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'phase_shift')
         gen_plot(fig, show = True, save = save)
 
-
     ## ANALYSIS - DYNAMIC MODULUS ##
 
     def get_dynamic_modulus (self):
