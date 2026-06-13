@@ -642,7 +642,7 @@ class OptimizationFile (object):
         --------
         None
         """
-        add_element_to_tree(self.root, "Options", "f_diff_scale", value = "{0:.4f}".format(value), attributes = attributes)
+        add_element_to_tree(self.root, "Options", "f_diff_scale", value = "{0:.6f}".format(value), attributes = attributes)
 
     # reset f_diff scale
     def reset_f_diff_scale (self):
