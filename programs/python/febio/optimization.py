@@ -112,7 +112,7 @@ class Optimization (object):
             for j in list(df_opt_res.columns.values)[1:]:
                 df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
         if save:
-            df_sum.to_csv("{0}{1}/{1}.opt-sum.csv".format(self.jd, self.jn))
+            df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
 
         return df_sum
 
@@ -128,11 +128,31 @@ class Optimization (object):
 
         Returns:
         --------
-        Figure or List[Figure]
+        List[Figure]
             each optimization parameter as Figure object.
         """
         # get the optimization results
-        # for each parameter, generate plot against y-axis
+        df = self.get_optimization_results()
+        # check the xaxis key
+        # check the yaxis key
+        if yaxis_key is None:
+            # if no keys were specified, do for all keys
+            yaxis_key = self.get_optimization_parameters()
+        elif isinstance(yaxis_key, str):
+            # check that the key that was specified exists in optimization job
+            pass
+        elif isinstance(yaxis_key, list):
+            # check that each key in the list exists in the optimization job
+            pass
+        else:
+            # the key does not match the specified data type
+            pass
+
+        for y in yaxis_key:
+            # create figure
+            fig = Figure()
+            # 
+            pass 
 
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.
