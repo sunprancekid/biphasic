@@ -97,10 +97,10 @@ class Optimization (object):
         DataFrame
             contains results of optimization from each job set.
         """
-        df_sum = None
+        self.df_sum = None
         # check if the summary file already exists
         if (not overwrite) and os.path.exists(summary_file_format.format(self.jd, self.jn)):
-            df_sum = pd.read_csv(summary_file_format.format(self.jd, self.jn))
+            self.df_sum = pd.read_csv(summary_file_format.format(self.jd, self.jn))
         else:
             for idx, row in self.df_parm.iterrows():
                 # attempt to parse the results and save them as csv
@@ -122,7 +122,7 @@ class Optimization (object):
             if save:
                 df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
 
-        return df_sum
+        return self.df_sum
 
     def show_optimization_results (self, show = True, save = False):
         """ plots optimized parameters.
@@ -176,11 +176,7 @@ class Optimization (object):
         Returns:
         --------
         Model
-            job which includes specific job para
-            # print(m.tree_has_element(row['path']))
-            # m.update_element_value(elm_path = row['path'], value = df_opt[row['key'] + "_opt"][len(df_opt) - 1])
-            # print(df_opt[row['key'] + "_opt"][len(df_opt) - 1])
-            # print(row['key'])meters and optimal parameters from optimization job
+            job which includes optimized value from specific optimization set
         """
         # get the base model from the job directory
         if m is None:
@@ -204,9 +200,9 @@ class Optimization (object):
 
         # get the optimization results, add them to the model
         of = OptFile("{0}{1}/{2}{1}-{3}.opt".format(self.jd, self.jn, self.df_parm['path'][n - 1], n))
-        for index, row in of.get_parameters().iterrows():
-            # get the parameter optimial parameter from result file
-            df_opt = pd.read_csv("{0}{1}/{2}febio4.opt.csv".format(self.jd, self.jn, self.df_parm['path'][n - 1]))
+        for index, row in of.get_parameters().iterrows(): # gets the parameters and paths for each optimizable value
+            # add the optimized value to appropriate field in the model
+            m.update_element_value(elm_path = row['path'], value = self.df_sum[row['key'] + "_opt"][n - 1])
 
         # return the model to the user
         return m

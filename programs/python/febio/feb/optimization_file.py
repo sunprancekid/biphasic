@@ -503,6 +503,7 @@ class OptimizationFile (object):
                 if i < len(path) - 1:
                     np += "/"
             # print(np)
+            # NOTE here, not every optimizable value necissarily exists in the MATERIAL portion of the file
             np = "Material/" + np
             df_tmp = pd.DataFrame.from_dict({'key': [p.split('.')[-1]], 'path': [np], 'min': [v.split(',')[1]], 'max': [v.split(',')[2]], 'start': [v.split(',')[0]] })
             df = pd.concat([df, df_tmp]).reset_index(drop = True)

@@ -492,7 +492,7 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
         # generate and save the visco elastic model with optimized parameters from step two
         # here, the parameters, directories for 'job_ve' and 'o' are the same
         m_opt = o.generate_optimized_model(m = feb_file, n = row['n'])
-        m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(self.jd, self.jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
+        m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(jd, jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
 
 # fourth step in fitting sequence
 def step_four ():
