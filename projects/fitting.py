@@ -452,7 +452,8 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
 
     during the third step, the optimal viscoelastic parameters are parsed
     from each optimization model. the optimized model is rerun to confirm
-    the validity of the parameters.
+    the validity of the optimized parameters relative to the poroelastic
+    model.
 
     Arguments:
     ----------

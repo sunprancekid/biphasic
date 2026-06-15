@@ -229,18 +229,20 @@ submit () {
 
     # check if the directory contains an optimization file
     declare -i HAS_OPT=0
-    local opt_list=( ${simdirstack}*.opt )
-    if [[ ${#opt_list[@]} -eq 0 ]]; then
+    local regex="*.opt"
+    # local opt_list=( ${simdirstack}${regex} )
+    declare -i n_opt=$( find ${simdirstack} -name ${regex} | wc -l )
+    if [[ $n_opt -eq 0 ]]; then
         # the liist length is zero
         # no optimization files exist in the simulation directory
         # check if a global optimization file was specified
-        if [[ $OPT_FILE -eq 1 ]]; then
+        if [[ $BOOL_OPT -eq 1 ]]; then
             # submit the simulation with the global optimization file
             declare -i HAS_OPT=1
             local local_opt=${OPT_FILE} # local opt is global opt
         fi
         # run without optimization
-    elif [[ ${#opt_list[@]} -gt 1 ]]; then
+    elif [[ $n_opt -gt 1 ]]; then
         # the list length is greater than one
         # multiple optimization files were detected
         # throw error
