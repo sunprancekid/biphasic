@@ -24,6 +24,8 @@ from febio.feb.model_file import ModelFile as ModFile
 config_file_format = "{0}/{1}/{1}.config.csv"
 # format of parameter file
 parameter_file_format = "{0}/{1}/{1}.parm.csv"
+# format of summary file name
+summary_file_format = "{0}/{1}/{1}.sum.csv"
 # header used for config files
 config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 'symbolic', 'val', 'min_val', 'max_val', 'n_val', 'log']
 # header used for summary file
@@ -78,7 +80,7 @@ class Optimization (object):
         else:
             self.df_parm = None
 
-    def get_optimization_results(self, save = False):
+    def get_optimization_results(self, save = False, overwrite = False):
         """ for each simulation in the job set, parse the optimization results.
 
         the results are returned as a dataframe, and saved to the job directory.
@@ -87,6 +89,8 @@ class Optimization (object):
         ----------
         save : bool (optional, default is 'False')
             saves the optimization results to the job directory as a csv file.
+        overwrite : bool (optional, default is 'True')
+            if 'True', overwrites the summary file and recalculates results
 
         Returns:
         --------
@@ -94,25 +98,29 @@ class Optimization (object):
             contains results of optimization from each job set.
         """
         df_sum = None
-        for idx, row in self.df_parm.iterrows():
-            # attempt to parse the results and save them as csv
-            opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
-            print(opt_dir)
-            if not os.path.exists(opt_dir + 'febio4.opt.csv'):
-                success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.opt.out')
-                print(success)
-                if not success: continue
-            # append the optimization results to the summary data frame
-            df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
-            if df_sum is None:
-                # the summary dataframe has not been initialized yet
-                df_sum = self.df_parm.copy(deep = True)
+        # check if the summary file already exists
+        if (not overwrite) and os.path.exists(summary_file_format.format(self.jd, self.jn)):
+            df_sum = pd.read_csv(summary_file_format.format(self.jd, self.jn))
+        else:
+            for idx, row in self.df_parm.iterrows():
+                # attempt to parse the results and save them as csv
+                opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
+                print(opt_dir)
+                if not os.path.exists(opt_dir + 'febio4.opt.csv'):
+                    success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.opt.out')
+                    print(success)
+                    if not success: continue
+                # append the optimization results to the summary data frame
+                df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
+                if df_sum is None:
+                    # the summary dataframe has not been initialized yet
+                    df_sum = self.df_parm.copy(deep = True)
+                    for j in list(df_opt_res.columns.values)[1:]:
+                        df_sum[j] = [np.nan for k in range(len(df_sum))]
                 for j in list(df_opt_res.columns.values)[1:]:
-                    df_sum[j] = [np.nan for k in range(len(df_sum))]
-            for j in list(df_opt_res.columns.values)[1:]:
-                df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
-        if save:
-            df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
+                    df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
+            if save:
+                df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
 
         return df_sum
 
@@ -137,7 +145,8 @@ class Optimization (object):
         # check the yaxis key
         if yaxis_key is None:
             # if no keys were specified, do for all keys
-            yaxis_key = self.get_optimization_parameters()
+            # yaxis_key = self.get_optimization_parameters()
+            pass
         elif isinstance(yaxis_key, str):
             # check that the key that was specified exists in optimization job
             pass

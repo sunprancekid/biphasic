@@ -16,6 +16,7 @@ import pandas as pd
 # local
 from febio.job import Job
 from febio.sweep import Sweep
+from febio.optimization import Optimization as Opt
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
 from plot.figure import Figure
@@ -446,7 +447,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
         o.save_optimization_file(filepath = "{0}opt-{2}.opt".format(s_ve.get_simulation_path(), jn, i))
 
 # third step in fitting sequence
-def step_three ():
+def step_three (jd = None, jn = None, feb_file = default_feb_ve):
     """ third step is fitting sequence, once the second step is finished.
 
     during the third step, the optimal viscoelastic parameters are parsed
@@ -455,17 +456,43 @@ def step_three ():
 
     Arguments:
     ----------
-    None
+    jd : str
+        path to directory which will contain job
+    jn : str
+        name of job in job directory
+    feb_file : str
+        path to viscoelastic model
 
     Results:
     --------
     None
     """
+    # check that the previous step was completed
+    if not os.path.exists("{0}{1}/opt".format(jd, jn)):
+        # through error, exit
+        print("ERROR :: step_three() :: directory '' does not exist, step two has not yet been completed.")
+        return
+
     # open optimization jobs, parse results
-    # create a new job, same parameters as previous job.
-    # write the optimization file to the new job directory
-    # run the simulations
-    pass
+    job_ve = Job("{0}{1}".format(jd, jn), "opt") # used for generating parameters
+    o = Opt("{0}{1}/".format(jd, jn), "opt") # used get th results from optimization
+    m = ModelFile(feb_file)
+    df_opt_res = o.get_optimization_results()
+
+    # re-write the same parameters from the optimization job a new directory
+    job_ve.jn = "ve" # rename the job
+    job_ve.generate_parameters()
+    job_ve.save_config()
+    job_ve.save_parameters()
+    m.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb")
+
+    # loop through each set of optimization runs,
+    # generated optimized model and write to the new viscoelasticity job directory.
+    for idx, row in df_opt_res.iterrows():
+        # generate and save the visco elastic model with optimized parameters from step two
+        # here, the parameters, directories for 'job_ve' and 'o' are the same
+        m_opt = o.generate_optimized_model(m = feb_file, n = row['n'])
+        m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(self.jd, self.jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
 
 # fourth step in fitting sequence
 def step_four ():
