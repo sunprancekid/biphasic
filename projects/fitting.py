@@ -496,7 +496,7 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
         m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(jd, jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
 
 # fourth step in fitting sequence
-def step_four ():
+def step_four (jd, jn):
     """ fourth step in fitting sequence, once the third step is finished.
 
     during the fourth step, the optimizal parameters for the viscoelastic
@@ -506,15 +506,24 @@ def step_four ():
 
     Arguments:
     ----------
-    None
+    jd : str
+        path to the job directory
+    jn : str
+        name of job in job directory
 
     Results:
     --------
     None
     """
-    # get the results for the set of simulation jobs
-    # between poroelasticity and viscoelasticity, compare the following properties
+    # get the results for the viscoelastic and poroelastic jobs
+    sp = Sweep("{0}{1}/".format(jd, jn), "pe")
+    sv = Sweep("{0}{1}/".format(jd, jn), "ve")
+
+    ## between poroelasticity and viscoelasticity, compare the following properties
     # resonant amplitude (-dW)
+    fig = Figure()
+    # todo determine the maximum number of cycles in each simulation
+    # fig.append_from_df(df = sp.get_phase_shift(), xcol = f, ycol = '{0}'.format(len()))
     # phase shift (delta)
     # dynamic modulus (G*)
     # loss modulus (G'')

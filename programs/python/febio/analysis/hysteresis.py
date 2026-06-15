@@ -179,7 +179,7 @@ def calculate_complex_mod (period, time, pos, force):
     l = []
     sub_int = n_cyc - 1
     ## loop through all cycles
-    for i in range(n_cyc):cycle
+    for i in range(n_cyc):
 
         ## get max and min stress / strain for cycle
         max_strain[i] = max(strain[i])
@@ -228,12 +228,12 @@ def calculate_complex_mod (period, time, pos, force):
                 y.append(stress[i][j])
                 l.append('$\\sigma_{{norm}}$')
 
-    df = pd.DataFrame.from_dict({'x': x, 'y': y, 'l': l})
-    fig = Figure()
-    fig.load_data(df, xcol = 'x', ycol = 'y', icol = 'l')
-    fig.set_subtitle_label("$\\delta = {0:.4f}, Y' = {1:.2f}$".format(delta[sub_int], dymod[sub_int]))
-    fig.save_data()
-    gen_plot(fig, show = True, save = True)
+    # df = pd.DataFrame.from_dict({'x': x, 'y': y, 'l': l})
+    # fig = Figure()
+    # fig.load_data(df, xcol = 'x', ycol = 'y', icol = 'l')
+    # fig.set_subtitle_label("$\\delta = {0:.4f}, Y' = {1:.2f}$".format(delta[sub_int], dymod[sub_int]))
+    # fig.save_data()
+    # gen_plot(fig, show = True, save = True)
 
     return delta, dymod
 
