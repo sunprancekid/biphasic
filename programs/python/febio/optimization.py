@@ -116,7 +116,25 @@ class Optimization (object):
 
         return df_sum
 
-    def generate_optimized_model (self, n, m = None):
+    def show_optimization_results (self, show = True, save = False):
+        """ plots optimized parameters.
+        
+        Arguments:
+        ----------
+        show : bool
+        save : bool
+        xaxis_key : str (optional, default is 'n')
+        yaxis_key : str (optional, default is 'all')
+
+        Returns:
+        --------
+        Figure or List[Figure]
+            each optimization parameter as Figure object.
+        """
+        # get the optimization results
+        # for each parameter, generate plot against y-axis
+
+    def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.
 
         Arguments:
