@@ -308,6 +308,20 @@ class Simulation (object):
             print("ERROR :: Simulation.get_oscillation_phase_period() :: simulation does not have a oscillation phase.")
             return None
 
+    def get_oscillation_phase_frequency(self):
+        """ returns the oscilation frequency, if it exists.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        float
+            frequency assigned to simulation oscillation phase in simulation seconds.
+        """
+        return 2 * math.pi / self.get_oscillation_phase_period()
+
     def get_number_oscillation_cycles (self):
         """ returns the number of cycles in the oscillation phase.
 

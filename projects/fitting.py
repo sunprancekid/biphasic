@@ -529,11 +529,15 @@ def step_four (jd, jn, show = True, save = False):
     # reduce the number of cycles by two
     n_cyc -= 2
 
+    ## poro and viscoelastic labels
+    label_pe = "Poroelastic Data"
+    label_ve = "Viscoelastic Fit"
+
     ## between poroelasticity and viscoelasticity, compare the following properties
     # resonant amplitude (-dW)
     fig = Figure()
-    fig.append_df(df = sp.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = 'Poroelastic Data')
-    fig.append_df(df = sv.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = 'Viscoelastic Fit')
+    fig.append_df(df = sp.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = label_pe)
+    fig.append_df(df = sv.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = label_ve)
     fig.set_axis_scale(akey = 'x', log = True)
     fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
     fig.set_axis_label(akey = 'y', l = "Dissipated Energy (J)")
@@ -543,8 +547,8 @@ def step_four (jd, jn, show = True, save = False):
 
     # phase shift (delta)
     fig = Figure()
-    fig.append_df(df = sp.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
-    fig.append_df(df = sv.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.append_df(df = sp.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = label_pe)
+    fig.append_df(df = sv.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = label_ve)
     fig.set_axis_scale(akey = 'x', log = True)
     fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
     fig.set_axis_label(akey = 'y', l = "Phase lag (degrees, $^{{\\circ}}$)")
@@ -554,8 +558,8 @@ def step_four (jd, jn, show = True, save = False):
 
     # dynamic modulus (G*)
     fig = Figure()
-    fig.append_df(df = sp.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
-    fig.append_df(df = sv.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.append_df(df = sp.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = label_pe)
+    fig.append_df(df = sv.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = label_ve)
     fig.set_axis_scale(akey = 'x', log = True)
     fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
     fig.set_axis_label(akey = 'y', l = "Dynamic Modulus ($Pa$)")
@@ -565,8 +569,8 @@ def step_four (jd, jn, show = True, save = False):
 
     # loss modulus (G'')
     fig = Figure()
-    fig.append_df(df = sp.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
-    fig.append_df(df = sv.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.append_df(df = sp.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = label_pe)
+    fig.append_df(df = sv.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = label_ve)
     fig.set_axis_scale(akey = 'x', log = True)
     fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
     fig.set_axis_label(akey = 'y', l = "Loss Modulus ($Pa$)")
@@ -576,14 +580,64 @@ def step_four (jd, jn, show = True, save = False):
 
     # storage modulus (G')
     fig = Figure()
-    fig.append_df(df = sp.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
-    fig.append_df(df = sv.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.append_df(df = sp.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = label_pe)
+    fig.append_df(df = sv.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = label_ve)
     fig.set_axis_scale(akey = 'x', log = True)
     fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
     fig.set_axis_label(akey = 'y', l = "Storage Modulus ($Pa$)")
     fig.set_saveas(savedir = savedir, filename = "storage-modulus")
     if save: fig.save_data()
     gen_plot(fig, save = save, show = show)
+
+    ## for each oscillatiory simulation
+    # compare the viscoleastic / poroelastic model stress curves ..
+    for i in range(1, sv.get_sim_num() + 1):
+        sim_ve = sv.get_simulation(i)
+        sim_pe = sp.get_simulation(i)
+
+        # TODO can I adjust the markers so that the fitting is more obvious?
+        # in time
+        fig = Figure()
+        # append data
+        # NOTE in theory, the poroelastic and viscoelastic strain curves are exactly the same
+        fig.append_df(df = sim_pe.get_displacement_force_lag(cycle = n_cyc), xcol = 't', ycol = 'f', label = label_pe)
+        fig.append_df(df = sim_ve.get_displacement_force_lag(cycle = n_cyc), xcol = 't', ycol = 'f', label = label_ve)
+        # set markers
+        fig.set_marker(ival = label_pe, marker = 'o')
+        fig.set_marker(ival = label_ve, marker = 'x')
+        # add title
+        fig.set_title_label(l = "$f = {0:.2e} Hz$, $T = {1:.2e} s$".format(sim_ve.get_oscillation_phase_frequency(), sim_ve.get_oscillation_phase_period()))
+        fig.set_subtitle_label(l = "({0})".format(sim_ve.get_key_value('id')))
+        # set axis labels
+        fig.set_axis_label(akey = 'x', l = "Simulation Time (seconds)")
+        fig.set_axis_label(akey = 'y', l = "Force against Tip (mN)") # TODO double check these units
+        # save data
+        if save:
+            fig.set_saveas(savedir = savedir + "cycles/", filename = "{0}-stress".format(sim_ve.get_key_value('id')))
+            fig.save_data()
+            # show figure
+            gen_plot(fig, show = False, save = save)
+
+        # hysteresis loop
+        fig = Figure()
+        # append data
+        fig.append_df(df = sim_pe.get_displacement_force_lag(cycle = n_cyc), xcol = 'x', ycol = 'f', label = label_pe)
+        fig.append_df(df = sim_ve.get_displacement_force_lag(cycle = n_cyc), xcol = 'x', ycol = 'f', label = label_ve)
+        # set markers
+        fig.set_marker(ival = label_ve, marker = 'x')
+        fig.set_marker(ival = label_pe, marker = 'o')
+        # add title
+        fig.set_title_label(l = "$f = {0:.2e} Hz$, $T = {1:.2e} s$".format(sim_ve.get_oscillation_phase_frequency(), sim_ve.get_oscillation_phase_period()))
+        fig.set_subtitle_label(l = "({0})".format(sim_ve.get_key_value('id')))
+        # set axis labels
+        fig.set_axis_label(akey = 'x', l = "Tip Displacement (mm)")
+        fig.set_axis_label(akey = 'y', l = "Force against Tip (mN)") # TODO double check these units
+        # save data
+        if save:
+            fig.set_saveas(savedir = savedir + "cycles/", filename = "{0}-lj".format(sim_ve.get_key_value('id')))
+            fig.save_data()
+            # show figure
+            gen_plot(fig, show = False, save = save)
 
 if __name__ == "__main__":
 
