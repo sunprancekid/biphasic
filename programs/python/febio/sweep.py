@@ -380,6 +380,106 @@ class Sweep (object):
         # NOTE here some jobs index from 1 and some from zero, would be good to check this.
         return m_idx + 1
 
+    ## ANALYSIS - STORAGE MODULUS ##
+
+    ## TODO add recalculate option
+
+    def get_storage_modulus (self, cycles = None):
+        """ returns the storage modulus for all simulations.
+
+        Parameters:
+        -----------
+        cycles : int or List[int]
+            subset of cycles to get work for
+
+        Returns:
+        --------
+        df
+            contains storage modulus as well as simulation properties at specified cycle.
+        """
+        # initialize arrays
+        max_cycle = 0
+        ot = []
+        hys = [[] for i in range(self.get_sim_num())]
+        # loop through all simulations
+        for i in range(self.get_sim_num()):
+            # initialize the simulation
+            sim = Simulation(self.list_sim[col_jd][i], \
+                    self.list_sim[col_jn][i], \
+                    self.list_sim[col_si][i])
+            # get the hysteresis data
+            if sim.has_key('OT'):
+                ot.append(sim.get_key_value('OT'))
+                hys[i] = sim.parse_complex_modulus()['store-mod'].to_list()
+                if len(hys[i]) > max_cycle:
+                    max_cycle = len(hys[i])
+            # remove the simulation
+            del sim
+        # add to the dataframe
+        col_header = ['T', 'f']
+        for i in range(max_cycle):
+            col_header.append(i)
+        df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
+        for i in range(self.get_sim_num()):
+            df.loc[i, 'T'] = ot[i]
+            df.loc[i, 'f'] = 2. * math.pi / ot[i]
+            for j in range(len(hys[i])):
+                df.loc[i,j] = hys[i][j]
+        # return the data frame to the user
+        return df
+
+    def show_storage_modulus (self):
+        pass
+
+    ## ANALYSIS - LOSS MODULUS ##
+
+    def get_loss_modulus (self, cycles = None):
+        """ returns the loss modulus for all simulations.
+
+        Parameters:
+        -----------
+        cycles : int or List[int]
+            subset of cycles to get work for
+
+        Returns:
+        --------
+        df
+            contains loss modulus as well as simulation properties at specified cycle.
+        """
+        # initialize arrays
+        max_cycle = 0
+        ot = []
+        hys = [[] for i in range(self.get_sim_num())]
+        # loop through all simulations
+        for i in range(self.get_sim_num()):
+            # initialize the simulation
+            sim = Simulation(self.list_sim[col_jd][i], \
+                    self.list_sim[col_jn][i], \
+                    self.list_sim[col_si][i])
+            # get the hysteresis data
+            if sim.has_key('OT'):
+                ot.append(sim.get_key_value('OT'))
+                hys[i] = sim.parse_complex_modulus()['loss-mod'].to_list()
+                if len(hys[i]) > max_cycle:
+                    max_cycle = len(hys[i])
+            # remove the simulation
+            del sim
+        # add to the dataframe
+        col_header = ['T', 'f']
+        for i in range(max_cycle):
+            col_header.append(i)
+        df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
+        for i in range(self.get_sim_num()):
+            df.loc[i, 'T'] = ot[i]
+            df.loc[i, 'f'] = 2. * math.pi / ot[i]
+            for j in range(len(hys[i])):
+                df.loc[i,j] = hys[i][j]
+        # return the data frame to the user
+        return df
+
+    def show_loss_modulus (self):
+        pass
+
     ## ANALYSIS - PHASE SHIFT ##
 
     def get_phase_shift (self, cycles = None):
@@ -409,7 +509,7 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()[0]
+                hys[i] = sim.parse_complex_modulus()['delta'].to_list()
                 if len(hys[i]) > max_cycle:
                     max_cycle = len(hys[i])
             # remove the simulation
@@ -496,7 +596,7 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()[1]
+                hys[i] = sim.parse_complex_modulus()['dynamic-mod'].to_list()
                 if len(hys[i]) > max_cycle:
                     max_cycle = len(hys[i])
             # remove the simulation

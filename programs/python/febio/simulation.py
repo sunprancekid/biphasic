@@ -32,6 +32,8 @@ xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 # default_prop_profile_colormap = 'seismic'
 default_prop_profile_colormap = 'berlin'
 # default_prop_profile_colormap = 'bwr'
+# name of complex modulus file
+file_complex_modulus = "complex-modulus.csv"
 
 ## METHODS
 # none
@@ -81,7 +83,7 @@ class Simulation (object):
         self.file_feb = "{0}/{1}/{2}/{3}.feb".format(jd, jn, self.parm['path'], self.parm['id'])
         self.file_out = "{0}/{1}/{2}/febio4.out.csv".format(jd, jn, self.parm['path'], self.parm['id'])
         self.file_xplt = "{0}/{1}/{2}/{3}.xplt".format(jd, jn, self.parm['path'], self.parm['id'])
-        self.file_log = "{0}/{1}/{2}/{3}.log".format(jd, jn, self.parm['path'], self.parm['id'])
+        self.file_log = "{0}/{1}/{2}/febio4.job.out".format(jd, jn, self.parm['path'])
         self.file_elm_dat = "{0}/{1}/{2}/{3}".format(jd, jn, self.parm['path'], default_elm_dat)
         # contains simulation data
         self.elm_data = {}
@@ -257,7 +259,7 @@ class Simulation (object):
             return False
 
         # parse the logfile, write to outfile
-        extract_febio_out(d = self.sd, f = '{0}.log'.format(self.parm['id']))
+        extract_febio_out(d = self.sd, f = 'febio4.job.out')
         # get displacement and force
         calculate_displacement (d = self.sd, f = default_outfile,  z = True)
         calculate_force (d = self.sd, f = default_outfile, z = True, y = True, x = True)
@@ -957,47 +959,70 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def parse_complex_modulus (self):
-        """ Use cyclic loading data to determing the dynamic modulus.
+    def parse_complex_modulus (self, overwrite = False):
+        """ Use cyclic loading data to determing the complex modulus properties.
+
+        complex modulus properties include phase shift (delta), storage modulus (G'), 
+        loss modulus (G''), and dynamic modulus (G*).
+
+        Data is stored in a local file corresponding to the simulation. If the
+        file already exists locally, then the data is loaded from the file
+        rather than calculated from the raw simulation data. If overwrite
+        is specified, then the complex modulus data is recalculated regardless
+        of if the local file exists or not.
 
         Parameter:
         ----------
-        None
+        overwrite : bool
+            determines if previously calculated complex modulus should be overwritten.
 
         Returns:
         --------
-        None
+        DataFrame
+            contains complex modulus properties for each oscillation cycle
 
         """
         ## load module
         ## TODO :: move module above once hysteresis has been completely refactored
         from febio.analysis.hysteresis import calculate_complex_mod
 
-        ## get data
-        # get the relaxation time and oscaillation period
-        period = self.get_oscillation_phase_period()
-        relax_time = self.get_relaxation_phase_length()
+        ## TODO load from local file, if it already exists
+        ## if not, calculate the data and save it to a local file
 
-        # get the time and work from the outfile
-        time = self.get_outfile()['t'].to_list()
-        pos = self.get_outfile()['disp'].to_list()
-        force = self.get_outfile()['F_mag'].to_list()
-        # drop the relaxation time from the work and time
-        # reduce time
-        for i in range(len(time) - 1, -1, -1):
-            # transverse list in reverse order
-            if time[i] >= relax_time:
-                time[i] = time[i] - relax_time
-            else:
-                time.pop(i)
-                pos.pop(i)
-                force.pop(i)
+        if (not overwrite) and os.path.exists("{0}/{1}".format(self.sd, file_complex_modulus)):
+            # load the file if overwrite has not been specified, and
+            # and the file exists
+            df = pd.read_csv("{0}/{1}".format(self.sd, file_complex_modulus))
+        else:
+            # overwrite has been specified or the file does not exist
+            ## get data
+            # get the relaxation time and oscaillation period
+            period = self.get_oscillation_phase_period()
+            relax_time = self.get_relaxation_phase_length()
 
-        ## pass to method
-        delta, dymod = calculate_complex_mod(period, time, pos, force)
+            # get the time and work from the outfile
+            time = self.get_outfile()['t'].to_list()
+            pos = self.get_outfile()['disp'].to_list()
+            force = self.get_outfile()['F_mag'].to_list()
+            # drop the relaxation time from the work and time
+            # reduce time
+            for i in range(len(time) - 1, -1, -1):
+                # transverse list in reverse order
+                if time[i] >= relax_time:
+                    time[i] = time[i] - relax_time
+                else:
+                    time.pop(i)
+                    pos.pop(i)
+                    force.pop(i)
 
-        ## return to user
-        return delta, dymod
+            ## pass data to method
+            df = calculate_complex_mod(period, time, pos, force)
+
+            ## save data to local file
+            df.to_csv("{0}/{1}".format(self.sd, file_complex_modulus), index  = False)
+
+        # return to user
+        return df
 
     def get_displacement_force_lag (self, cycle = None, norm = False):
         """ get the displacement and force corresponding to a certain cycle of a simulation.
@@ -1057,7 +1082,6 @@ class Simulation (object):
         # create dataframe and return
         df = pd.DataFrame.from_dict({'t': t_plot, 'x': p_plot, 'f': f_plot})
         return df
-        fig.set_axis_label('y', "Force / Position")
 
     def show_displacement_force_lag (self, cycle = None, norm = False, show = True, save = False):
         """ display the stress-strain lag for a give cycle.
@@ -1229,8 +1253,13 @@ class Simulation (object):
         relax_time = self.get_relaxation_phase_length()
 
         # get the time and work from the outfile
-        if recalculate:
+        if recalculate or (not self.has_outfile()):
             self.parse_logfile()
+        # else:
+            # if 've' in self.sd:
+            #     print(self.file_out)
+            #     print(self.has_outfile())
+            #     exit()
         time = self.get_outfile()['t'].to_list()
         work = self.get_outfile()['dw_fdx'].to_list()
         # drop the relaxation time from the work and time

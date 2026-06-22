@@ -496,7 +496,7 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
         m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(jd, jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
 
 # fourth step in fitting sequence
-def step_four (jd, jn):
+def step_four (jd, jn, show = True, save = False):
     """ fourth step in fitting sequence, once the third step is finished.
 
     during the fourth step, the optimizal parameters for the viscoelastic
@@ -510,6 +510,10 @@ def step_four (jd, jn):
         path to the job directory
     jn : str
         name of job in job directory
+    show : bool
+        if 'True', displays all images to UI.
+    save : bool
+        if 'True', saves all images and data to job directory.
 
     Results:
     --------
@@ -518,17 +522,68 @@ def step_four (jd, jn):
     # get the results for the viscoelastic and poroelastic jobs
     sp = Sweep("{0}{1}/".format(jd, jn), "pe")
     sv = Sweep("{0}{1}/".format(jd, jn), "ve")
+    savedir = "{0}{1}/results/".format(jd, jn)
+
+    # get the number of cycles that were performed
+    n_cyc = sp.get_simulation(1).get_number_oscillation_cycles()
+    # reduce the number of cycles by two
+    n_cyc -= 2
 
     ## between poroelasticity and viscoelasticity, compare the following properties
     # resonant amplitude (-dW)
     fig = Figure()
-    # todo determine the maximum number of cycles in each simulation
-    # fig.append_from_df(df = sp.get_phase_shift(), xcol = f, ycol = '{0}'.format(len()))
+    fig.append_df(df = sp.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = 'Poroelastic Data')
+    fig.append_df(df = sv.get_hysteresis_work(), xcol = 'f', ycol = n_cyc, label = 'Viscoelastic Fit')
+    fig.set_axis_scale(akey = 'x', log = True)
+    fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
+    fig.set_axis_label(akey = 'y', l = "Dissipated Energy (J)")
+    fig.set_saveas(savedir = savedir, filename = "sweep")
+    if save: fig.save_data()
+    gen_plot(fig, save = save, show = show)
+
     # phase shift (delta)
+    fig = Figure()
+    fig.append_df(df = sp.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
+    fig.append_df(df = sv.get_phase_shift(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.set_axis_scale(akey = 'x', log = True)
+    fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
+    fig.set_axis_label(akey = 'y', l = "Phase lag (degrees, $^{{\\circ}}$)")
+    fig.set_saveas(savedir = savedir, filename = "phase-lag")
+    if save: fig.save_data()
+    gen_plot(fig, save = save, show = show)
+
     # dynamic modulus (G*)
+    fig = Figure()
+    fig.append_df(df = sp.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
+    fig.append_df(df = sv.get_dynamic_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.set_axis_scale(akey = 'x', log = True)
+    fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
+    fig.set_axis_label(akey = 'y', l = "Dynamic Modulus ($Pa$)")
+    fig.set_saveas(savedir = savedir, filename = "dynamic-modulus")
+    if save: fig.save_data()
+    gen_plot(fig, save = save, show = show)
+
     # loss modulus (G'')
+    fig = Figure()
+    fig.append_df(df = sp.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
+    fig.append_df(df = sv.get_loss_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.set_axis_scale(akey = 'x', log = True)
+    fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
+    fig.set_axis_label(akey = 'y', l = "Loss Modulus ($Pa$)")
+    fig.set_saveas(savedir = savedir, filename = "loss-modulus")
+    if save: fig.save_data()
+    gen_plot(fig, save = save, show = show)
+
     # storage modulus (G')
-    pass
+    fig = Figure()
+    fig.append_df(df = sp.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = "Poroelastic Data")
+    fig.append_df(df = sv.get_storage_modulus(), xcol = 'f', ycol = n_cyc, label = "Viscoelastic Fit")
+    fig.set_axis_scale(akey = 'x', log = True)
+    fig.set_axis_label(akey = 'x', l = "Frequency (Hz, $2 \\pi T^{{-1}}$)")
+    fig.set_axis_label(akey = 'y', l = "Storage Modulus ($Pa$)")
+    fig.set_saveas(savedir = savedir, filename = "storage-modulus")
+    if save: fig.save_data()
+    gen_plot(fig, save = save, show = show)
 
 if __name__ == "__main__":
 
