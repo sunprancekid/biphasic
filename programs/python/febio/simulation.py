@@ -1072,7 +1072,7 @@ class Simulation (object):
         # parse the displacement and force data
         time = self.get_outfile()['t'].to_list()
         pos = self.get_outfile()['disp'].to_list()
-        force = self.get_outfile()['F_mag'].to_list()
+        force = self.get_outfile()['F_z'].to_list() # NOTE z component of force
         # get the displacement and force data corresponding to the cycle
         f_plot = []
         p_plot = []
@@ -1081,7 +1081,7 @@ class Simulation (object):
             if (time[i] <= t_end) and (time[i] >= t_start):
                 t_plot.append(time[i])
                 p_plot.append(-pos[i]) # NOTE negative position
-                f_plot.append(force[i])
+                f_plot.append(-force[i]) # NOTE negative force
         # normalize data if requested
         if norm:
             # normalize the position, force data if requested
