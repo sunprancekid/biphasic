@@ -59,7 +59,7 @@ default_emod = 0.5
 # length scale
 default_z = 0.125
 # sweep
-default_n_period = 40
+default_n_period = 20
 
 ## VISCOELASTIC OPTIMIZATION
 # path to objective function in feb file
@@ -346,8 +346,8 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     poro_amp = emod * pow(z, 3.)
 
     # use time scales to set minimum, maximum period
-    if min_period is None: min_period = poro_tau / 100
-    if max_period is None: max_period = poro_tau * 100
+    if min_period is None: min_period = poro_tau / 10
+    if max_period is None: max_period = poro_tau * 10
 
     # load modules
     # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
@@ -357,7 +357,8 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     j = Job("{0}{1}".format(jd, jn), 'pe')
     constant_bulk_modulus (job = j, E_val = emod)
     constant_permeability (job = j, K_val = perm)
-    frequency_sweep (job = j, loading_depth = load_depth, relaxation_time = relax_time, oscillation_amplitude = osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
+    # here the loading depth and oscillation amplitude are scaled by the the implicit geometric length scale
+    frequency_sweep (job = j, loading_depth = (z / default_z) * load_depth, relaxation_time = relax_time, oscillation_amplitude = (z / default_z) * osc_amp, period_low = min_period, period_high = max_period, period_n = n_period)
 
     # load model
     m = ModelFile (feb_file)
