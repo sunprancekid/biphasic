@@ -182,8 +182,10 @@ def calculate_complex_mod (period, time, pos, force):
         n = math.floor(time[i] / period)
         if n < n_cyc:
             t[n].append(time[i])
-            stress[n].append(-pos[i])
-            strain[n].append(force[i])
+            # the strain is the prescribed displacement of the indenter
+            strain[n].append(-pos[i])
+            # the stress is the resulting force the indenter experiences from the material
+            stress[n].append(force[i])
 
     ## initialize arrays
     # complex modulus properties
@@ -237,7 +239,7 @@ def calculate_complex_mod (period, time, pos, force):
         ## CALCULATE PROPERTIES
         # delta - phase shift
         # the degree (literally) to which stress leads strain
-        delta.append((delta_strain - delta_stress) * (180. / (2. * math.pi)))
+        delta.append((delta_stress - delta_strain) * (180. / (2. * math.pi)))
         # storage modulus - cos of dynamic modlus
         stmod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.cos(delta[-1] * (2. * math.pi) / 180.))
         # loss modulus - sin of dynamic moudlus

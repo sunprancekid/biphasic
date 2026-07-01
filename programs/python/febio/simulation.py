@@ -973,7 +973,7 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def parse_complex_modulus (self, overwrite = False):
+    def parse_complex_modulus (self, overwrite = True):
         """ Use cyclic loading data to determing the complex modulus properties.
 
         complex modulus properties include phase shift (delta), storage modulus (G'), 
@@ -1130,8 +1130,9 @@ class Simulation (object):
         df = self.get_displacement_force_lag(cycle = cycle, norm = norm)
         # establish labels
         if norm:
-            f_label = "Normalized Force \n($F_{{max}}$ = {:.1e}, $F_{{min}}$ = {:.1e})".format(df['f'].max(), df['f'].min())
-            p_label = "Normalized Position \n($x_{{max}}$ = {:.1e}, $x_{{min}}$ = {:.1e})".format(df['x'].max(), df['x'].min())
+            df_unnorm = self.get_displacement_force_lag(cycle = cycle, norm = False)
+            f_label = "Normalized Force \n($F_{{max}}$ = {:.1e}, $F_{{min}}$ = {:.1e})".format(df_unnorm['f'].max(), df_unnorm['f'].min())
+            p_label = "Normalized Position \n($x_{{max}}$ = {:.1e}, $x_{{min}}$ = {:.1e})".format(df_unnorm['x'].max(), df_unnorm['x'].min())
         else:
             f_label = "Force"
             p_label = "Position"
