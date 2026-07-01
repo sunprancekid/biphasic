@@ -258,7 +258,7 @@ submit () {
         fi
         # submit the simulation with the local optimization file
         declare -i HAS_OPT=1
-        local local_opt=${opt_list[0]}
+        local local_opt=$(find ${simdirstack} -name ${regex})
     fi
 
     # if there is a check file call, check for the file

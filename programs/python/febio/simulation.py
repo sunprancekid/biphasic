@@ -1072,7 +1072,7 @@ class Simulation (object):
         # parse the displacement and force data
         time = self.get_outfile()['t'].to_list()
         pos = self.get_outfile()['disp'].to_list()
-        force = self.get_outfile()['F_z'].to_list() # NOTE z component of force
+        force = self.get_outfile()['Fz'].to_list() # NOTE z component of force
         # get the displacement and force data corresponding to the cycle
         f_plot = []
         p_plot = []

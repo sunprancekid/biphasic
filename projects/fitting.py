@@ -71,12 +71,12 @@ gamma_start = 10.
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
 tau_min = 0.001
-tau_max = 10000.
+tau_max = 100000.
 tau_start = 10.
 tau_name = "fem.material('Material1').t1"
 # elastic modulus min, max, start, and name
-emod_min = 0.001
-emod_max = 100.
+emod_min = 0.01
+emod_max = 10.
 emod_start = 1.
 emod_name = "fem.material('Material1').elastic.E"
 
@@ -428,6 +428,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
         # open each simulation, save the final stress-strain, hysteresis data
         s_pe = job_pe.get_simulation(i)
         s_ve = job_ve.get_simulation(i)
+        if not os.path.exists(s_ve.get_simulation_path()): os.makedirs(s_ve.get_simulation_path())
         f_d = s_pe.get_displacement_force_lag ()
         # save force displacement lag to simulation directory
         s_pe.show_displacement_force_lag (norm = True, save = True, show = False)
