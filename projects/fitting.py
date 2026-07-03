@@ -65,14 +65,14 @@ default_n_period = 20
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
-obj_tol = 0.0000001
+obj_tol = 0.000001
 # gamma min, max, start, and name
-gamma_min = 0.001
+gamma_min = 0.0001
 gamma_max = 10000.
 gamma_start = 10.
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
-tau_min = 0.001
+tau_min = 0.0001
 tau_max = 100000.
 tau_start = 10.
 tau_name = "fem.material('Material1').t1"
@@ -84,6 +84,7 @@ emod_name = "fem.material('Material1').elastic.E"
 
 ## TODO add rigid body file writting and pe and ve files
 ## TODO display optimization results against the frequency
+## TODO pe generates simulation directory hirearchy
 
 ## METHODS
 # generate viscoelastic simulation using parameters, base feb file
