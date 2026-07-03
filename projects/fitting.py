@@ -80,6 +80,8 @@ emod_max = 10.
 emod_start = 1.
 emod_name = "fem.material('Material1').elastic.E"
 
+## TODO add rigid body file writting and pe and ve files
+## TODO display optimization results against the frequency
 
 ## METHODS
 # generate viscoelastic simulation using parameters, base feb file
@@ -534,6 +536,8 @@ def step_four (jd, jn, show = True, save = False):
     ## poro and viscoelastic labels
     label_pe = "Poroelastic Data"
     label_ve = "Viscoelastic Fit"
+
+    ## TODO plot the optimized parameters against frequency
 
     ## between poroelasticity and viscoelasticity, compare the following properties
     # resonant amplitude (-dW)
