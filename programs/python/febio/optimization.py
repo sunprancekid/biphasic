@@ -105,22 +105,22 @@ class Optimization (object):
             for idx, row in self.df_parm.iterrows():
                 # attempt to parse the results and save them as csv
                 opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
-                print(opt_dir)
+                # print(opt_dir)
                 if not os.path.exists(opt_dir + 'febio4.opt.csv'):
                     success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.opt.out')
-                    print(success)
+                    # print(success)
                     if not success: continue
                 # append the optimization results to the summary data frame
                 df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
-                if df_sum is None:
+                if self.df_sum is None:
                     # the summary dataframe has not been initialized yet
-                    df_sum = self.df_parm.copy(deep = True)
+                    self.df_sum = self.df_parm.copy(deep = True)
                     for j in list(df_opt_res.columns.values)[1:]:
-                        df_sum[j] = [np.nan for k in range(len(df_sum))]
+                        self.df_sum[j] = [np.nan for k in range(len(self.df_sum))]
                 for j in list(df_opt_res.columns.values)[1:]:
-                    df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
+                    self.df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
             if save:
-                df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
+                self.df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
 
         return self.df_sum
 
