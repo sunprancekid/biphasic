@@ -18,6 +18,8 @@ from febio.io.logfile import extract_febio_opt as opt_io
 from febio.job import Job
 from febio.feb.optimization_file import OptimizationFile as OptFile
 from febio.feb.model_file import ModelFile as ModFile
+from plot.figure import Figure # used for generating plots
+from plot.plot import gen_plot
 
 ## PARAMETERS
 # format of config file
@@ -120,19 +122,19 @@ class Optimization (object):
                 for j in list(df_opt_res.columns.values)[1:]:
                     self.df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
             if save:
-                self.df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn))
+                self.df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn), index = False)
 
         return self.df_sum
 
-    def show_optimization_results (self, show = True, save = False):
+    def show_optimization_results (self, xaxis_key = None, yaxis_key = None, show = True, save = False):
         """ plots optimized parameters.
         
         Arguments:
         ----------
+        xaxis_key : str (optional, default is 'n')
+        yaxis_key : str or List[str] (optional, default is 'all')
         show : bool
         save : bool
-        xaxis_key : str (optional, default is 'n')
-        yaxis_key : str (optional, default is 'all')
 
         Returns:
         --------
@@ -141,27 +143,67 @@ class Optimization (object):
         """
         # get the optimization results
         df = self.get_optimization_results()
-        # check the xaxis key
+
+        # check the xaxis keey
+        if xaxis_key is None:
+            xaxis_key = 'n'
+        else:
+            # check that the xaxis exists in the column list
+            if xaxis_key not in list(df.columns.values):
+                # the xaxis key must exiss in the optimization results table
+                print("ERROR :: Optimization.show_optimization_results() :: 'xaxis_key'({0}) does not exist in optimization results ({1}/opt.sum.csv).".format(xaxis_key, "{0}{1}".format(self.jd, self.jn)))
+                return
+
         # check the yaxis key
+        # convert string to list preimpltively
+        if isinstance(yaxis_key, str): yaxis_key = [yaxis_key]
+        # check yaxis keys based on type
         if yaxis_key is None:
             # if no keys were specified, do for all keys
-            # yaxis_key = self.get_optimization_parameters()
-            pass
-        elif isinstance(yaxis_key, str):
-            # check that the key that was specified exists in optimization job
-            pass
+            yaxis_key = []
+            # loop through each column in the results file
+            for i in list(df.columns.values):
+                # if the header does not exist in the parameter file
+                # it is a result from the optimization process
+                if i not in list(self.df_parm.columns.values):
+                    # add it to the list of yaxis_keys
+                    yaxis_key.append(i)
         elif isinstance(yaxis_key, list):
-            # check that each key in the list exists in the optimization job
-            pass
+            # check each item in the list for it's type
+            # traverse the list in reverse order
+            for i in range(len(yaxis_key) - 1, -1, -1):
+                # check that the key specified does not exist in optimization job parameters
+                if y in list(self.df_parm.columns.values):
+                    # the yaxis key is not an optimizable parameter
+                    print("ERROR :: Optimization.show_optimization_results() :: 'yaxis_key' ({0}) is not a result of the optimization process, and cannot be specified as a dependent variable when plotting.".format(yaxis_key.pop(i)))
+                # check that the specified key exists in the results file
+                if (yaxis_key[i] not in list(df.columns.values)) or ((yaxis_key[i] + '_opt') not in list(df.columns.values)):
+                    # the string does not match any of the columns in the results file
+                    print("ERROR :: Optimization.show_optimization_results() :: 'yaxis_key' ({0}) does not exist in the optimization process.".format(yaxis_key.pop(i)))
+
+            # check that the length of the list is still greater than one
+            if (len(yaxis_key) == 0):
+                print("ERROR :: Optimization.show_optimization_results() :: all elements were removed from method argument 'yaxis_key'. Unable to continue.")
+                return
         else:
             # the key does not match the specified data type
+            print("ERROR :: Optimization.show_optimization_results() :: method argument 'yaxis_key' ({0}) should be either type 'str' or 'List[str]'.".format(yaxis_key))
             pass
 
         for y in yaxis_key:
-            # create figure
+            # create figure, add data
             fig = Figure()
-            # 
-            pass 
+            fig.append_df (df = df, xcol = xaxis_key, ycol = y)
+            # set axis labels
+            fig.set_axis_label (akey = 'x', l = xaxis_key)
+            fig.set_axis_label (akey = 'y', l = y)
+            fig.set_axis_scale (akey = 'x', log = True)
+            fig.set_axis_scale (akey = 'y', log = True)
+            # set save location
+            if save:
+                fig.set_saveas(savedir = '{0}{1}/results/'.format(self.jd, self.jn), filename = y)
+                fig.save_data()
+            gen_plot (fig, show = show, save = save)
 
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.

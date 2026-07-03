@@ -893,6 +893,7 @@ class Job (object):
         df = pd.DataFrame.from_dict(noncon_dict | {'f': f} | {'h': hys})
         for k in noncon_col:
             if k != 'OT':
+                ## TODO add scaling algorithm
                 # establish save directory if saving
                 if not period:
                     xcol = 'f'

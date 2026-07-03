@@ -543,6 +543,10 @@ def step_four (jd, jn, show = True, save = False):
     label_ve = "Viscoelastic Fit"
 
     ## TODO plot the optimized parameters against frequency
+    # open the optimization job
+    o = Opt(jd = "{0}{1}/".format(jd, jn), jn = "opt")
+    o.get_optimization_results(save = True, overwrite = True)
+    o.show_optimization_results(save = save, show = show, xaxis_key = 'OT')
 
     ## between poroelasticity and viscoelasticity, compare the following properties
     # resonant amplitude (-dW)
