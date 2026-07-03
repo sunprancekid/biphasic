@@ -64,6 +64,8 @@ default_n_period = 20
 ## VISCOELASTIC OPTIMIZATION
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
+# amount by which the object function needs to be reduced to match the specified data
+obj_tol = 0.0000001
 # gamma min, max, start, and name
 gamma_min = 0.001
 gamma_max = 10000.
@@ -444,6 +446,8 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
         o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name)
         # add optimization function
         o.set_optimization_function(name = obj_fun)
+        # set the objective function tolerance
+        o.set_objective_tolerance(value = obj_tol)
         # add optimization data (from poroelastic simulation)
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list())
         # append cyclic data to optimization file to the viscoelastic job with the poroelastic data
