@@ -612,7 +612,7 @@ class OptimizationFile (object):
         None
         """
         # adjust the value
-        add_element_to_tree(self.root, "Options", "obj_tol", value = "{0:.6f}".format(value), attributes = attributes)
+        add_element_to_tree(self.root, "Options", "obj_tol", value = "{0:.8f}".format(value), attributes = attributes)
 
     # reset objective tolerance
     def reset_objective_tolerance (self):

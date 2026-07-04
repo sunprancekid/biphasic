@@ -65,7 +65,7 @@ default_n_period = 20
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
-obj_tol = 0.000001
+obj_tol = 0.0000001
 # gamma min, max, start, and name
 gamma_min = 0.0001
 gamma_max = 10000.
