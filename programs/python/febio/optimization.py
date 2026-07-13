@@ -249,6 +249,43 @@ class Optimization (object):
         # return the model to the user
         return m
 
+    ## ITERATIONS
+
+    def get_iterations_single (self, n):
+        """ returns the results of a single optimization process.
+
+        Arguments:
+        ----------
+        n : int
+            integer associated with single optimization process within job.
+
+        Returns:
+        --------
+        DataFrame
+            contains each iteration of optimization
+        """
+        # check that job parameters exist
+        if not self.has_parameters():
+            # the optimization job does not have any parameters
+            # job does not exists
+            print("ERROR :: Optimization.get_iterations_single() :: parameters for job '{0}' in directory '{1}' cannot be found.".format(self.jn, self.jd))
+            return
+
+        # check that n exists within job
+        if n not in self.df_parm['n'].to_list():
+            # n does not exist within the job
+            print("ERROR :: Optimization.get_iterations_single() :: optimization job number '{0}' does not exist in the job set.".format(n))
+            return
+
+        # check that the results exist within the simulation directory
+        opt_csv_file = "{0}{1}/{2}/febio4.opt.csv".format(self.jd, self.jn, self.df_parm.iloc['n', n])
+        print(opt_csv_file)
+        if not os.path.exists("{0}{1}"):
+
+
+        # results the results
+        pass
+
     ## CONFIG ##
 
     def has_config(self):

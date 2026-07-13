@@ -53,7 +53,7 @@ max_large_gamma = 5000.
 
 # POROELASTIC MODEL
 # permeability
-default_perm = 0.001
+default_perm = 0.0001
 # elastic modulus
 default_emod = 0.5
 # length scale
@@ -65,7 +65,7 @@ default_n_period = 20
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
-obj_tol = 0.0000001
+obj_tol = 1.0e-18
 # gamma min, max, start, and name
 gamma_min = 0.0001
 gamma_max = 10000.
@@ -351,8 +351,8 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     poro_amp = emod * pow(z, 3.)
 
     # use time scales to set minimum, maximum period
-    if min_period is None: min_period = poro_tau / 10
-    if max_period is None: max_period = poro_tau * 10
+    if min_period is None: min_period = poro_tau / 20
+    if max_period is None: max_period = poro_tau * 20
 
     # load modules
     # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
