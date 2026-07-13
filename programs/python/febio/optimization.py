@@ -278,13 +278,18 @@ class Optimization (object):
             return
 
         # check that the results exist within the simulation directory
-        opt_csv_file = "{0}{1}/{2}/febio4.opt.csv".format(self.jd, self.jn, self.df_parm.iloc['n', n])
-        print(opt_csv_file)
-        if not os.path.exists("{0}{1}"):
+        opt_csv_file = "{0}{1}/{2}febio4.opt.csv".format(self.jd, self.jn, self.df_parm.iloc[n]["path"])
+        if not os.path.exists(opt_csv_file):
+            # if the optimization file does not exist within the simulation directory,
+            # attempt to parse if from the job file (if it exists)
+            opt_out_file = ""
+            if not os.path.exists(opt_out_file):
+                #
+            else:
+                # parse the optimization file
 
-
-        # results the results
-        pass
+        # open the opimization file as a data frame, return
+        return pd.read_csv(opt_csv_file)
 
     ## CONFIG ##
 
