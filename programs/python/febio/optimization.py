@@ -11,6 +11,7 @@
 ## MODULES
 # native / conda
 import sys, os
+import math
 import pandas as pd
 import numpy as np
 # local
@@ -117,8 +118,13 @@ class Optimization (object):
                 if self.df_sum is None:
                     # the summary dataframe has not been initialized yet
                     self.df_sum = self.df_parm.copy(deep = True)
+                    # if results have period value, calculate frequency
+                    if 'OT' in list(self.df_sum.columns.values):
+                        self.df_sum['f'] = [2 * math.pi / v for v in self.df_sum['OT'].to_list()]
+                    # the optimization column header to the results dataframe
                     for j in list(df_opt_res.columns.values)[1:]:
                         self.df_sum[j] = [np.nan for k in range(len(self.df_sum))]
+
                 for j in list(df_opt_res.columns.values)[1:]:
                     self.df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
             if save:
@@ -279,14 +285,14 @@ class Optimization (object):
 
         # check that the results exist within the simulation directory
         opt_csv_file = "{0}{1}/{2}febio4.opt.csv".format(self.jd, self.jn, self.df_parm.iloc[n]["path"])
-        if not os.path.exists(opt_csv_file):
-            # if the optimization file does not exist within the simulation directory,
-            # attempt to parse if from the job file (if it exists)
-            opt_out_file = ""
-            if not os.path.exists(opt_out_file):
-                #
-            else:
-                # parse the optimization file
+        # if not os.path.exists(opt_csv_file):
+        #     # if the optimization file does not exist within the simulation directory,
+        #     # attempt to parse if from the job file (if it exists)
+        #     opt_out_file = ""
+        #     if not os.path.exists(opt_out_file):
+        #         #
+        #     else:
+        #         # parse the optimization file
 
         # open the opimization file as a data frame, return
         return pd.read_csv(opt_csv_file)
