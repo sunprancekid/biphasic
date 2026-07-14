@@ -312,20 +312,22 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_hysteresis_work (self, period = False, save = False):
+    def show_hysteresis_work (self, period = False, show = True, save = False):
         """ plot hysteresis work for second to last cycle.
 
         Parameters:
         -----------
         period : bool (default 'False')
             if 'True', displays hysteresis work against period.
+        show : bool (default 'True')
+            determines if the figure is displayed via GUI before returning
         save : bool (default 'False')
             if 'True', saves display to job directory
 
         Returns:
         --------
-        None
-
+        Figure
+            formatted figure object
         """
         # get work for simulations within set
         df_hys = self.get_hysteresis_work()
@@ -354,7 +356,8 @@ class Sweep (object):
         if save:
             fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'hysteresis_work')
             fig.save_data()
-        gen_plot(fig, show = True, save = save)
+        if show: gen_plot(fig, show = show, save = save)
+        return fig
 
     def get_resonant_simulation_int (self):
         """ returns the simulation number at which the sweep has an amplitude maximum.
