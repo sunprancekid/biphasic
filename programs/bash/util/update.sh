@@ -255,11 +255,27 @@ send_git() {
     # none
 
     ## ARGUMENTS
-    # none
+    # first argument: line in sync file that contains host information
+    declare -i l=$1
 
     ## SCRIPT
-    # none
-    return
+    # get the sync info from script
+    local host=$($PARSE_CSV -f $SYNC_FILE -l $l -c $COL_NUM_HOST)
+    local local=$($PARSE_CSV -f $SYNC_FILE -l $l -c $COL_NUM_LOCAL)
+    local remote=$($PARSE_CSV -f $SYNC_FILE -l $l -c $COL_NUM_REMOTE)
+    local name=$($PARSE_CSV -f $SYNC_FILE -l $l -c $COL_NUM_NAME)
+    # store the current working directory
+    local curr_dir=$(echo $PWD)
+    # navigate to the git directory
+    cd $local$name
+    # inform the user, if requested
+    if [[ $BOOL_VERB -eq 1 ]]; then
+        echo -e "\npulling git repo '${name}' located in directory '${local}'."
+    fi
+    # pull
+    git push
+    # return to the current working directory
+    cd $curr_dir
 }
 
 ## FLAGS
@@ -318,12 +334,10 @@ for l in $(seq 2 $N_LINES); do
     if [[ ($BOOL_GET -eq 1) && ("${p}" = "sync-bash") ]]; then
         get_sync $l
     elif [[ ($BOOL_GET -eq 1) && ( ("${p}" = "git") || ("${p}" = "git-pull") ) ]]; then
-        echo "get and git // git-pull"
         get_git $l
     elif [[ ($BOOL_SEND -eq 1) && ("${p}" = "sync-bash") ]]; then
         send_sync $l
     elif [[ ($BOOL_SEND -eq 1) && (${p} = "git") ]]; then
-        echo "send and git"
         send_git $l
     fi
 done
