@@ -1038,7 +1038,7 @@ class Simulation (object):
         # return to user
         return df
 
-    def get_displacement_force_lag (self, cycle = None, norm = False):
+    def get_displacement_force_lag (self, cycle = None, norm = False, t_start = None, t_end = None):
         """ get the displacement and force corresponding to a certain cycle of a simulation.
 
         Arguments:
@@ -1047,6 +1047,10 @@ class Simulation (object):
             cycle number
         norm : bool (optional, default is 'False')
             if 'True', normalize stress / strain values so that they are on a relative scale
+        t_start : float (optional)
+            specify the time point at which the stress / strain data should start
+        t_end : float (optional)
+            specify the time point at which the stress / strain data should end
 
         Returns:
         --------
@@ -1067,8 +1071,8 @@ class Simulation (object):
                 cycle -= 1
 
         # according to the cycle number, get the starting and stopping times for the cycle
-        t_start = relax_time + period * (cycle - 1)
-        t_end   = relax_time + period * (cycle)
+        if t_start is None: t_start = relax_time + period * (cycle - 1)
+        if t_end is None: t_end   = relax_time + period * (cycle)
         # parse the displacement and force data
         time = self.get_outfile()['t'].to_list()
         pos = self.get_outfile()['disp'].to_list()
