@@ -1101,7 +1101,7 @@ class Simulation (object):
         df = pd.DataFrame.from_dict({'t': t_plot, 'x': p_plot, 'f': f_plot})
         return df
 
-    def show_displacement_force_lag (self, cycle = None, norm = False, show = True, save = False):
+    def show_displacement_force_lag (self, cycle = None, norm = False, t_start = None, t_end = None, show = True, save = False):
         """ display the stress-strain lag for a give cycle.
 
         Arguments:
@@ -1110,6 +1110,10 @@ class Simulation (object):
             oscillation cycle number, must be one or greater.
         norm : bool (optional, default is 'False')
             if True, normalize the stress / strain values so that they are on a relative scale.
+        t_start : float (optional)
+            specify the time point at which the stress / strain data should start
+        t_end : float (optional)
+            specify the time point at which the stress / strain data should end
         show : bool (optional, default is 'True')
             if True, display figure with strss-strain data against time.
         save : bool (optional, default is 'False')
@@ -1131,7 +1135,7 @@ class Simulation (object):
                 cycle -= 1
 
         ## GET DATA
-        df = self.get_displacement_force_lag(cycle = cycle, norm = norm)
+        df = self.get_displacement_force_lag(cycle = cycle, norm = norm, t_start = t_start, t_end = t_end)
         # establish labels
         if norm:
             df_unnorm = self.get_displacement_force_lag(cycle = cycle, norm = False)
