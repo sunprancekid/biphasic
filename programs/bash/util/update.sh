@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -E
 
 ## Matthew A. Dorsey
 ## @mad-mpikg
@@ -121,18 +121,18 @@ check () {
 
     # check for the column headers
     declare -i N_COL=$($PARSE_CSV -f $SYNC_FILE -l 1 -c)
-    for i in $(seq 1 $N_COL); do
-            local head="$($PARSE_CSV -f $SYNC_FILE -l 1 -c $i)"
-            if [ $head = $COL_HOST ]; then
-                declare -i COL_NUM_HOST=$i
-            elif [ $head = $COL_LOCAL ]; then
-                declare -i COL_NUM_LOCAL=$i
-            elif [ $head = $COL_NAME ]; then
-                declare -i COL_NUM_NAME=$i
-            elif [ $head = $COL_REMOTE ]; then
-                declare -i COL_NUM_REMOTE=$i
-            elif [ $head = $COL_PROTOCOL ]; then
-                declare -i COL_NUM_PROTOCOL=$i
+    for n in $(seq 1 $N_COL); do
+            local head="$($PARSE_CSV -f $SYNC_FILE -l 1 -c $n)"
+            if [ "$head" = "$COL_HOST" ]; then
+                declare -i COL_NUM_HOST=$n
+            elif [ "$head" = "$COL_LOCAL" ]; then
+                declare -i COL_NUM_LOCAL=$n
+            elif [ "$head" = "$COL_NAME" ]; then
+                declare -i COL_NUM_NAME=$n
+            elif [ "$head" = "$COL_REMOTE" ]; then
+                declare -i COL_NUM_REMOTE=$n
+            elif [ "${head}" = "${COL_PROTOCOL}" ]; then
+                declare -i COL_NUM_PROTOCOL=$n
             fi
     done
 
@@ -230,7 +230,7 @@ send_sync () {
 
     ## ARGUMENTS
     # first argument: line in sync file which action should be performed for
-    declare -i l=${OPTARG}
+    declare -i l=$1
 
     ## SCRIPT
     # get address
@@ -284,17 +284,17 @@ while getopts "hvgsf:p:" opt; do
         h) # display help options, exit
             help 0;;
         v) # execute script verbosely
-            declare BOOL_VERB=1;;
+            declare -i BOOL_VERB=1 ;;
         g) # get, syn files locally with remote directory
-            declare -i BOOL_GET=1;;
+            declare -i BOOL_GET=1 ;;
         s) # send, push local files / directory to remote directory
-            declare -i BOOL_SEND=1;;
+            declare -i BOOL_SEND=1 ;;
         f) # declare file with sync instructions
             declare -i BOOL_FILE=1
-            SYNC_FILE=${OPTARG};;
+            SYNC_FILE=${OPTARG} ;;
         p) # specify a path to the directory which contains the executables
             declare -i BOOL_PATH=1
-            EX_PATH=${OPTARG};;
+            EX_PATH=${OPTARG} ;;
         ?) # display help, exit non-zero
             help $NONZERO_EXITCODE
         esac
