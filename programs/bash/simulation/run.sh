@@ -214,15 +214,18 @@ submit () {
     # check that the directory exists
     local simdirstack=$JOB_PATH$simdir
     if [[ ! -d $simdirstack ]]; then
-        display_error "simulation directory '$simdirstack' does not exist. cannot submit simulation '$simid'"
+        display_verbose "simulation directory '$simdirstack' does not exist. cannot submit simulation '$simid'"
+        return
     fi
     # check that the directory contains a feb file
     local feb_list=( ${simdirstack}*.feb )
     if [[ ${#feb_list[@]} -eq 0 ]]; then
         local feb_file=${simdirstack}${simid}.feb
-        display_error "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
+        display_verbose "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
+        return
     elif [[ ${#feb_list[@]} -gt 1 ]]; then
-        display_error "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
+        display_verbose "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
+        return
     else
         local feb_file=${feb_list[0]}
     fi
@@ -246,7 +249,8 @@ submit () {
         # the list length is greater than one
         # multiple optimization files were detected
         # throw error
-        display_error "multiple optimization files detected locally in simulation directory '${simdirstack}'. unable to submit simulation '${simid}'."
+        display_verbose "multiple optimization files detected locally in simulation directory '${simdirstack}'. unable to submit simulation '${simid}'."
+        return
     else
         # the list length is one
         # one optimization file was detected
@@ -254,7 +258,8 @@ submit () {
         if [[ $BOOL_OPT -eq 1 ]]; then
             # the global optimization file was specified but one was detected locally
             # throw an error
-            display_error "optimization file detected locally in simulation directory '${simdirstack}', but global optimization file was specified '${OPT_FILE}'. unable to submit simulation '${simid}'."
+            display_verbose "optimization file detected locally in simulation directory '${simdirstack}', but global optimization file was specified '${OPT_FILE}'. unable to submit simulation '${simid}'."
+            return
         fi
         # submit the simulation with the local optimization file
         declare -i HAS_OPT=1
