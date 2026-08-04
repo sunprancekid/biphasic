@@ -33,6 +33,8 @@ declare -i BOOL_SEND=0
 declare -i BOOL_FILE=0
 # determines if a path has been specified
 declare -i BOOL_PATH=0
+# determines if a specific line number was specified
+declare -i BOOL_LINE=0
 # path to executables
 EX_PATH="./programs/bash/util/"
 
@@ -79,6 +81,7 @@ help () {
     echo -e " -s\t\t| SEND: sync remote directory with local directory (local -> remote)."
     echo -e " -g\t\t| GET: sync local directory with remote directory (remote -> local)."
     echo -e " -p\t\t| specify path to executables 'sync.sh' and 'parse_csv.sh' (default is ${EX_PATH})"
+    echo -e " -n << ARG >> \t| specify a certain line number in FILE to perform operation for (exclusively)."
     echo -e ""
 
     # exit with exit code
@@ -117,6 +120,17 @@ check () {
         display_error "file containing sync instructions must be specified with option -f."
     elif [ ! -f ${SYNC_FILE} ]; then
         display_error "file '${SYNC_FILE}' containing sync instructions does not exist or cannot be found."
+    fi
+
+    # if a line number was specified, check that it exists in the file
+    if [[ $BOOL_LINE -eq 1 ]]; then 
+        # check that the line number exists in the file
+        declare -i n_lines=$($PARSE_CSV -f $SYNC_FILE -l)
+        if [[ $L -gt $n_lines ]]; then
+            display_error "argument '${L}' was passed to flag '-n', but file '$SYNC_FILE' contains $n_lines lines"
+        elif [[ $L -lt 2 ]]; then
+            display_error "argument '${L}' was passed to flag '-n', which is less than the minimum number '2' (the first line is the header)."
+        fi
     fi
 
     # check for the column headers
@@ -189,7 +203,7 @@ get_sync () {
     fi
 
     # execute
-    $SYNC -a $host -g -r $remote$name -l $local
+    $SYNC -a $host -g -r $remote$name/ -l $local$name/
 }
 
 # use git to retrieve
@@ -245,7 +259,7 @@ send_sync () {
     fi
 
     # execute
-    $SYNC -a $host -g -r $remote$name -l $local
+    $SYNC -a $host -s -r $remote$name -l $local$name/
 }
 
 # use git to push directory
@@ -279,7 +293,7 @@ send_git() {
 }
 
 ## FLAGS
-while getopts "hvgsf:p:" opt; do
+while getopts "hvgsf:p:n:" opt; do
     case $opt in
         h) # display help options, exit
             help 0;;
@@ -295,6 +309,9 @@ while getopts "hvgsf:p:" opt; do
         p) # specify a path to the directory which contains the executables
             declare -i BOOL_PATH=1
             EX_PATH=${OPTARG} ;;
+        n) # specify a certain line number to perform the syncing opertion for
+            declare -i BOOL_LINE=1
+            declare -i L=${OPTARG} ;;
         ?) # display help, exit non-zero
             help $NONZERO_EXITCODE
         esac
@@ -326,12 +343,21 @@ for i in $(seq 1 $N_COL); do
 done
 
 ## loop through each line in the file
-declare -i N_LINES=$($PARSE_CSV -f $SYNC_FILE -l )
-for l in $(seq 2 $N_LINES); do
+# if one specific line was provided
+if [[ $BOOL_LINE -eq 1 ]]; then
+    # increment only the requested line
+    declare -i START_LINE=$L
+    declare -i N_LINES=$L
+else
+    # increment all lines
+    declare -i START_LINE=2
+    declare -i N_LINES=$($PARSE_CSV -f $SYNC_FILE -l )
+fi
+for l in $(seq $START_LINE $N_LINES); do
     # determine the protocol
     p=$($PARSE_CSV -f $SYNC_FILE -l $l -c $COL_NUM_PROTOCOL)
     # execute protocol
-    if [[ ($BOOL_GET -eq 1) && ("${p}" = "sync-bash") ]]; then
+    if [[ ($BOOL_GET -eq 1) && ( ("${p}" = "sync-bash") || ( "${p}" = "sync-local" ) ) ]]; then
         get_sync $l
     elif [[ ($BOOL_GET -eq 1) && ( ("${p}" = "git") || ("${p}" = "git-pull") ) ]]; then
         get_git $l
