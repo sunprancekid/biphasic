@@ -86,6 +86,9 @@ class Optimization (object):
         """ for each simulation in the job set, parse the optimization results.
 
         the results are returned as a dataframe, and saved to the job directory.
+        if the optimization job failed, the results corresponding to the results 
+        are filled with 'nan' to signify the optimized results to no exists
+        in that case.
 
         Arguments:
         ----------
@@ -107,25 +110,31 @@ class Optimization (object):
             for idx, row in self.df_parm.iterrows():
                 # attempt to parse the results and save them as csv
                 opt_dir = "{0}{1}/{2}".format(self.jd, self.jn, row['path'])
-                # print(opt_dir)
+                success = True # assume the results exists
                 if not os.path.exists(opt_dir + 'febio4.opt.csv'):
+                    # if the results do not exist, attempt to parse them
                     success = opt_io(d = "{0}{1}/{2}/".format(self.jd, self.jn, row['path']), f = 'febio4.opt.out')
-                    # print(success)
-                    if not success: continue
-                # append the optimization results to the summary data frame
-                df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
-                if self.df_sum is None:
-                    # the summary dataframe has not been initialized yet
-                    self.df_sum = self.df_parm.copy(deep = True)
-                    # if results have period value, calculate frequency
-                    if 'OT' in list(self.df_sum.columns.values):
-                        self.df_sum['f'] = [2 * math.pi / v for v in self.df_sum['OT'].to_list()]
-                    # the optimization column header to the results dataframe
-                    for j in list(df_opt_res.columns.values)[1:]:
-                        self.df_sum[j] = [np.nan for k in range(len(self.df_sum))]
 
-                for j in list(df_opt_res.columns.values)[1:]:
-                    self.df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
+                if success: # if the simulation results file exists
+                    ## get the final optimized values from the summary file
+                    # append the optimization results to the summary data frame
+                    df_opt_res = pd.read_csv(opt_dir + 'febio4.opt.csv')
+                    # check if the summary file has already been initialized
+                    if self.df_sum is None:
+                        # the summary dataframe has not been initialized yet
+                        self.df_sum = self.df_parm.copy(deep = True)
+                        # if results have period value, calculate frequency
+                        if 'OT' in list(self.df_sum.columns.values):
+                            self.df_sum['f'] = [2 * math.pi / v for v in self.df_sum['OT'].to_list()]
+                        # the optimization column header to the results dataframe
+                        for j in list(df_opt_res.columns.values)[1:]:
+                            self.df_sum[j] = [np.nan for k in range(len(self.df_sum))]
+
+                    for j in list(df_opt_res.columns.values)[1:]:
+                        self.df_sum.loc[idx, j] = df_opt_res.loc[len(df_opt_res) - 1, j]
+                else:
+                    # if the results do not exist for the simulation, skip
+                    continue
             if save:
                 self.df_sum.to_csv("{0}{1}/{1}.sum.csv".format(self.jd, self.jn), index = False)
 
@@ -213,6 +222,9 @@ class Optimization (object):
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.
 
+        if optimization results do not exist for the specified job ('n'), the
+        method returns 'None'.
+
         Arguments:
         ----------
         n : int
@@ -249,6 +261,8 @@ class Optimization (object):
         of = OptFile("{0}{1}/{2}{1}-{3}.opt".format(self.jd, self.jn, self.df_parm['path'][n - 1], n))
         for index, row in of.get_parameters().iterrows(): # gets the parameters and paths for each optimizable value
             # add the optimized value to appropriate field in the model
+            val = self.df_sum[row['key'] + "_opt"][n - 1]
+            if np.isnan(val): return None # row contains nan types, optimization was unsuccessful
             m.update_element_value(elm_path = row['path'], value = self.df_sum[row['key'] + "_opt"][n - 1])
 
         # return the model to the user

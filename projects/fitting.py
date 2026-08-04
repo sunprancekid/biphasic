@@ -456,7 +456,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
         o.save_optimization_file(filepath = "{0}opt-{2}.opt".format(s_ve.get_simulation_path(), jn, i))
 
 # third step in fitting sequence
-def step_three (jd = None, jn = None, feb_file = default_feb_ve):
+def step_three (jd = None, jn = None, feb_file = default_feb_ve, overwrite = False):
     """ third step is fitting sequence, once the second step is finished.
 
     during the third step, the optimal viscoelastic parameters are parsed
@@ -472,6 +472,8 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
         name of job in job directory
     feb_file : str
         path to viscoelastic model
+    overwrite : bool (optional, default is 'False')
+        overwrite existing results, if requested
 
     Results:
     --------
@@ -487,7 +489,7 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
     job_ve = Job("{0}{1}".format(jd, jn), "opt") # used for generating parameters
     o = Opt("{0}{1}/".format(jd, jn), "opt") # used get th results from optimization
     m = ModelFile(feb_file)
-    df_opt_res = o.get_optimization_results()
+    df_opt_res = o.get_optimization_results(save = True, overwrite = overwrite)
 
     # re-write the same parameters from the optimization job a new directory
     job_ve.jn = "ve" # rename the job
@@ -502,7 +504,10 @@ def step_three (jd = None, jn = None, feb_file = default_feb_ve):
         # generate and save the visco elastic model with optimized parameters from step two
         # here, the parameters, directories for 'job_ve' and 'o' are the same
         m_opt = o.generate_optimized_model(m = feb_file, n = row['n'])
-        m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(jd, jn, row['path']), saveas = "ve-{0}.feb".format(row['n']))
+        if m_opt is None: 
+            os.makedirs("{0}{1}/ve/{2}".format(jd, jn, row['path'])) # make path
+            continue # skip if method returns 'None' type
+        m_opt.save_model(saveto = "{0}{1}/ve/{2}".format(jd, jn, row['path']), saveas = "ve-{0}.feb".format(row['n']), overwrite = overwrite)
 
 # fourth step in fitting sequence
 def step_four (jd, jn, show = True, save = False):

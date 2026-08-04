@@ -298,7 +298,6 @@ def extract_febio_opt (d = None, f = None, s = None):
 			l = l.strip() # remove newline character
 
 			# check if the line matches iteration format
-			# n_it += 1
 			if l == "----- Iteration: {0} -----".format(n_it):
 
 				## PARAMETER ADJUSTMENT VALUES
@@ -337,7 +336,9 @@ def extract_febio_opt (d = None, f = None, s = None):
 					# skip through the optimization data point without counting them
 					for i in range(n_data):
 						l = f_io.readline().strip()
-						# print(l)
+						if "ERROR" in l.split(" "):
+							# system has reported and the correct results cannot be parsed
+							return False
 
 				# SCORING
 				# get the objective value
