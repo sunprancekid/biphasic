@@ -267,6 +267,8 @@ submit () {
         # if specific check file doesn't eist, check for regex
         # local check_list=( ${simdirstack}$CHECKFILE )
         local check_file=${simdirstack}${CHECKFILE}
+        declare -i n_check=$( find ${simdirstack} -name $CHECKFILE | wc -l )
+        echo $n_check
         if [[ -f $check_file ]]; then
             # report if verbose
             if [[ $BOOL_VERBOSE -eq 1 ]]; then
