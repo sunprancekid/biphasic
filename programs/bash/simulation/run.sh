@@ -219,12 +219,12 @@ submit () {
     fi
     # check that the directory contains a feb file
     local feb_list=( ${simdirstack}*.feb )
-    if [[ ${#feb_list[@]} -eq 0 ]]; then
-        local feb_file=${simdirstack}${simid}.feb
-        display_verbose "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit simulation '$simid'"
+    declare -i n_feb=$( find ${simdirstack} -name "*.feb" | wc -l )
+    if [[ $n_feb -eq 0 ]]; then
+        display_verbose "no '.feb' file exist in simulation directory '$simdirstack'. unable to submit '$simid'"
         return
-    elif [[ ${#feb_list[@]} -gt 1 ]]; then
-        display_verbose "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit simulaiton '$simid'"
+    elif [[ $n_feb -gt 1 ]]; then
+        display_verbose "multiple '.feb' files exist in simulation directory '$simdirstack'. unable to submit '$simid'"
         return
     else
         local feb_file=${feb_list[0]}
