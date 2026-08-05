@@ -202,6 +202,12 @@ get_sync () {
         echo -e "\nSyncing '${name}' in remote directory '${host}:$remote' with local directory '${local}'.."
     fi
 
+    # check if the directory exists
+    if [ ! -d $local$name ]; then
+        # if the directory does not already exist, create it
+        mkdir $local$name
+    fi
+
     # execute
     $SYNC -a $host -g -r $remote$name/ -l $local$name/
 }
