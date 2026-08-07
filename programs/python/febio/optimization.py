@@ -23,12 +23,14 @@ from plot.figure import Figure # used for generating plots
 from plot.plot import gen_plot
 
 ## PARAMETERS
+# format for directoy containing files
+job_directory_format = "{0}{1}/"
 # format of config file
-config_file_format = "{0}/{1}/{1}.config.csv"
+config_file_format = "{0}{1}.config.csv"
 # format of parameter file
-parameter_file_format = "{0}/{1}/{1}.parm.csv"
+parameter_file_format = "{0}{1}.parm.csv"
 # format of summary file name
-summary_file_format = "{0}/{1}/{1}.sum.csv"
+summary_file_format = "{0}{1}.sum.csv"
 # header used for config files
 config_header = ['key', 'xml', 'description', 'units', 'constant', 'related', 'symbolic', 'val', 'min_val', 'max_val', 'n_val', 'log']
 # header used for summary file
@@ -45,7 +47,16 @@ class Optimization (object):
 
     Attributes:
     -----------
-    None
+    get_job_id():
+    get_summary_file_format():
+    has_summary():
+    get_summary():
+    get_config_file_format():
+    has_config():
+    load_config():
+    get_parameter_file_format():
+    has_parameters():
+    load_parameters():
 
     Methods:
     --------
@@ -104,8 +115,8 @@ class Optimization (object):
         """
         self.df_sum = None
         # check if the summary file already exists
-        if (not overwrite) and os.path.exists(summary_file_format.format(self.jd, self.jn)):
-            self.df_sum = pd.read_csv(summary_file_format.format(self.jd, self.jn))
+        if (not overwrite) and os.path.exists(self.get_summary_file_format()):
+            self.df_sum = pd.read_csv(self.get_summary_file_format())
         else:
             for idx, row in self.df_parm.iterrows():
                 # attempt to parse the results and save them as csv
@@ -314,7 +325,79 @@ class Optimization (object):
         # open the opimization file as a data frame, return
         return pd.read_csv(opt_csv_file)
 
+    ## JOBID
+
+    def get_jobid (self):
+        """ returns the job path.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+            path to job directory used to load optimization results.
+        """
+        return job_directory_format.format(self.jd, self.jn)
+
+    ## SUMMARY ## 
+
+    def get_summary_file_format (self):
+        """ returns the formatted path to the summary file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+            path to the simulation summary file.
+        """
+        return summary_file_format.format(self.jd, self.jn)
+
+    def has_summary (self):
+        """ checks if summary file exists within the simulation directory.
+
+        Parameters:
+        -----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        return path.os.exists(self.get_summary_file_format())
+
+    def get_summary (self):
+        """ return summary of optimization simulations.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        return self.df_sum
+
     ## CONFIG ##
+
+    def get_config_file_format (self):
+        """ returns formatted path to config file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+            path to the simulation config file.
+        """
+        return config_file_format.format(self.get_jobid(), self.jn)
 
     def has_config(self):
         """ check if config file exists in job directory.
@@ -328,7 +411,7 @@ class Optimization (object):
         bool
             'True' if file exists in job directory, else 'False'.
         """
-        return (os.path.exists(config_file_format.format(self.jd, self.jn)))
+        return (os.path.exists(self.get_config_file_format()))
 
     def load_config (self):
         """ load config file into Job from simulation directory.
@@ -341,7 +424,7 @@ class Optimization (object):
         --------
         None
         """
-        self.df_config = pd.read_csv(config_file_format.format(self.jd, self.jn))
+        self.df_config = pd.read_csv(config_file_format.format(self.get_jobid(), self.jn))
         # check if the config file has all of the headers
         for h in config_header:
             # if the column is not in config file header already
@@ -351,6 +434,20 @@ class Optimization (object):
                 ## TODO :: there is an option to get the information pertaining to each key from the parm file for config files that already exist and use an older version ...
 
     ## PARAMETERS ##
+
+    def get_parameter_file_format (self):
+        """ returns formatted path to config file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+            path to the simulation parameter file.
+        """
+        return parameter_file_format.format(self.get_jobid(), self.jn)
 
     def has_parameters (self):
         """ check if the parameter file exists within the job directory.
@@ -364,7 +461,7 @@ class Optimization (object):
         bool
             'True' if the parameter file exists, else 'False'.
         """
-        return (os.path.exists(parameter_file_format.format(self.jd, self.jn)))
+        return (os.path.exists(self.get_parameter_file_format()))
 
     def load_parameters (self):
         """ loads the parameter file, if it exists.
@@ -377,7 +474,7 @@ class Optimization (object):
         --------
         None
         """
-        self.df_parm = pd.read_csv(parameter_file_format.format(self.jd, self.jn))
+        self.df_parm = pd.read_csv(self.get_parameter_file_format())
 
 ## ARGUMENTS
 # none
