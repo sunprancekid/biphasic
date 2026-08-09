@@ -341,6 +341,22 @@ class Optimization (object):
         """
         return job_directory_format.format(self.jd, self.jn)
 
+    ## SIMULATION ## 
+
+    def has_simulation (self):
+        """ checks if simulation exists in optimization job.
+        
+        Arguments:
+        ----------
+        n : int
+            corresponds to simulation number in job.
+
+        Returns:
+        --------
+        bool
+            true
+        """
+
     ## SUMMARY ## 
 
     def get_summary_file_format (self):

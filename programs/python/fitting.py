@@ -67,24 +67,22 @@ obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
 obj_tol = 1.0e-18
 # gamma min, max, start, and name
-gamma_min = 0.0001
-gamma_max = 10000.
-gamma_start = 10.
+gamma_min = 0.01
+gamma_max = 1.
+gamma_start = 0.1
 gamma_name = "fem.material('Material1').g1"
 # tau min, max, start, and name
-tau_min = 0.0001
-tau_max = 100000.
+tau_min = 1.
+tau_max = 1000.
 tau_start = 10.
 tau_name = "fem.material('Material1').t1"
 # elastic modulus min, max, start, and name
-emod_min = 0.01
-emod_max = 10.
-emod_start = 1.
+emod_min = 0.35
+emod_max = 0.55
+emod_start = 0.45
 emod_name = "fem.material('Material1').elastic.E"
 
 ## TODO add rigid body file writting and pe and ve files
-## TODO display optimization results against the frequency
-## TODO pe generates simulation directory hirearchy
 
 ## METHODS
 # generate viscoelastic simulation using parameters, base feb file
@@ -307,7 +305,7 @@ def analysis_gamma_low (jd = None, jn = None, show = True, save = False):
     gen_plot(fig, show = show, save = save)
 
 # first step in fitting sequence
-def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, n_period = default_n_period, min_period = None, max_period = None, feb_file = default_feb_pe):
+def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, n_frequency = default_n_period, min_frequency = None, max_frequency = None, feb_file = default_feb_pe, norm = False):
     """ first step in fitting sequence.
 
     during the first step, the a poroelastic model is generated, and the resonant
@@ -331,28 +329,57 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
         time between loading and oscillation phase
     load_depth : float (optional, default is 'default_loading_depth')
         depth of initial indentation before relxation and oscillation phases
-    n_period : int (optional, default is 'default_n_period')
-        number of unique period values between minimum and maximum to test
-    min_period : float (optional)
+    n_freqyebct : int (optional, default is 'default_n_period')
+        number of unique frequency values to test
+    min_frequency : float (optional)
         minimum oscilation period to test (if unspecified, minimum period is
         two orders of magnitude less than the resonant timescale)
-    max_period : float (optional)
+    max_frequency : float (optional)
         maximum oscillation period to test (if unspecified, maximum period is
         two orders of magnitude greater than the resonant timescale)
     feb_file : str (optional, default is 'default_feb_pe')
         path to base poroelastic model to use for simulation set
+    norm : bool
+        if 'True', time scales are selected relative to normalized poroelastic
+        timescale
 
     Returns:
     --------
     None
     """
-    # based on the poroelastic model, determine the time scales
-    poro_tau = pow(z, 2.) / (emod * perm)
-    poro_amp = emod * pow(z, 3.)
+    ## determine timescales
+    # estimate the critical period / frequency according to the poroelastic model parameters
+    norm_fac = pow(emod, 1.) * pow(perm, 1.) * pow(z, -2.) # converts reduced time to real time according to poroelastic parameters
+    crit_poro_freq = 30. * norm_fac # this is an emperically determined value
 
-    # use time scales to set minimum, maximum period
-    if min_period is None: min_period = poro_tau / 20
-    if max_period is None: max_period = poro_tau * 20
+    # if frequency is unspecified in method call
+    if max_frequency is None: 
+        # default max freq. is one order of magnitude 
+        # greater than the critical freq.
+        max_frequency = crit_poro_freq * 10
+    elif norm:
+        # the max freq provided is reduce, move to real time
+        max_frequency = max_frequency * norm_fac
+
+    # if the min frequency is unspecified in the method call
+    if min_frequency is None: 
+        # default min freq. is one order of magnitude 
+        # less than the critical freq.
+        min_frequency = crit_poro_freq / 10
+    elif norm:
+        # if the minfreq was provided and normalized
+        # move to real time
+        min_frequency = min_frequency * norm_fac
+
+    # convert frequency to period
+    max_period = 2. * math.pi / min_frequency # min_frequency -> max_period
+    min_period = 2. * math.pi / max_frequency # max_frequency -> min_period
+
+    # notify the user of the estimate critical frequency
+    print("NOTE :: fitting.step_one() :: according to the poroelastic model parameters (e = {0:.2e} MPa, K = {1:.2e} mm^4/Ns, l = {2:.2e} mm), the resonant time scale will be {4:.2e} seconds or {5:.2e} Hz.".format(emod, perm, z, math.pi * 2. / crit_poro_freq, crit_poro_freq))
+    if crit_poro_freq > (2. * math.pi):
+        # notify the user if the resonant period is approaching the "speed limit"
+        print("WARNING :: fitting.step_one() :: the resonant frequency is approaching the resonant beam frequency ({0:.2e} seconds / {1:.2e} Hz).".format(0.1, math.pi * 2. * 10))
 
     # load modules
     # NOTE :: these methods have the same names as those for viscoleasticity, so they are loaded locally rather than globally
@@ -373,6 +400,8 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     j.save_config()
     j.save_parameters()
     m.save_model (saveto = "{0}{1}/pe/".format(jd, jn), saveas = "pe.feb".format(jn))
+    j.generate_parameterized_models(m = "{0}{1}/pe/pe.feb", overwrite = True)
+
 
 # second step in fitting sequence
 def step_two (jd = None, jn = None, feb_file = default_feb_ve):
