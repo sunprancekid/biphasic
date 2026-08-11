@@ -10,15 +10,19 @@
 
 
 ## MODULES
-# native / conda
-import sys, os
+# native
+import sys, os, math
+import copy
+# conda
 import pandas as pd
-# local
+# local - febio
 from febio.job import Job
 from febio.sweep import Sweep
 from febio.optimization import Optimization as Opt
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
+from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+# local - plotting
 from plot.figure import Figure
 from plot.plot import gen_plot
 
@@ -85,6 +89,206 @@ emod_name = "fem.material('Material1').elastic.E"
 ## TODO add rigid body file writting and pe and ve files
 
 ## METHODS
+## TODO write linux script, how should job execute ..?
+# start fitting job
+def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False, pe_feb = default_feb_pe, ve_feb = default_feb_ve):
+    """ initialize the parameters and model files for fitting routine.
+
+    a fitting routine contains three parts: first, data is generated from a
+    poroelasic model for beam bending. The poroelastic model parameters are
+    the elastic modulus (emod), the permeability (perm), and the length scale
+    (z). the beam bending model has two parameters, which are the loading
+    depth (load_depth - the depth the tip displaces the beam during the pre-
+    stress phase) and the oscillation amplitude (osc_amp - the amplitude of
+    oscillation during the oscillation phase).
+
+    second: stress-strain data is taken from the final complete oscillation
+    cycle of the poroelastic simulation. the data is provided to a viso-
+    elastic beam bending model ('feb_ve') which has the exact same 
+    dimensions. during optimization, the viscoelastic model parameters 
+    are adjusted until the viscoelastic model reproduces the exact same
+    stress-strain data as the poroelastic model. 
+
+    third: the optimal parameters provided during optimization are validated
+    by running one final simulation where the stress-strain data is reproduced.
+
+    This is performed at several time scales to determine the how the optimal
+    viscoelastic parameters change with time scale overtime.
+
+    here, two time scales are selected (min_freq and max_freq), which are meant
+    to be the boundaries (outer edges) of the range of timescales which will 
+    be tested during fitting.
+    
+    Arguments:
+    ----------
+    jd : str
+        path to location to save simulation directory
+    jn : str
+        name of simulation set
+    emod : float (optional, default is 'default_emod')
+        value of elastic modulus used in material model
+    perm : float (optional, default is 'default_perm')
+        value of permeability using in material model
+    z : float (optional, default iis 'default_z')
+        value of model length scale (must match length scale of feb model)
+    osc_amp : float (optional, default is 'default_oscillation_amplitude')
+        amplitude during oscillation phase
+    relax_time : float (optional, default is 'default_relaxation_time')
+        time between loading and oscillation phase
+    load_depth : float (optional, default is 'default_loading_depth')
+        depth of initial indentation before relxation and oscillation phases
+    min_freq : float (optional)
+        minimum oscilation period to test (if unspecified, minimum period is
+        two orders of magnitude less than the resonant timescale)
+    max_freq : float (optional)
+        maximum oscillation period to test (if unspecified, maximum period is
+        two orders of magnitude greater than the resonant timescale)
+    norm : bool
+        if 'True', time scales provided ('min_freq' and 'max_freq') are
+        relative to the poroelastic timescale determined by the poroelastic
+        model parameters
+    pe_feb : str (optional, default is 'default_feb_pe')
+        path to base poroelastic model to use for simulation set
+    ve_feb : str (optional, default is 'default_feb_ve')
+        path to base viscoelastic mode to use for simulation set
+
+    Returns:
+    -----------
+    None
+    """
+    ## establish timescales 
+    # estimate the critical period / frequency according to the poroelastic model parameters
+    norm_fac = pow(emod, 1.) * pow(perm, 1.) * pow(z, -2.) # converts reduced time to real time according to poroelastic parameters
+    crit_poro_freq = 30. * norm_fac # this is an emperically determined value
+
+    # if frequency is unspecified in method call
+    if max_freq is None: 
+        # default max freq. is one order of magnitude 
+        # greater than the critical freq.
+        max_freq = crit_poro_freq * 10
+    elif norm:
+        # the max freq provided is reduce, move to real time
+        max_freq = max_freq * norm_fac
+
+    # if the min frequency is unspecified in the method call
+    if min_freq is None: 
+        # default min freq. is one order of magnitude 
+        # less than the critical freq.
+        min_freq = crit_poro_freq / 10
+    elif norm:
+        # if the minfreq was provided and normalized
+        # move to real time
+        min_freq = min_freq * norm_fac
+
+    # convert frequency to period
+    max_period = 2. * math.pi / min_freq # min_freq -> max_period
+    min_period = 2. * math.pi / max_freq # max_freq -> min_period
+
+    # notify the user of the estimate critical frequency
+    print("NOTE :: fitting.init_fit() :: according to the poroelastic model parameters (e = {0:.2e} MPa, K = {1:.2e} mm^4/Ns, l = {2:.2e} mm), the resonant time scale will be {3:.2e} seconds or {4:.2e} Hz.".format(emod, perm, z, math.pi * 2. / crit_poro_freq, crit_poro_freq))
+    if crit_poro_freq > (2. * math.pi):
+        # notify the user if the resonant period is approaching the "speed limit"
+        print("WARNING :: fitting.init_fit() :: the resonant frequency is approaching the resonant beam frequency ({0:.2e} seconds / {1:.2e} Hz).".format(0.1, math.pi * 2. * 10))
+
+    ## create poroelastic job
+    # set job parameters
+    j_pe = Job("{0}{1}".format(jd, jn), 'pe')
+    constant_bulk_modulus (job = j_pe, E_val = emod)
+    constant_permeability (job = j_pe, K_val = perm)
+    # here the loading depth and oscillation amplitude are scaled by the the implicit geometric length scale
+    frequency_sweep (job = j_pe, 
+        loading_depth = (z / default_z) * load_depth, 
+        relaxation_time = relax_time, 
+        oscillation_amplitude = (z / default_z) * osc_amp, 
+        period_low = min_period, 
+        period_high = max_period, 
+        period_n = 2) # initially, only two simulations are started
+    # generate job parameters
+    # save
+    j_pe.generate_parameters()
+    j_pe.save_config()
+    j_pe.save_parameters()
+    # j_pe.generate_parameterized_models(m = "{0}{1}/pe/pe.feb", overwrite = True)
+    # generate model
+    m_pe = ModelFile (pe_feb)
+    m_pe.save_model (saveto = "{0}{1}/pe/".format(jd, jn), saveas = "pe.feb".format(jn))
+
+    ## create optimization job
+    job_opt = Job("{0}{1}".format(jd, jn), 'opt')
+    # write pe parameters to ve job
+    # NOTE: here, elastic modulus, gamma and tau are varied during optimization, and therefore do not need to fixed
+    frequency_sweep (job = job_opt,
+                     loading_depth = (z / default_z) * load_depth,
+                     relaxation_time = relax_time,
+                     oscillation_amplitude = (z / default_z) * osc_amp,
+                     period_low = min_period,
+                     period_high = max_period,
+                     period_n = 2) 
+    # save parameters
+    job_opt.generate_parameters()
+    job_opt.save_config()
+    job_opt.save_parameters()
+    # generate model
+    m_opt = ModelFile(ve_feb)
+    m_opt.save_model(saveto = "{0}{1}/opt/".format(jd, jn), saveas = "opt.feb", overwrite = True)
+
+    ## create viscoelastic job
+    # viscoelatic job is exactly the same as the optimization job
+    job_ve = copy.deepcopy(job_opt)
+    job_ve.jn = 've'
+    job_ve.generate_parameters()
+    job_ve.save_config()
+    job_ve.save_parameters()
+    # the viscoelastic model is exactly the same as the optimization model
+    m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "pe.feb", overwrite = True)
+
+def update_fit ():
+    """ update fit job directories based on their status.
+    
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    # use poroelastic job hirearchy as Ansatz for 'opt' and 've' jobs
+    pass
+
+# add fitting at selected time scale to job
+def add_fit_timescale ():
+    """ add timescale to fitting job.
+    
+    Arguments:
+    ----------
+    None
+
+    Parameters:
+    -----------
+    None
+    """
+    # assume time scale exists between two points which have already run 
+    # generate an optization file which contains the correct bounds
+    pass
+
+def update_step_two (jd = None, jn = None):
+    """ iteratively implements optimization and feb files.
+
+    Arguments:
+    ----------
+    None
+
+    Returns:
+    --------
+    None
+    """
+    # check that the path to optimization exists
+    # check what has been completed so far
+    # first: run only the ends
+    # second: fill 
+    pass
+
 # first step in fitting sequence
 def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, n_frequency = default_n_period, min_frequency = None, max_frequency = None, feb_file = default_feb_pe, norm = False):
     """ first step in fitting sequence.
@@ -183,7 +387,6 @@ def step_one (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     m.save_model (saveto = "{0}{1}/pe/".format(jd, jn), saveas = "pe.feb".format(jn))
     j.generate_parameterized_models(m = "{0}{1}/pe/pe.feb", overwrite = True)
 
-
 # second step in fitting sequence
 def step_two (jd = None, jn = None, feb_file = default_feb_ve):
     """ second step in fitting sequence, once first step is finished.
@@ -211,7 +414,7 @@ def step_two (jd = None, jn = None, feb_file = default_feb_ve):
 
     # import methods from viscoleastic mod file
     # NOTE :: these methods have the same name as those in the proelastic mod file, so they are loaded locally (not globally)
-    from viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
+    # from viscoelastic_modulation import constant_bulk_modulus, constant_tau, constant_gamma, frequency_sweep
 
     # create viscoelastic job and model, save parameters
     job_ve = Job("{0}{1}".format(jd, jn), 'opt')
