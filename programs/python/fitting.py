@@ -242,18 +242,107 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     # the viscoelastic model is exactly the same as the optimization model
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "pe.feb", overwrite = True)
 
-def update_fit ():
+def update_fit (jd = None, jn = None, overwrite = True):
     """ update fit job directories based on their status.
     
     Arguments:
     ----------
-    None
+    jd : str
+        path to location to save simulation directory
+    jn : str
+        name of simulation set
+    overwrite : bool
+        boolean that determines if existing files are overwritten
 
     Parameters:
     -----------
     None
     """
+    ## esablish jobs, models
+    ## TODO update results for each job
+    j_pe = Job ("{0}{1}".format(jd, jn), 'pe')
+    j_op = Optimization ("{0}{1}".format(jd, jn), 'opt')
+    j_ve = Job ("{0}{1}".format(jd, jn), 've')
+    m_pe = Model ("{0}{1}/pe/pe.feb".format(jd, jn))
+    m_op = Model ("{0}{1}/opt/opt.feb".format(jd, jn))
+    m_ve = Model ("{0}{1}/ve/ve.feb".format(jd, jn))
+
+    ## check the progression of each job through the fitting routines
     # use poroelastic job hirearchy as Ansatz for 'opt' and 've' jobs
+    for i in range(1, j_pe.gets_sim_num() + 1):
+        # establish job directories
+        dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.get_key_value('path'))
+        dir_op = "{0}{1}/opt/{2}".format(jd, jn, j_pe.get_key_value('path'))
+        dir_ve = "{0}{1}/ve/{2}".format(jd, jn, j_pe.get_key_value('path'))
+
+        # POROELASTIC JOB
+        # check if the job directory exists
+        if not os.path.exists(dir_pe):
+            # if it does not exist, make the directory
+            os.makedirs(dir_pe)
+            # parameterize model, save to simulation directory
+            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}".format(i), overwrite = overwrite)
+            # write slurm file
+            ## TODO add slurm file writing
+            continue # move to the next integer
+        else:
+            # the simulation directory exists, is the simulation done?
+            if not os.path.exists(dir_pe + "febio4.job.out"): continue
+            elif not os.path.exists(dir_pe + "febio4.out.csv"):
+                # in this case, the outfile exists by the csv file does not
+                # attempt to analyze the results
+                # in this case, the out file exists but the csv file does not
+                # so the results could be done, but haven't been fully analyzed
+                continue
+
+        ## OPTIMIZATIONS JOB
+        # check if the directory exists
+        if not os.path.exists(dir_op):
+            # if it does not, make the directory
+            os.makedirs(dir_op)
+            
+            # get the simulation stress-strain data from the poroelastic file
+            s_pe = j_pe.get_simulation(i)
+            f_d = s_pe.get_displacement_force_lag ()
+            f_d['f'] = -1 * f_d['f'] # transform force to negative value
+            
+            # generate the feb file
+            j_ve.parameterize_model(m = m_opt, n = i).save_model(saveto = dir_op, saveas = "opt-{0}".format(i), overwrite = overwrite)
+
+            # generate optimization file
+            o = OptFile()
+            # add optimizable parameters
+            ## HERE check for neighbors which are finished already
+            o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
+            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name) # time constant
+            # in the case of elasticity, the bounds should be outside the average value
+            o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
+            o.set_optimization_function(name = obj_fun) # optimization function
+            o.set_objective_tolerance(value = obj_tol) # objective tolerance
+            o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
+            o.save_optimization_file(filepath = "{0}{1}/{2}opt-{3}.opt".format(jn, jn, j_pe.get_key_value('path'), i)) # write the optimization file to the simulation directory
+
+            # generate slurm file
+            ## TODO generate slurm file
+        else:
+            # the job directory does exist, check if optimization is finished
+            # attempt to generate optimized model
+            m_o = j_op.generate_optimized_model (m = m_ve, n = i)
+            # if the method returns None type, optimization is not done
+            if m_o is None: continue
+
+        ## VISCOELASTIC JOB
+        # does the directory exist?
+        # if not, make the directory
+        # generate the file file
+        # generate the slurm submission file
+        # if the directory exists, is the job done?
+        # if it does exist, is the job done?
+        # if it is, move on to ANALYSIS
+
+        ## ANALYSIS
+        # update the results
+
     pass
 
 # add fitting at selected time scale to job
