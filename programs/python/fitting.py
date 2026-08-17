@@ -56,7 +56,7 @@ min_large_gamma = 500.
 max_large_gamma = 5000.
 
 # POROELASTIC MODEL
-# permeability
+# permeabilityOptimization
 default_perm = 0.0001
 # elastic modulus
 default_emod = 0.5
@@ -261,19 +261,19 @@ def update_fit (jd = None, jn = None, overwrite = True):
     ## esablish jobs, models
     ## TODO update results for each job
     j_pe = Job ("{0}{1}".format(jd, jn), 'pe')
-    j_op = Optimization ("{0}{1}".format(jd, jn), 'opt')
+    j_op = Opt ("{0}{1}".format(jd, jn), 'opt')
     j_ve = Job ("{0}{1}".format(jd, jn), 've')
-    m_pe = Model ("{0}{1}/pe/pe.feb".format(jd, jn))
-    m_op = Model ("{0}{1}/opt/opt.feb".format(jd, jn))
-    m_ve = Model ("{0}{1}/ve/ve.feb".format(jd, jn))
+    m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
+    m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
+    m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
 
     ## check the progression of each job through the fitting routines
     # use poroelastic job hirearchy as Ansatz for 'opt' and 've' jobs
-    for i in range(1, j_pe.gets_sim_num() + 1):
+    for i in range(1, j_pe.get_sim_num() + 1):
         # establish job directories
-        dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.get_key_value('path'))
-        dir_op = "{0}{1}/opt/{2}".format(jd, jn, j_pe.get_key_value('path'))
-        dir_ve = "{0}{1}/ve/{2}".format(jd, jn, j_pe.get_key_value('path'))
+        dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
+        dir_op = "{0}{1}/opt/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
+        dir_ve = "{0}{1}/ve/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
 
         # POROELASTIC JOB
         # check if the job directory exists
@@ -281,7 +281,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # if it does not exist, make the directory
             os.makedirs(dir_pe)
             # parameterize model, save to simulation directory
-            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}".format(i), overwrite = overwrite)
+            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(i), overwrite = overwrite)
             # write slurm file
             ## TODO add slurm file writing
             continue # move to the next integer
