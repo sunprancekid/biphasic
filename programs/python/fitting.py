@@ -21,6 +21,7 @@ from febio.sweep import Sweep
 from febio.optimization import Optimization as Opt
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
+from febio.slurm.submit import gen_submit_script
 from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
 # local - plotting
 from plot.figure import Figure
@@ -35,6 +36,9 @@ default_oscillation_amplitude = 0.001
 default_relaxation_time = 10000
 # default loading depth during initial loading
 default_loading_depth = 0.005
+# dictionary used for poroelastic model files
+dict_feb_pe = {'0.05': "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/z_0050/bend_pe.feb", '0.08': "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/z_0080/bend_pe.feb", '0.125': "/home/mpikg/dorsey/Desktop/biphasic/bend/scale/z_0125/bend_pe.feb", '0.2': "/home/mpikg/dorsey/models/bend/scale/z_0200/bend_pe.feb", '0.5': "/home/mpikg/dorsey/models/bend/scale/z_0500/bend_pe.feb", '1.0': "/home/mpikg/dosey/models/bend/scale/z_1000/bend_pe.feb"}
+# dictionary used for viscoelastic model files
 # default feb model for viscoleastic simulations
 default_feb_ve = "models/bend/bend_ve.feb"
 # default feb model for poroelastic simulations
@@ -156,6 +160,8 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     -----------
     None
     """
+    ## check arguments
+
     ## establish timescales 
     # estimate the critical period / frequency according to the poroelastic model parameters
     norm_fac = pow(emod, 1.) * pow(perm, 1.) * pow(z, -2.) # converts reduced time to real time according to poroelastic parameters
@@ -283,7 +289,11 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # parameterize model, save to simulation directory
             j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(i), overwrite = overwrite)
             # write slurm file
-            ## TODO add slurm file writing
+            gen_submit_script (filepath = "{0}pe-{1}.slurm.sub".format(j_pe.get_simulation(i).get_simulation_path(), i), 
+                jobid = "pe-{0}.feb".format(i), 
+                feb_file = "{0}pe-{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), i), 
+                del_feb = True, 
+                del_xplt = True)
             continue # move to the next integer
         else:
             # the simulation directory exists, is the simulation done?
@@ -761,3 +771,11 @@ def step_four (jd, jn, show = True, save = False):
             # show figure
             gen_plot(fig, show = False, save = save)
 
+## ARGUMENTS
+# first argument: path to directory that contains fitting simulations
+
+## SCRIPT 
+# loop through each length scale directory
+# does the simulation directory exist for the length scale?
+# if not make the directory and generate the simulation file structure
+# if it does, update the directory
