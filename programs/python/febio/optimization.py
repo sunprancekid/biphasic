@@ -356,6 +356,7 @@ class Optimization (object):
         bool
             true
         """
+        pass
 
     ## SUMMARY ## 
 
