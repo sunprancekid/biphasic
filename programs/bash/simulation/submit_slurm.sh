@@ -145,7 +145,7 @@ gen_slurm_script () {
     # check if a slurm submit file already exists in the directory
     regex="*.slurm.sub"
     declare -i n_slurm=$( find ${FILEPATH} -name ${regex} | wc -l )
-    if [[ $n_slumr -ge 1 ]]; then
+    if [[ $n_slurm -ge 1 ]]; then
         # the directory already has a slurm file
         return
     fi

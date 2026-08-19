@@ -58,7 +58,7 @@ def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file =
 	## write file contents to list
 	# create list if file contents
 	f_list = []
-	f_list.append("#/bin/bash -l")
+	f_list.append("#!/bin/bash -l")
 	f_list.append("")
 	f_list.append("#SBATCH --partition=cpu2")
 	if jobid is not None: f_list.append("#SBATCH -J {0}".format(jobid))

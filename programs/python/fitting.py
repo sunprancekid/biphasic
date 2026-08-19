@@ -273,6 +273,12 @@ def update_fit (jd = None, jn = None, overwrite = True):
     m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
     m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
 
+    # used for job naming
+    z_int = 0
+    for l in list(dict_feb.keys()):
+        if jn == dict_feb[l]:
+            z_int = list(dict_feb.keys()).index(l) + 1
+
     ## check the progression of each job through the fitting routines
     # use poroelastic job hirearchy as Ansatz for 'opt' and 've' jobs
     for i in range(1, j_pe.get_sim_num() + 1):
@@ -289,8 +295,10 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # parameterize model, save to simulation directory
             j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(i), overwrite = overwrite)
             # write slurm file
+            jobid = "p{0}".format(i)
+            if z_int > 0: jobid = "z{0}-p{1}".format(z_int, i)
             gen_slurm_script (filepath = "{0}pe-{1}.slurm.sub".format(j_pe.get_simulation(i).get_simulation_path(), i),
-                jobid = "pe-{0}".format(i),
+                jobid = jobid,
                 feb_file = "{0}pe-{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), i), 
                 time_limit = "20:00", # twenty minute time limit
                 del_feb = True, 
