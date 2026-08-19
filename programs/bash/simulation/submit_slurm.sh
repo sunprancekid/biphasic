@@ -142,7 +142,13 @@ gen_slurm_script () {
     # none
 
     ## SCRIPT
-    # if the integer has been specified, rename the job according to the integer
+    # check if a slurm submit file already exists in the directory
+    regex="*.slurm.sub"
+    declare -i n_slurm=$( find ${FILEPATH} -name ${regex} | wc -l )
+    if [[ $n_slumr -ge 1 ]]; then
+        # the directory already has a slurm file
+        return
+    fi
 
     # submit the job to slurm
     echo "#!/bin/bash -l" > $FILEPATH$FILENAME
@@ -195,8 +201,19 @@ sub_slurm_script () {
     cd $SIMDIR
     # echo $pwd
 
-    # log into cluster and submit script${SIMID}.slurm.sub
-    local slurm_out="$(sbatch ${SIMID}.slurm.sub)"
+    # find the slurm file in the current directory
+    regex="*.slurm.sub"
+    declare -i n_slurm=$( find -name ${regex} | wc -l )
+    if [[ $n_slurm -ne 1 ]]; then
+        # multiple slurm files exist in the directory, report error
+        echo "ERROR :: submit_slurm.sh :: multiple slurm submission files exist in ${SIMDIR}, unable to submit."
+        exit $NONZEROEXITCODE
+    fi
+    # get the slurm file
+    local slurm_file=$(find -name ${regex})
+
+    # submit script
+    local slurm_out="$(sbatch ${slurm_file})"
     local out_arr=($slurm_out)
     if [[ $BOOL_RETURN -eq 1 ]]; then
         echo ${out_arr[3]}
