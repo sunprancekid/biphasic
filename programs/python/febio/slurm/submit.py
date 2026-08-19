@@ -14,7 +14,7 @@ import sys, os
 
 ## METHODS
 # generates slurm script
-def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file = None, overwrite = False, del_feb = False, del_xplt = None):
+def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file = None, time_limit = None, overwrite = False, del_feb = False, del_xplt = None):
 	""" generates slurm submission script.
 
 	Arguments:
@@ -27,6 +27,8 @@ def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file =
 		path to febio file
 	opt_file : str (optional)
 		for optimization jobs, path to optimization file
+	time_limit : str
+		string description of time limit assigned to job (e.g. 1-12:00:00)
 	overwrite : bool
 		if 'True', overwrite existing files even if they exists
 	def_feb : bool
@@ -59,7 +61,7 @@ def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file =
 	f_list.append("#/bin/bash -l")
 	f_list.append("")
 	f_list.append("#SBATCH --partition=cpu2")
-	if jobid is not None: f_list.append("#BATCH -J {0}".format(jobid))
+	if jobid is not None: f_list.append("#SBATCH -J {0}".format(jobid))
 	f_list.append("#SBATCH --nodes=1")
 	f_list.append("#SBATCH --ntasks=1")
 	f_list.append("#SBATCH --cpus-per-task=16")
@@ -67,6 +69,7 @@ def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file =
 	else: f_list.append("#SBATCH --error=%j.err")
 	if jobid is not None: f_list.append("#SBATCH --error={0}.%j.out".format(jobid))
 	else: f_list.append("#SBATCH --error={0}.%j.out".format(jobid))
+	if time_limit is not None: f_list.append("#SBATCH --time={0}".format(time_limit))
 	f_list.append("")
 	f_list.append("### MODULES ### ")
 	f_list.append("module purge")
@@ -90,8 +93,8 @@ def gen_slurm_script (filepath = None, jobid = None, feb_file = None, opt_file =
 
 	# write file
 	with open(filepath, 'w') as file:
-		for l in f_line:
-			f.write(l + "\n")
+		for l in f_list:
+			file.write(l + "\n")
 
 ## CLASSES
 # none

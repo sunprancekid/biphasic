@@ -21,7 +21,7 @@ from febio.sweep import Sweep
 from febio.optimization import Optimization as Opt
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
-from febio.slurm.submit import gen_submit_script
+from febio.slurm.submit import gen_slurm_script
 from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
 # local - plotting
 from plot.figure import Figure
@@ -36,8 +36,8 @@ default_oscillation_amplitude = 0.001
 default_relaxation_time = 10000
 # default loading depth during initial loading
 default_loading_depth = 0.005
-# dictionary used for poroelastic model files
-dict_feb_pe = {'0.05': "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/z_0050/bend_pe.feb", '0.08': "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/z_0080/bend_pe.feb", '0.125': "/home/mpikg/dorsey/Desktop/biphasic/bend/scale/z_0125/bend_pe.feb", '0.2': "/home/mpikg/dorsey/models/bend/scale/z_0200/bend_pe.feb", '0.5': "/home/mpikg/dorsey/models/bend/scale/z_0500/bend_pe.feb", '1.0': "/home/mpikg/dosey/models/bend/scale/z_1000/bend_pe.feb"}
+# dictionary used to map length scale to febio model files
+dict_feb = {'0.05': "z_0050", '0.08': "z_0080", '0.125': "z_0125", '0.2': "z_0200", '0.5': "z_0500", '1.0': "z_1000"}
 # dictionary used for viscoelastic model files
 # default feb model for viscoleastic simulations
 default_feb_ve = "models/bend/bend_ve.feb"
@@ -289,9 +289,10 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # parameterize model, save to simulation directory
             j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(i), overwrite = overwrite)
             # write slurm file
-            gen_submit_script (filepath = "{0}pe-{1}.slurm.sub".format(j_pe.get_simulation(i).get_simulation_path(), i), 
-                jobid = "pe-{0}.feb".format(i), 
+            gen_slurm_script (filepath = "{0}pe-{1}.slurm.sub".format(j_pe.get_simulation(i).get_simulation_path(), i),
+                jobid = "pe-{0}".format(i),
                 feb_file = "{0}pe-{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), i), 
+                time_limit = "20:00", # twenty minute time limit
                 del_feb = True, 
                 del_xplt = True)
             continue # move to the next integer
@@ -771,11 +772,23 @@ def step_four (jd, jn, show = True, save = False):
             # show figure
             gen_plot(fig, show = False, save = save)
 
-## ARGUMENTS
-# first argument: path to directory that contains fitting simulations
+if __name__ == "__main__":
 
-## SCRIPT 
-# loop through each length scale directory
-# does the simulation directory exist for the length scale?
-# if not make the directory and generate the simulation file structure
-# if it does, update the directory
+    ## ARGUMENTS
+    # first argument: path to directory that contains fitting simulations
+    dir_path = sys.argv[1]
+
+    ## SCRIPT
+    # loop through each length scale directory
+    for l in list(dict_feb.keys()):
+        # location of model files for corresponding length scale
+        feb_pe = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_pe.feb"
+        feb_ve = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_ve.feb"
+
+        # does the simulation directory exist for the length scale?
+        if not os.path.exists(dir_path + dict_feb[l]):
+            # if not make the directory and generate the simulation file structure
+            init_fit (jd = dir_path, jn = dict_feb[l], z = float(l), pe_feb = feb_pe, ve_feb = feb_ve)
+
+        # update the directory
+        update_fit (jd = dir_path, jn = dict_feb[l])
