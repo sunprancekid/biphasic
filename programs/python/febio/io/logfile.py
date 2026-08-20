@@ -408,6 +408,19 @@ def extract_febio_opt (d = None, f = None, s = None):
 
 # parse custom output from febio simulations, save to file
 def extract_febio_out (d = None, f = None, s = None):
+	""" extract results from febio out file.
+	
+	Arguments:
+	----------
+	d : str
+	f : str
+	s : str
+
+	Returns:
+	--------
+	bool
+		'True' if the end if the results could successfully be parsed from the outfile, else 'False'
+	"""
 	
 	## debugging statement
 	if DEBUG:
@@ -517,6 +530,10 @@ def extract_febio_out (d = None, f = None, s = None):
 				# if this point was reached, the simulation ended properly
 				has_end = True
 
+	# if the file has ended but the end was not reached
+	# the simulation did not complete
+	if not has_end: return False
+
 	## write io to formatted file within same directory
 	# write the out information
 	if s is None:
@@ -537,6 +554,9 @@ def extract_febio_out (d = None, f = None, s = None):
 		else:
 			# write 'na' to indicate that the end of the job was not reached
 			s_io.writelines("na,na,na\n".format(n_steps, time_linear, time_total))
+
+	# simulation completed successfully and results were succesfully written
+	return True
 
 # calculate material displacement
 def calculate_force (d = None, f = None, s = None, z = False, y = False, x = False):

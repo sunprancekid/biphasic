@@ -259,7 +259,10 @@ class Simulation (object):
             return False
 
         # parse the logfile, write to outfile
-        extract_febio_out(d = self.sd, f = 'febio4.job.out')
+        success = extract_febio_out(d = self.sd, f = 'febio4.job.out')
+        # if the results were not parsed, cannot continue analysis
+        if not success: return False
+
         # get displacement and force
         calculate_displacement (d = self.sd, f = default_outfile,  z = True)
         calculate_force (d = self.sd, f = default_outfile, z = True, y = True, x = True)

@@ -19,6 +19,7 @@ import pandas as pd
 from febio.job import Job
 from febio.sweep import Sweep
 from febio.optimization import Optimization as Opt
+from febio.simulation import Simulation
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
 from febio.slurm.submit import gen_slurm_script
@@ -246,7 +247,7 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     job_ve.save_config()
     job_ve.save_parameters()
     # the viscoelastic model is exactly the same as the optimization model
-    m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "pe.feb", overwrite = True)
+    m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
 def update_fit (jd = None, jn = None, overwrite = True):
     """ update fit job directories based on their status.
@@ -297,10 +298,10 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # write slurm file
             jobid = "p{0}".format(i)
             if z_int > 0: jobid = "z{0}-p{1}".format(z_int, i)
-            gen_slurm_script (filepath = "{0}pe-{1}.slurm.sub".format(j_pe.get_simulation(i).get_simulation_path(), i),
+            gen_slurm_script (filepath = "{0}pe-{1}.slurm.sub".format(dir_pe, i),
                 jobid = jobid,
                 feb_file = "{0}pe-{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), i), 
-                time_limit = "20:00", # twenty minute time limit
+                time_limit = "30:00", # twenty minute time limit
                 del_feb = True, 
                 del_xplt = True)
             continue # move to the next integer
@@ -309,24 +310,28 @@ def update_fit (jd = None, jn = None, overwrite = True):
             if not os.path.exists(dir_pe + "febio4.job.out"): continue
             elif not os.path.exists(dir_pe + "febio4.out.csv"):
                 # in this case, the outfile exists by the csv file does not
-                # attempt to analyze the results
-                # in this case, the out file exists but the csv file does not
-                # so the results could be done, but haven't been fully analyzed
-                continue
+                # attempt to parse the results from the logfile
+                success = j_pe.get_simulation(i).parse_logfile()
+                if not success: continue # simulation not completed yet
+                # results where written and ready for optimization phase
 
         ## OPTIMIZATIONS JOB
         # check if the directory exists
         if not os.path.exists(dir_op):
-            # if it does not, make the directory
+            # if the  does not, make the directory
             os.makedirs(dir_op)
+
+            # set job id
+            jobid = "o{0}".format(i)
+            if z_int > 0: jobid = "z{0}-o{1}".format(z_int, i)
             
             # get the simulation stress-strain data from the poroelastic file
             s_pe = j_pe.get_simulation(i)
-            f_d = s_pe.get_displacement_force_lag ()
+            f_d = s_pe.get_displacement_force_lag()
             f_d['f'] = -1 * f_d['f'] # transform force to negative value
             
             # generate the feb file
-            j_ve.parameterize_model(m = m_opt, n = i).save_model(saveto = dir_op, saveas = "opt-{0}".format(i), overwrite = overwrite)
+            j_ve.parameterize_model(m = m_op, n = i).save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
             # generate optimization file
             o = OptFile()
@@ -339,10 +344,17 @@ def update_fit (jd = None, jn = None, overwrite = True):
             o.set_optimization_function(name = obj_fun) # optimization function
             o.set_objective_tolerance(value = obj_tol) # objective tolerance
             o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
-            o.save_optimization_file(filepath = "{0}{1}/{2}opt-{3}.opt".format(jn, jn, j_pe.get_key_value('path'), i)) # write the optimization file to the simulation directory
+            o.save_optimization_file(filepath = "{0}{1}.opt".format(dir_op, jobid)) # write the optimization file to the simulation directory
 
-            # generate slurm file
-            ## TODO generate slurm file
+            # write slurm file
+            gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_op, jobid),
+                jobid = jobid,
+                feb_file = "{0}{1}.feb".format(dir_op, jobid), 
+                opt_file =  "{0}{1}.opt".format(dir_op, jobid),
+                time_limit = "2-00:00:00", # two day time limit
+                del_feb = True)
+            # move to the next integer
+            continue
         else:
             # the job directory does exist, check if optimization is finished
             # attempt to generate optimized model
