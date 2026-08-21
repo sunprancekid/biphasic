@@ -12,6 +12,7 @@
 # native / conda
 import sys, os
 import math
+import glob # used for getting file lists with regex
 import pandas as pd
 import numpy as np
 # local
@@ -253,9 +254,9 @@ class Optimization (object):
             # replace m with the job stored in the file
             m = "{0}{1}/{1}.feb".format(self.jd, self.jn)
         # check if the model exists
-        if os.path.exists(m):
+        if isinstance(m, str) and os.path.exists(m):
             m = ModFile(m)
-        else:
+        elif not isinstance (m, ModFile):
             # path does not exist
             print("ERROR :: Optimization.generate_optimized_model() :: path to model file '{0}' does not exist or cannot be found. specify path to model 'm' as type str in method argument.".format(m))
 
@@ -269,7 +270,16 @@ class Optimization (object):
         m = j.parameterize_model(m = m, n = n)
 
         # get the optimization results, add them to the model
-        of = OptFile("{0}{1}/{2}{1}-{3}.opt".format(self.jd, self.jn, self.df_parm['path'][n - 1], n))
+        ls_opt = glob.glob("{0}{1}/{2}*.opt".format(self.jd, self.jn, self.df_parm['path'][n - 1])) # list of opt files
+        if len(ls_opt) > 1:
+            ## multiple optimization files exist in the simulation directory
+            print("ERROR :: Optimization.show_optimization_results() :: multiple optimization files ('*.opt') exist in '{0}{1}/'. Unable to load results.".format(self.jd, self.jn))
+            return
+        elif len(ls_opt) == 0:
+            ## not optimization files exist in the simulation directory
+            print("ERROR :: Optimization.show_optimization_results() :: no optimization files ('*.opt') exist in '{0}{1}/'. Unable to load results.".format(self.jd, self.jn))
+            return
+        of = OptFile(ls_opt[0])
         for index, row in of.get_parameters().iterrows(): # gets the parameters and paths for each optimizable value
             # add the optimized value to appropriate field in the model
             val = self.df_sum[row['key'] + "_opt"][n - 1]

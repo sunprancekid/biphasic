@@ -24,6 +24,7 @@ from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
 from febio.slurm.submit import gen_slurm_script
 from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+from util.smoothie import log2lin, lin2log
 # local - plotting
 from plot.figure import Figure
 from plot.plot import gen_plot
@@ -267,9 +268,9 @@ def update_fit (jd = None, jn = None, overwrite = True):
     """
     ## esablish jobs, models
     ## TODO update results for each job
-    j_pe = Job ("{0}{1}".format(jd, jn), 'pe')
-    j_op = Opt ("{0}{1}".format(jd, jn), 'opt')
-    j_ve = Job ("{0}{1}".format(jd, jn), 've')
+    j_pe = Job ("{0}{1}/".format(jd, jn), 'pe')
+    j_op = Opt ("{0}{1}/".format(jd, jn), 'opt')
+    j_ve = Job ("{0}{1}/".format(jd, jn), 've')
     m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
     m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
     m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
@@ -357,10 +358,15 @@ def update_fit (jd = None, jn = None, overwrite = True):
             continue
         else:
             # the job directory does exist, check if optimization is finished
+            # update results
+            j_op.get_optimization_results(save = True, overwrite = True)
             # attempt to generate optimized model
             m_o = j_op.generate_optimized_model (m = m_ve, n = i)
             # if the method returns None type, optimization is not done
-            if m_o is None: continue
+            # if m_o is None: continue
+            if m_o is None:
+                # job has not generated final results yet
+                continue
 
         ## VISCOELASTIC JOB
         # does the directory exist?
@@ -377,20 +383,77 @@ def update_fit (jd = None, jn = None, overwrite = True):
     pass
 
 # add fitting at selected time scale to job
-def add_fit_timescale ():
-    """ add timescale to fitting job.
+def add_fit_timescales (jd = None, jn = None):
+    """ add timescaled to fitting job.
     
     Arguments:
     ----------
-    None
+    jd : str
+        path to directory containing 'fit' job
+    jn : str
+        name of job in directory
 
-    Parameters:
-    -----------
-    None
+    Returns:
+    --------
+    bool
+        'True' if operation was successful, else 'False'
     """
-    # assume time scale exists between two points which have already run 
-    # generate an optization file which contains the correct bounds
-    pass
+    # get directories, model files for job
+    j_pe = Job ("{0}{1}/".format(jd, jn), 'pe')
+    j_op = Opt ("{0}{1}/".format(jd, jn), 'opt')
+    j_ve = Job ("{0}{1}/".format(jd, jn), 've')
+    m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
+    m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
+    m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
+
+    # get the time scales associated with the poroelastic job
+    ts = j_pe.df_parm['OT'].tolist()
+    # determine how many new timescales should be added
+    if len(ts) == 2:
+        n_up = 1 # add one more simulation
+    elif len(ts) < 2:
+        # error, must have at least two points
+        print("ERROR :: fitting.add_fit_timescales() :: fit job '{0}' in '{1}' has less than two timescales, cannot add more.".format(jn, jd))
+        return False
+    else:
+        n_up = (len(ts) - 1) / 2
+
+    ## append new timescales to data frame
+    cur_idx = 0 # current index
+    prv_idx = 0 # previous index
+    df_len = len(j_pe.df_parm.index)
+    for idx, row in j_pe.df_parm.iterrows():
+        # update time scales
+        # skip the first row
+        if idx != 0:
+            # for each row, the new timescale is half way between the current and previous timescales
+            j_pe.df_parm.loc[df_len + idx - 1] = row # copy
+
+            # determine new time scale on log scale (!)
+            ts_low = lin2log(j_pe.df_parm.iloc[idx - 1]['OT'])
+            ts_high = lin2log(j_pe.df_parm.iloc[idx]['OT'])
+            ts_new = log2lin((ts_low + ts_high) / 2)
+
+
+            # adjust values
+            j_pe.df_parm.loc[df_len + idx - 1, 'OT'] = ts_new
+            j_pe.df_parm.loc[df_len + idx - 1, 'n'] = j_pe.df_parm['n'].max() + 1
+            j_pe.df_parm.loc[df_len + idx - 1, 'id'] = 'OT{0}'.format(j_pe.df_parm.loc[df_len + idx - 1, 'n'])
+            j_pe.df_parm.loc[df_len + idx - 1, 'path'] = "job/OT{0}/".format(j_pe.df_parm.loc[df_len + idx - 1, 'n'])
+
+        # update indicies
+        cur_idx = idx + 1
+        prv_idx = idx
+
+    # save updated data frame to simulation directories
+    # sort list
+    j_pe.df_parm = j_pe.df_parm.sort_values(by=['OT'])
+    # save
+    j_pe.save_parameters(overwrite = True)
+    j_pe.jn = "opt"
+    j_pe.save_parameters(overwrite = True)
+    j_pe.jn = "ve"
+    j_pe.save_parameters(overwrite = True)
 
 def update_step_two (jd = None, jn = None):
     """ iteratively implements optimization and feb files.

@@ -341,11 +341,15 @@ def extract_febio_opt (d = None, f = None, s = None):
 							return False
 
 				# SCORING
-				# get the objective value
-				obj_val.append(float(l.split(" ")[2]))
-				l = f_io.readline()
-				# get the regression coefficient
-				reg_coeff.append(float(l.split(" ")[2]))
+				if len(l) >= 2:
+					# get the objective value
+					obj_val.append(float(l.split(" ")[2]))
+					l = f_io.readline()
+					# get the regression coefficient
+					reg_coeff.append(float(l.split(" ")[2]))
+				else:
+					# unable to load, cannot split
+					return False
 
 				# iterate iterations
 				n_it += 1
