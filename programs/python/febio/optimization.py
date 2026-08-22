@@ -82,6 +82,8 @@ class Optimization (object):
         # assign the job name and directory
         self.jd = jd
         self.jn = jn
+        # set summary to None
+        self.df_sum = None
         # load the config file
         if self.has_config():
             self.load_config()
@@ -230,6 +232,42 @@ class Optimization (object):
                 fig.set_saveas(savedir = '{0}{1}/results/'.format(self.jd, self.jn), filename = y)
                 fig.save_data()
             gen_plot (fig, show = show, save = save)
+
+    def get_optimized_parameter_value (self, n, o_key):
+        """ returns the values corresponding to the optimized solution from one simulation in job.
+
+        Arguments:
+        ----------
+        n : int
+            integer corresponding to simulation in job (key 'n')
+        o_key : str
+            string corresponding to column in optimization summary file
+        
+        Returns:
+        --------
+        float (or None)
+            optimized value corresponding to simulation, or None if optimization not complete
+        """
+        # load summary file
+        if self.df_sum is None: self.get_optimization_results()
+
+        ## check arguments
+        # check that n exists in optimization job
+        if n < 1 or (n > self.df_sum['n'].max()):
+            print("ERROR :: Optimization.get_optimized_parameter_value() :: method argument 'n' ({0}) does not exist in optimization job {1}{2}.".format(n, self.jd, self.jn))
+            return None
+        # check the o_key exists in summary file
+        if o_key not in list(self.df_sum.columns.values):
+            print("ERROR :: Optimization.get_optimized_parameter_value() :: method argument 'o_key' ({0}) does not exist in summary file for optimization job '{1}{2}.".format(o_key, self.jd, self.jn))
+            return None
+
+        ## get value
+        val = None
+        # get row corresponding to simulation
+        r = self.df_sum.loc[self.df_sum['n'] == n]
+        # get optimized value
+        return r.iloc[0][o_key]
+
 
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.

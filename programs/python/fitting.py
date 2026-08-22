@@ -288,6 +288,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
         dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
         dir_op = "{0}{1}/opt/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
         dir_ve = "{0}{1}/ve/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
+        n = j_pe.df_parm.iloc[i-1]['n']
 
         # POROELASTIC JOB
         # check if the job directory exists
@@ -295,13 +296,14 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # if it does not exist, make the directory
             os.makedirs(dir_pe)
             # parameterize model, save to simulation directory
-            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(i), overwrite = overwrite)
+            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(n), overwrite = overwrite)
             # write slurm file
-            jobid = "p{0}".format(i)
-            if z_int > 0: jobid = "z{0}-p{1}".format(z_int, i)
-            gen_slurm_script (filepath = "{0}pe-{1}.slurm.sub".format(dir_pe, i),
+            ## TODO use n to index the job name
+            jobid = "p{0}".format(n)
+            if z_int > 0: jobid = "z{0}-p{1}".format(z_int, n)
+            gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
                 jobid = jobid,
-                feb_file = "{0}pe-{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), i), 
+                feb_file = "{0}{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), jobid), 
                 time_limit = "30:00", # twenty minute time limit
                 del_feb = True, 
                 del_xplt = True)
@@ -323,8 +325,8 @@ def update_fit (jd = None, jn = None, overwrite = True):
             os.makedirs(dir_op)
 
             # set job id
-            jobid = "o{0}".format(i)
-            if z_int > 0: jobid = "z{0}-o{1}".format(z_int, i)
+            jobid = "o{0}".format(n)
+            if z_int > 0: jobid = "z{0}-o{1}".format(z_int, n)
             
             # get the simulation stress-strain data from the poroelastic file
             s_pe = j_pe.get_simulation(i)
@@ -337,9 +339,34 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # generate optimization file
             o = OptFile()
             # add optimizable parameters
-            ## HERE check for neighbors which are finished already
-            o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
-            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name) # time constant
+            ## tau and gamma can depend on previous simulations
+            if (i != 1) and (i != j_pe.get_sim_num() + 1):
+                # the job is between two other simulations
+                # check that the neighboring simulations have completed
+                n_l = j_op.df_parm.iloc[i - 1 - 1]['n']
+                n_r = j_op.df_parm.iloc[i + 1 - 1]['n']
+                # get solutions for gamma
+                g_l = j_op.get_optimized_parameter_value (n = n_l, o_key = 'g1_opt')
+                g_r = j_op.get_optimized_parameter_value (n = n_r, o_key = 'g1_opt')
+                # get solutions for tau
+                t_l = j_op.get_optimized_parameter_value (n = n_l, o_key = 't1_opt')
+                t_r = j_op.get_optimized_parameter_value (n = n_r, o_key = 't1_opt')
+                # add neighboring solutions to optimization 
+                # relaxation constant
+                if g_r < g_l:
+                    o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2, name = gamma_name) # relaxation constant
+                else: # g_l < g_r
+                    o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2, name = gamma_name)
+                # time constant
+                if t_r < t_l:
+                    o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2, name = tau_name) # time constant
+                else: # t_l < t_r
+                    o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2, name = tau_name)
+            else:
+                # the simulation is on the edge, use the default values
+                o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
+                o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name) # time constant
+
             # in the case of elasticity, the bounds should be outside the average value
             o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
             o.set_optimization_function(name = obj_fun) # optimization function
@@ -354,6 +381,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 opt_file =  "{0}{1}.opt".format(dir_op, jobid),
                 time_limit = "2-00:00:00", # two day time limit
                 del_feb = True)
+            exit()
             # move to the next integer
             continue
         else:
