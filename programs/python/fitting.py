@@ -381,7 +381,6 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 opt_file =  "{0}{1}.opt".format(dir_op, jobid),
                 time_limit = "2-00:00:00", # two day time limit
                 del_feb = True)
-            exit()
             # move to the next integer
             continue
         else:
