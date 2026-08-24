@@ -293,14 +293,14 @@ def update_fit (jd = None, jn = None, overwrite = True):
         # POROELASTIC JOB
         # check if the job directory exists
         if not os.path.exists(dir_pe):
+            # set job id
+            jobid = "p{0}".format(n)
+            if z_int > 0: jobid = "z{0}-p{1}".format(z_int, n)
             # if it does not exist, make the directory
             os.makedirs(dir_pe)
             # parameterize model, save to simulation directory
-            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "pe-{0}.feb".format(n), overwrite = overwrite)
+            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
             # write slurm file
-            ## TODO use n to index the job name
-            jobid = "p{0}".format(n)
-            if z_int > 0: jobid = "z{0}-p{1}".format(z_int, n)
             gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
                 jobid = jobid,
                 feb_file = "{0}{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), jobid), 
@@ -396,13 +396,38 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 continue
 
         ## VISCOELASTIC JOB
-        # does the directory exist?
-        # if not, make the directory
-        # generate the file file
-        # generate the slurm submission file
-        # if the directory exists, is the job done?
-        # if it does exist, is the job done?
-        # if it is, move on to ANALYSIS
+        # check if the directory exists already
+        continue
+        if not os.path.exists (dir_ve):
+            # the simulations has not been created yet
+            # establish the job name
+            jobid = "v{0}".format(n)
+            if z_int > 0: jobid = "z{0}-v{1}".format(z_int, n)
+            # create the directory
+            os.makedirs(dir_ve)
+
+            ## generate the model file with optimized parameters
+            m_o = j_op.generate_optimized_model(m = m_ve, n = n)
+            m_o.save_model(saveto = dir_ve, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+
+            ## generate the slurm file
+            gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_ve, jobid),
+                jobid = jobid,
+                feb_file = "{0}{1}.feb".format(j_ve.get_simulation(i).get_simulation_path(), jobid),
+                time_limit = "15:00", # fifteen minute time limit
+                del_feb = True,
+                del_xplt = True)
+            print(dir_ve)
+            exit()
+        else:
+            # the simulation directory exists, is the simulation done?
+            if not os.path.exists(dir_ve + "febio4.job.out"): continue
+            elif not os.path.exists(dir_ve + "febio4.out.csv"):
+                # in this case, the outfile exists by the csv file does not
+                # attempt to parse the results from the logfile
+                success = j_ve.get_simulation(i).parse_logfile()
+                if not success: continue # simulation not completed yet
+                # results were written and ready for analysis
 
         ## ANALYSIS
         # update the results
