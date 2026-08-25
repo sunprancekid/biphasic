@@ -1280,7 +1280,8 @@ class Simulation (object):
 
         # get the time and work from the outfile
         if recalculate or (not self.has_outfile()):
-            self.parse_logfile()
+            success = self.parse_logfile()
+            if not success: return None
         # else:
             # if 've' in self.sd:
             #     print(self.file_out)

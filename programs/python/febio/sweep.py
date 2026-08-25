@@ -284,7 +284,8 @@ class Sweep (object):
         # initialize arrays
         max_cycle = 0
         ot = []
-        hys = [[] for i in range(self.get_sim_num())]
+        hys = []
+        # hys = [[] for i in range(self.get_sim_num())]
         # loop through all simulations
         for i in range(self.get_sim_num()):
             # initialize the simulation
@@ -293,8 +294,10 @@ class Sweep (object):
                     self.list_sim[col_si][i])
             # get the hysteresis data
             if sim.has_key('OT'):
+                val = sim.parse_hysteresis_work()
+                if val is None: continue
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_hysteresis_work()
+                hys.append(val)
                 if len(hys[i]) > max_cycle:
                     max_cycle = len(hys[i])
             # remove the simulation
