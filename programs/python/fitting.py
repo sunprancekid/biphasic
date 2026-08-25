@@ -406,7 +406,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
             os.makedirs(dir_ve)
 
             ## generate the model file with optimized parameters
-            m_o = j_op.generate_optimized_model(m = m_ve, n = n)
+            m_o = j_op.generate_optimized_model(m = m_ve, n = i)
             m_o.save_model(saveto = dir_ve, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
             ## generate the slurm file
@@ -416,6 +416,8 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 time_limit = "15:00", # fifteen minute time limit
                 del_feb = True,
                 del_xplt = True)
+            print(dir_ve)
+            exit()
         else:
             # the simulation directory exists, is the simulation done?
             if not os.path.exists(dir_ve + "febio4.job.out"): continue
