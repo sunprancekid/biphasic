@@ -265,6 +265,7 @@ class Optimization (object):
         val = None
         # get row corresponding to simulation
         r = self.df_sum.loc[self.df_sum['n'] == n]
+        if np.isnan(r): return None
         # get optimized value
         return r.iloc[0][o_key]
 

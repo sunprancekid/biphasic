@@ -351,6 +351,10 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 # get solutions for tau
                 t_l = j_op.get_optimized_parameter_value (n = n_l, o_key = 't1_opt')
                 t_r = j_op.get_optimized_parameter_value (n = n_r, o_key = 't1_opt')
+                # if any of the values that were returned are none, break
+                if (g_l is None) or (g_r is None) or (t_l is None) or (t_r is None):
+                    print("ERROR :: fitting.update_fit() :: Unable to finish generating '{0}', neighboring optimization simulations are not complete yet.".format(dir_op))
+                    continue # skip this line until the neighboring optimization simulations are completed
                 # add neighboring solutions to optimization 
                 # relaxation constant
                 if g_r < g_l:
@@ -416,8 +420,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 time_limit = "15:00", # fifteen minute time limit
                 del_feb = True,
                 del_xplt = True)
-            print(dir_ve)
-            exit()
+            continue # continue to next int
         else:
             # the simulation directory exists, is the simulation done?
             if not os.path.exists(dir_ve + "febio4.job.out"): continue
