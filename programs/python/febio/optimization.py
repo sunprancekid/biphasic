@@ -267,7 +267,7 @@ class Optimization (object):
         r = self.df_sum.loc[self.df_sum['n'] == n]
         val = r.iloc[0][o_key]
         # return optimized value, if it exists
-        if np.isnan(r): return None
+        if np.isnan(val): return None
         else: return val
 
 
