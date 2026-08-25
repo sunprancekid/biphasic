@@ -397,7 +397,6 @@ def update_fit (jd = None, jn = None, overwrite = True):
 
         ## VISCOELASTIC JOB
         # check if the directory exists already
-        continue
         if not os.path.exists (dir_ve):
             # the simulations has not been created yet
             # establish the job name
@@ -417,8 +416,6 @@ def update_fit (jd = None, jn = None, overwrite = True):
                 time_limit = "15:00", # fifteen minute time limit
                 del_feb = True,
                 del_xplt = True)
-            print(dir_ve)
-            exit()
         else:
             # the simulation directory exists, is the simulation done?
             if not os.path.exists(dir_ve + "febio4.job.out"): continue
