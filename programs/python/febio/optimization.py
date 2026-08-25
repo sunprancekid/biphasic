@@ -265,9 +265,10 @@ class Optimization (object):
         val = None
         # get row corresponding to simulation
         r = self.df_sum.loc[self.df_sum['n'] == n]
+        val = r.iloc[0][o_key]
+        # return optimized value, if it exists
         if np.isnan(r): return None
-        # get optimized value
-        return r.iloc[0][o_key]
+        else: return val
 
 
     def generate_optimized_model (self, m, n):
