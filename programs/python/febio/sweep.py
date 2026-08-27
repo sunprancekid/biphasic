@@ -334,6 +334,7 @@ class Sweep (object):
         """
         # get work for simulations within set
         df_hys = self.get_hysteresis_work()
+        return df_hys
         # determine how cycles were performed
         c = list(df_hys.columns.values)
         i = 0
