@@ -356,7 +356,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
             o = OptFile()
             # add optimizable parameters
             ## tau and gamma can depend on previous simulations
-            if (i != 1) and (i != j_pe.get_sim_num() + 1):
+            if (i != 1) and (i != j_pe.get_sim_num()):
                 # the job is between two other simulations
                 # check that the neighboring simulations have completed
                 n_l = j_op.df_parm.iloc[i - 1 - 1]['n']
