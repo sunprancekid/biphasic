@@ -264,7 +264,7 @@ class Sweep (object):
 
     ## ANALYSIS - HYSTERESIS WORK ##
 
-    def get_hysteresis_work (self, cycles = None):
+    def get_hysteresis_work (self, cycles = None, overwrite = False):
         """ returns the hysteresis work for all simulations.
 
         for all simulation within the set, the hysteresis work is 
@@ -274,6 +274,8 @@ class Sweep (object):
         -----------
         cycles : int or List[int]
             subset of cycles numbers to be selected
+        overwrite : bool
+            recalculate all values if 'True', else use existing values.
 
         Returns:
         --------
@@ -294,9 +296,10 @@ class Sweep (object):
                     self.list_sim[col_si][i])
             # get the hysteresis data
             if sim.has_key('OT'):
-                val = sim.parse_hysteresis_work()
+                val = sim.parse_hysteresis_work(recalculate = overwrite)
                 if val is None: continue
                 ot.append(sim.get_key_value('OT'))
+                print(sim.get_number_oscillation_cycles())
                 hys.append(val)
                 if len(hys[i]) > max_cycle:
                     max_cycle = len(hys[i])
@@ -315,7 +318,7 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_hysteresis_work (self, period = False, show = True, save = False):
+    def show_hysteresis_work (self, period = False, show = True, save = False, overwrite = False):
         """ plot hysteresis work for second to last cycle.
 
         Parameters:
@@ -326,6 +329,8 @@ class Sweep (object):
             determines if the figure is displayed via GUI before returning
         save : bool (default 'False')
             if 'True', saves display to job directory
+        overwrite : bool
+            recalculate all values if 'True', else use existing values.
 
         Returns:
         --------
@@ -333,8 +338,7 @@ class Sweep (object):
             formatted figure object
         """
         # get work for simulations within set
-        df_hys = self.get_hysteresis_work()
-        return df_hys
+        df_hys = self.get_hysteresis_work(overwrite = overwrite)
         # determine how cycles were performed
         c = list(df_hys.columns.values)
         i = 0

@@ -789,6 +789,7 @@ class Job (object):
 
         # loop through each parameter in config file
         for idx, row in self.df_config.iterrows():
+            if row['key'] == 'OT': print(self.get_key_value(row['key'], n))
             if row['xml'] == 'na': continue # the key value is not written to the model file
             # parse the key value from job / config
             m.update_element_value(elm_path = row['xml'], value = self.get_key_value(row['key'], n))

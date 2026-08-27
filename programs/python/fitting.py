@@ -315,7 +315,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
             # if it does not exist, make the directory
             os.makedirs(dir_pe)
             # parameterize model, save to simulation directory
-            j_pe.parameterize_model(m = m_pe, n = i).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+            j_pe.parameterize_model(m = m_pe, n = n).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
             # write slurm file
             gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
                 jobid = jobid,
@@ -350,7 +350,7 @@ def update_fit (jd = None, jn = None, overwrite = True):
             f_d['f'] = -1 * f_d['f'] # transform force to negative value
             
             # generate the feb file
-            j_ve.parameterize_model(m = m_op, n = i).save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+            j_ve.parameterize_model(m = m_op, n = n).save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
             # generate optimization file
             o = OptFile()
