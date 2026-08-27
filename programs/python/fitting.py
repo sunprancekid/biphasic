@@ -187,18 +187,18 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
 
     # if frequency is unspecified in method call
     if max_freq is None: 
-        # default max freq. is one order of magnitude 
+        # default max freq. is two orders of magnitude 
         # greater than the critical freq.
-        max_freq = crit_poro_freq * 10
+        max_freq = crit_poro_freq * 100
     elif norm:
         # the max freq provided is reduce, move to real time
         max_freq = max_freq * norm_fac
 
     # if the min frequency is unspecified in the method call
     if min_freq is None: 
-        # default min freq. is one order of magnitude 
+        # default min freq. is two orders of magnitude 
         # less than the critical freq.
-        min_freq = crit_poro_freq / 10
+        min_freq = crit_poro_freq / 100
     elif norm:
         # if the minfreq was provided and normalized
         # move to real time
