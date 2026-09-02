@@ -45,8 +45,8 @@ def normalize ():
 	"""
 	pass
 
-def scale (sum_df = None, scale_key = None, fit = False, norm = False, norm_dict = None, save_to = None):
-	""" determine scaling of resonant response withrespect to model parameters.
+def scale (prop_df = None, x_col = None, y_col = None, var_col = None):
+	""" determine scaling constants associated with model.
 
 	Arguments:
 	----------

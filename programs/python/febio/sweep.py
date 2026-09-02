@@ -12,6 +12,7 @@
 # native / conda
 import sys, os, math
 import pandas as pd
+import numpy as np
 # local
 from febio.simulation import Simulation
 from plot.figure import Figure
@@ -297,9 +298,10 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 val = sim.parse_hysteresis_work(recalculate = overwrite)
-                if val is None: continue
                 ot.append(sim.get_key_value('OT'))
-                print(sim.get_number_oscillation_cycles())
+                if val is None:
+                    hys.append([np.nan for j in range(len(hys[i - 1]))])
+                    continue
                 hys.append(val)
                 if len(hys[i]) > max_cycle:
                     max_cycle = len(hys[i])
