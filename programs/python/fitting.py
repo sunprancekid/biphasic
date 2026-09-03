@@ -95,22 +95,6 @@ emod_name = "fem.material('Material1').elastic.E"
 ## TODO add rigid body file writting and pe and ve files
 
 ## METHODS
-# show poroelastic results
-def poroelastic_analysis (jd = None, jn = None, savedir = None):
-    """analyze poroelastic simulations by comparing length scale scaling.
-    
-    Arguments:
-    ----------
-    jd : str
-        path to job directory
-    jn : str
-        job name in job directory ('jd')
-    savedir : str (optional)
-        path to save results (default is '{jd}{jn}/anal')
-    """
-    # plot loss modulus for each length scale
-    # plot storage modulus for each length scale
-    # plot dissipation for each length scale
 
 # start fitting job
 def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False, pe_feb = default_feb_pe, ve_feb = default_feb_ve):
