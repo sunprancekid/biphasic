@@ -62,20 +62,23 @@ obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
 obj_tol = 1.0e-18
 # gamma min, max, start, and name
-gamma_min = 0.01
-gamma_max = 1.
+gamma_min = 0.001
+gamma_max = 10.
 gamma_start = 0.1
 gamma_name = "fem.material('Material1').g1"
+gamma_xml = "Material/material[@id='1']/g1"
 # tau min, max, start, and name
-tau_min = 1.
-tau_max = 1000.
+tau_min = 0.1
+tau_max = 10000.
 tau_start = 10.
 tau_name = "fem.material('Material1').t1"
+tau_xml = "Material/material[@id='1']/t1"
 # elastic modulus min, max, start, and name
 emod_min = 0.35
 emod_max = 0.55
 emod_start = 0.45
 emod_name = "fem.material('Material1').elastic.E"
+emod_xml = "Material/material[@id='1']/elastic/E"
 
 ## METHODS
 # start fitting job
@@ -232,7 +235,7 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     # the viscoelastic model is exactly the same as the optimization model
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
-def update_fit (jd = None, jn = None, overwrite = True):
+def update_fit (jd = None, jn = None, overwrite = True, force = True):
     """ update fit job directories based on their status.
     
     Arguments:
@@ -243,6 +246,8 @@ def update_fit (jd = None, jn = None, overwrite = True):
         name of simulation set
     overwrite : bool
         boolean that determines if existing files are overwritten
+    force : bool
+        during optimization, force bulk modulus and gamma to take specific values
 
     Returns:
     --------
@@ -278,8 +283,12 @@ def update_fit (jd = None, jn = None, overwrite = True):
         if not (update_poroelastic(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
 
         ## update optimization routine
-        # if method results 'False', optimization simulation has not completed yet
-        if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
+        if not force:
+            # if method results 'False', optimization simulation has not completed yet
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
+        else:
+            # parse bulk modulus and relaxation constant from other jobs
+            continue
 
         ## VISCOELASTIC JOB
         # if the method returns False, viscoelastic simulation has not compeleted yet
@@ -361,8 +370,22 @@ def add_fit_timescales (jd = None, jn = None):
     j_pe.jn = "ve"
     j_pe.save_parameters(overwrite = True)
 
+# update optimization while forcing other optimization values to remain constant
+def force_viscoelastic_optimization (jd = None, jn = None, overwrite = True, z_int = None, force = False):
+    """
+
+    Arguments:
+    ----------
+    None
+
+    Returns:
+    --------
+    bool
+        'True' if optimization corresponding to simulation has been completed, else 'False'.
+    """
+
 # add optimization routine
-def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, force = False):
+def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_val = None, gamma_val = None, tau_val = None):
     """ update optimization portion of fitting routine.
 
     Arguments:
@@ -377,6 +400,12 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         overwrite existing files if they are incomplete
     z_int : int (optional)
         correspond to index in 'dict_feb'
+    emod_val : float or None (optional)
+        optional value to assign bulk modulus ddo not have access to Scholar Profiles. Souring optimization.
+    gamma_val : float or None (optional)
+        optional value to assign the relaxation constant during optimization.
+    tau_val : float or None (optional)
+        optional value to assign the time constant during optimization.
 
     Returns:
     --------
@@ -420,7 +449,14 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
 
         # generate the feb file
-        j_ve.parameterize_model(m = m_op, n = n).save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+        m = j_ve.parameterize_model(m = m_op, n = n)
+        # if a bulk modulus was specified, specify it in the model file
+        if emod_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_val, format = "{0:.4e}")
+        # if a realxation constant was specified, specify it in the model file
+        if gamma_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format = "{0:.4e}")
+        # if a time constant was specified, specify it in the model file
+        if tau_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format = "{0:.4e}")
+        m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
         # generate optimization file
         o = OptFile()
@@ -443,22 +479,25 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                 continue # skip this line until the neighboring optimization simulations are completed
             # add neighboring solutions to optimization
             # relaxation constant
-            if g_r < g_l:
-                o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2, name = gamma_name) # relaxation constant
-            else: # g_l < g_r
-                o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2, name = gamma_name)
+            if gamma_val is not None:
+                if g_r < g_l:
+                    o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2, name = gamma_name) # relaxation constant
+                else: # g_l < g_r
+                    o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2, name = gamma_name)
             # time constant
-            if t_r < t_l:
-                o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2, name = tau_name) # time constant
-            else: # t_l < t_r
-                o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2, name = tau_name)
+            if tau_val is not None:
+                if t_r < t_l:
+                    o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2, name = tau_name) # time constant
+                else: # t_l < t_r
+                    o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2, name = tau_name)
         else:
             # the simulation is on the edge, use the default values
             o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
             o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name) # time constant
 
         # in the case of elasticity, the bounds should be outside the average value
-        o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
+        if emod_val is not None:
+            o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
         o.set_optimization_function(name = obj_fun) # optimization function
         o.set_objective_tolerance(value = obj_tol) # objective tolerance
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
