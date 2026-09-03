@@ -509,23 +509,6 @@ def add_fit_timescales (jd = None, jn = None):
     j_pe.jn = "ve"
     j_pe.save_parameters(overwrite = True)
 
-def update_step_two (jd = None, jn = None):
-    """ iteratively implements optimization and feb files.
-
-    Arguments:
-    ----------
-    None
-
-    Returns:
-    --------
-    None
-    """
-    # check that the path to optimization exists
-    # check what has been completed so far
-    # first: run only the ends
-    # second: fill 
-    pass
-
 # fourth step in fitting sequence
 def step_four (jd, jn, show = True, save = False):
     """ fourth step in fitting sequence, once the third step is finished.
