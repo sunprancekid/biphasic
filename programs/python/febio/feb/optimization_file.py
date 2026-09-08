@@ -509,7 +509,7 @@ class OptimizationFile (object):
             df = pd.concat([df, df_tmp]).reset_index(drop = True)
         return df
 
-    def add_parameters (self, name, min_val, max_val, start_val):
+    def add_parameters (self, name, min_val, max_val, start_val, scale = None):
         """ add parameter to tree
 
         NOTE: for more about paraemters, see below.
@@ -526,13 +526,20 @@ class OptimizationFile (object):
             maximum possible value to assign to parameter during optimization
         start_val : float
             initial value assigned during parameter during optimization
+        scale : float (optional)
+            used to scale backwards derivative when min_val < f_diff_scale
 
         Returns:
         --------
         None
         """
         # todo :: boolean for duplicates
-        add_element_to_tree(self.root, "Parameters", "param", value = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val), attributes = {"name": name}, duplicate = True)
+
+        val = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val)
+        if scale is not None:
+            val += ",{0:.4e}".format(scale)
+
+        add_element_to_tree(self.root, "Parameters", "param", value = val, attributes = {"name": name}, duplicate = True)
 
     def has_parameters (self):
         """ determines if any parameters has been specified.

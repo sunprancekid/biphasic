@@ -383,6 +383,7 @@ def force_viscoelastic_optimization (jd = None, jn = None, overwrite = True, z_i
     bool
         'True' if optimization corresponding to simulation has been completed, else 'False'.
     """
+    pass
 
 # add optimization routine
 def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_val = None, gamma_val = None, tau_val = None):
@@ -493,7 +494,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         else:
             # the simulation is on the edge, use the default values
             o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
-            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name) # time constant
+            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name, scale = gamma_min) # time constant
 
         # in the case of elasticity, the bounds should be outside the average value
         if emod_val is not None:
