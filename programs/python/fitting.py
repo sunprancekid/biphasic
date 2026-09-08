@@ -62,14 +62,14 @@ obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
 obj_tol = 1.0e-18
 # gamma min, max, start, and name
-gamma_min = 0.001
-gamma_max = 10.
+gamma_min = 0.0001
+gamma_max = 100.
 gamma_start = 0.1
 gamma_name = "fem.material('Material1').g1"
 gamma_xml = "Material/material[@id='1']/g1"
 # tau min, max, start, and name
-tau_min = 0.1
-tau_max = 10000.
+tau_min = 0.01
+tau_max = 100000.
 tau_start = 10.
 tau_name = "fem.material('Material1').t1"
 tau_xml = "Material/material[@id='1']/t1"
@@ -235,7 +235,7 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     # the viscoelastic model is exactly the same as the optimization model
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
-def update_fit (jd = None, jn = None, overwrite = True, force = True):
+def update_fit (jd = None, jn = None, overwrite = True, force = False):
     """ update fit job directories based on their status.
     
     Arguments:
@@ -414,9 +414,9 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
     """
     ## establish job and model file
     j_pe = Job ("{0}{1}/".format(jd, jn), 'pe')
-    j_op = Job ("{0}{1}/".format(jd, jn), 'op')
+    j_op = Job ("{0}{1}/".format(jd, jn), 'opt')
     j_ve = Job ("{0}{1}/".format(jd, jn), 've')
-    m_op = ModelFile ("{0}{1}/op/op.feb".format(jd, jn))
+    m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
 
     ## check arguments
     # check job paths
@@ -430,7 +430,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
 
     ## check the directory
     # establish simulation directory
-    dir_op = "{0}{1}/op/{2}".format(jd, jn, j_op.df_parm.iloc[i-1]['path'])
+    dir_op = "{0}{1}/opt/{2}".format(jd, jn, j_op.df_parm.iloc[i-1]['path'])
     n = j_op.df_parm.iloc[i-1]['n']
     jobid = "o{0}".format(n)
     if not (z_int is None): jobid = "z{0}-o{1}".format(z_int, n)
@@ -476,7 +476,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
             # if any of the values that were returned are none, break
             if (g_l is None) or (g_r is None) or (t_l is None) or (t_r is None):
                 print("ERROR :: fitting.update_fit() :: Unable to finish generating '{0}', neighboring optimization simulations are not complete yet.".format(dir_op))
-                continue # skip this line until the neighboring optimization simulations are completed
+                return False # skip this line until the neighboring optimization simulations are completed
             # add neighboring solutions to optimization
             # relaxation constant
             if gamma_val is not None:
@@ -572,7 +572,7 @@ def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int 
         # if it does not exist, make the directory
         os.makedirs(dir_pe)
         # parameterize model, save to simulation directory
-        j_pe.parameterize_model(m = m, n = n).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+        j_pe.parameterize_model(m = m_pe, n = n).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
         # write slurm file
         gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
             jobid = jobid,
@@ -653,7 +653,7 @@ def update_viscoelastic (jd = None, jn = None, n = None, overwrite = True, z_int
             time_limit = "15:00", # fifteen minute time limit
             del_feb = True,
             del_xplt = True)
-        continue # continue to next int
+        return False # continue to next int
     else: # if the simulation directory exists
         ## has the simulation completed?
         if not os.path.exists(dir_ve + "febio4.job.out"): return False
