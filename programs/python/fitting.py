@@ -500,8 +500,8 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
             o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name, scale = gamma_min) # time constant
 
         # in the case of elasticity, the bounds should be outside the average value
-        if emod_val is not None:
-            o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
+        # if emod_val is None:
+        o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
         o.set_optimization_function(name = obj_fun) # optimization function
         o.set_objective_tolerance(value = obj_tol) # objective tolerance
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
