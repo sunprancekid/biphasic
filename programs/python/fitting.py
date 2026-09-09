@@ -425,7 +425,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         print("ERROR :: fitting.update_poroelastic() :: job 'op' does not exist in '{0}{1}'.".format(jd, jn))
         return False
     # check nz_int
-    if not (j_op.has_simulation(i)):
+    if not (j_pe.has_simulation(i)):
         print("ERROR :: fitting.update_poroelastic() :: simulation integer 'i={0}' does not exist in job '{1}{2}/pe/'.".format(i, jd, jn))
         return False
 
