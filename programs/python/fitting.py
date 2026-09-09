@@ -483,13 +483,13 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                 return False # skip this line until the neighboring optimization simulations are completed
             # add neighboring solutions to optimization
             # relaxation constant
-            if gamma_val is not None:
+            if gamma_val is None:
                 if g_r < g_l:
                     o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2, name = gamma_name) # relaxation constant
                 else: # g_l < g_r
                     o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2, name = gamma_name)
             # time constant
-            if tau_val is not None:
+            if tau_val is None:
                 if t_r < t_l:
                     o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2, name = tau_name) # time constant
                 else: # t_l < t_r
