@@ -418,6 +418,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
     j_op = Opt ("{0}{1}/".format(jd, jn), 'opt')
     j_ve = Job ("{0}{1}/".format(jd, jn), 've')
     m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
+    m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
 
     ## check arguments
     # check job paths
