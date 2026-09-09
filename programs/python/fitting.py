@@ -62,7 +62,7 @@ obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
 obj_tol = 1.0e-18
 # gamma min, max, start, and name
-gamma_min = 0.0001
+gamma_min = 0.0000001
 gamma_max = 100.
 gamma_start = 0.1
 gamma_name = "fem.material('Material1').g1"
@@ -496,8 +496,8 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                     o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2, name = tau_name)
         else:
             # the simulation is on the edge, use the default values
-            o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name) # relaxation constant
-            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name, scale = gamma_min) # time constant
+            o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name, scale = gamma_min) # relaxation constant
+            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name, scale = tau_min) # time constant
 
         # in the case of elasticity, the bounds should be outside the average value
         # if emod_val is None:
