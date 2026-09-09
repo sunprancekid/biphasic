@@ -290,6 +290,8 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False):
             # parse bulk modulus and relaxation constant from other jobs
             continue
 
+        continue
+
         ## VISCOELASTIC JOB
         # if the method returns False, viscoelastic simulation has not compeleted yet
         if not (update_viscoelastic(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
