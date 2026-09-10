@@ -535,7 +535,7 @@ class OptimizationFile (object):
         """
         # todo :: boolean for duplicates
 
-        val = "{0:.4f},{1:.4f},{2:.4f}".format(start_val, min_val, max_val)
+        val = "{0:.4e},{1:.4e},{2:.4e}".format(start_val, min_val, max_val)
         if scale is not None:
             val += ",{0:.4e}".format(scale)
 
