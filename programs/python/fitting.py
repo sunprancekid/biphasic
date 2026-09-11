@@ -511,22 +511,25 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         if j_pe.get_sim_num() > 2:
             # if the number of simulations is greater than two, use an average for the elastic modulus
             n_e = 0 # number of elastic modulus values counted
-            a_e = 0 # accumulation of elastic modulus values
+            a_e = 0. # accumulation of elastic modulus values
             for j in range(j_pe.get_sim_num()):
-                n_tmp = j_op.df_parm.iloc[i]['n'] # i -> n
+                # n_e += 1
+                n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
                 v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
-                if v_e is not None: a_e += v_e
+                if v_e is not None:
+                    a_e += v_e
+                    n_e += 1
             # if n_e is greater than two, use the second standard deviation to set the bounds
             if n_e > 2:
                 avg = a_e / n_e
                 var = 0.
                 for j in range(j_pe.get_sim_num()):
-                    n_tmp = j_op.df_parm.iloc[i]['n'] # i -> n
+                    n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
                     v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
                     if v_e is not None: var += math.pow(v_e - avg, 2)
                 # the bounds are two standard deviations outside of the average
-                e_l = avg - 2 * math.sqrt(v_e / (n_e - 1))
-                e_r = avg + 2 * math.sqrt(v_e / (n_e - 1))
+                e_l = avg - 2 * math.sqrt(var / (n_e - 1))
+                e_r = avg + 2 * math.sqrt(var / (n_e - 1))
 
 
         ## append the values to the optimization file
