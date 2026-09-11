@@ -535,9 +535,9 @@ class OptimizationFile (object):
         """
         # todo :: boolean for duplicates
 
-        val = "{0:.4e},{1:.4e},{2:.4e}".format(start_val, min_val, max_val)
+        val = "{0:.7e},{1:.7e},{2:.7e}".format(start_val, min_val, max_val)
         if scale is not None:
-            val += ",{0:.4e}".format(scale)
+            val += ",{0:.7e}".format(scale)
 
         add_element_to_tree(self.root, "Parameters", "param", value = val, attributes = {"name": name}, duplicate = True)
 

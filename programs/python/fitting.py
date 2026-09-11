@@ -452,7 +452,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         f_d = s_pe.get_displacement_force_lag()
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
 
-        # generate the feb file
+        ## generate the model file
         m = j_ve.parameterize_model(m = m_op, n = n)
         # if a bulk modulus was specified, specify it in the model file
         if emod_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_val, format = "{0:.4e}")
@@ -462,46 +462,90 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         if tau_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format = "{0:.4e}")
         m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
-        # generate optimization file
+        ## GENERATE OPTIMIZATION FILE
         o = OptFile()
         # add optimizable parameters
         ## tau and gamma can depend on previous simulations
-        if (i != 1) and (i != j_pe.get_sim_num()):
-            # the job is between two other simulations
-            # check that the neighboring simulations have completed
-            n_l = j_op.df_parm.iloc[i - 1 - 1]['n']
-            n_r = j_op.df_parm.iloc[i + 1 - 1]['n']
-            # get solutions for gamma
-            g_l = j_op.get_optimized_parameter_value (n = n_l, o_key = 'g1_opt')
-            g_r = j_op.get_optimized_parameter_value (n = n_r, o_key = 'g1_opt')
-            # get solutions for tau
-            t_l = j_op.get_optimized_parameter_value (n = n_l, o_key = 't1_opt')
-            t_r = j_op.get_optimized_parameter_value (n = n_r, o_key = 't1_opt')
-            # if any of the values that were returned are none, break
-            if (g_l is None) or (g_r is None) or (t_l is None) or (t_r is None):
-                print("ERROR :: fitting.update_fit() :: Unable to finish generating '{0}', neighboring optimization simulations are not complete yet.".format(dir_op))
-                return False # skip this line until the neighboring optimization simulations are completed
-            # add neighboring solutions to optimization
-            # relaxation constant
-            if gamma_val is None:
-                if g_r < g_l:
-                    o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2, name = gamma_name) # relaxation constant
-                else: # g_l < g_r
-                    o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2, name = gamma_name)
-            # time constant
-            if tau_val is None:
-                if t_r < t_l:
-                    o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2, name = tau_name) # time constant
-                else: # t_l < t_r
-                    o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2, name = tau_name)
-        else:
-            # the simulation is on the edge, use the default values
-            o.add_parameters(min_val = gamma_min, max_val = gamma_max, start_val = gamma_start, name = gamma_name, scale = gamma_min) # relaxation constant
-            o.add_parameters(min_val = tau_min, max_val = tau_max, start_val = tau_start, name = tau_name, scale = tau_min) # time constant
+        # get the simulation results to the left, fast
+        # as time increases, we expect gamma to increase (high), tau to decrease (low) and emod to be constant
+        j = 0
+        g_l = None
+        t_l = None
+        e_l = None
+        while g_l is None:
+            j += 1 # increment j
+            i_l = i - j # decrement the left integer
+            if i_l < 1:
+                # decrimined beyond simulation bounds, use defaults
+                g_l = gamma_max
+                t_l = tau_min
+                e_l = emod_min
+            else:
+                # attempt to parse simulation data
+                n_l = j_op.df_parm.iloc[i_l - 1]['n']
+                g_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'g1_opt')
+                t_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 't1_opt')
+                e_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'E_opt')
 
-        # in the case of elasticity, the bounds should be outside the average value
-        # if emod_val is None:
-        o.add_parameters(min_val = emod_min, max_val = emod_max, start_val = emod_start, name = emod_name) # bulk elastic modulus
+        # get the results to the right, slow
+        # as the timescale decreases, we expect gamma to decrease (low), tau in increase (high), and emod to be constant
+        j = 0
+        g_r = None
+        t_r = None
+        e_r = None
+        while g_r is None:
+            j += 1 # increment j
+            i_r = i + j
+            if i_r > j_pe.get_sim_num():
+                # increment beyond simulation bounds, use defaults
+                g_r = gamma_min
+                t_r = tau_max
+                e_r = emod_max
+            else:
+                # attempt to parse the simulation data
+                n_r = j_op.df_parm.iloc[i_r - 1]['n']
+                g_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'g1_opt')
+                t_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 't1_opt')
+                e_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'E_opt')
+
+        if j_pe.get_sim_num() > 2:
+            # if the number of simulations is greater than two, use an average for the elastic modulus
+            n_e = 0 # number of elastic modulus values counted
+            a_e = 0 # accumulation of elastic modulus values
+            for j in range(j_pe.get_sim_num()):
+                n_tmp = j_op.df_parm.iloc[i]['n'] # i -> n
+                v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
+                if v_e is not None: a_e += v_e
+            # if n_e is greater than two, use the second standard deviation to set the bounds
+            if n_e > 2:
+                avg = a_e / n_e
+                var = 0.
+                for j in range(j_pe.get_sim_num()):
+                    n_tmp = j_op.df_parm.iloc[i]['n'] # i -> n
+                    v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
+                    if v_e is not None: var += math.pow(v_e - avg, 2)
+                # the bounds are two standard deviations outside of the average
+                e_l = avg - 2 * math.sqrt(v_e / (n_e - 1))
+                e_r = avg + 2 * math.sqrt(v_e / (n_e - 1))
+
+
+        ## append the values to the optimization file
+        # relaxation constant
+        if g_r < g_l:
+            o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_r) # relaxation constant
+        else: # g_l < g_r
+            o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_l)
+        # time constant
+        if t_r < t_l:
+            o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_r) # time constant
+        else: # t_l < t_r
+            o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_l)
+        # elastic modulus
+        if e_r < e_l:
+            o.add_parameters(min_val = e_r, max_val = e_l, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_r)
+        else: # e_l < e_r
+            o.add_parameters(min_val = e_l, max_val = e_r, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_l)
+
         o.set_optimization_function(name = obj_fun) # optimization function
         o.set_objective_tolerance(value = obj_tol) # objective tolerance
         o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
