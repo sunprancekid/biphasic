@@ -160,6 +160,8 @@ gen_slurm_script () {
     echo "#SBATCH --cpus-per-task=16" >> $FILEPATH$FILENAME
     echo "#SBATCH --error=${SIMID}.%j.err" >> $FILEPATH$FILENAME
     echo "#SBATCH --output=${SIMID}.%j.out" >> $FILEPATH$FILENAME
+    echo "#SBATCH --partition=m128" >> $FILEPATH$FILENAME
+    echo "#SBATCH --cpus-per-task=20" >> $FILEPATH$FILENAME
     # echo "#SBATCH --mail-type=FAIL" >> $FILEPATH$FILENAME
     # echo "#SBATCH --mail-user=dorsey@ipfdd.de" >> $FILEPATH$FILENAME
     echo "" >> $FILEPATH$FILENAME
