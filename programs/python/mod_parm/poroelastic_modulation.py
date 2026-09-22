@@ -40,8 +40,18 @@ default_period_high = 100000. # one hundred thousand, 1e6
 default_period_n = 40
 # default constant bulk modulus
 default_bulk = 1.129
+
+## PERMEABILITY
 # default material permeability
 default_perm = 0.1
+# maximum permeability
+default_k_low = 0.0001
+# minimum permeability
+default_k_high = 1.0
+# number of permeability
+default_k_n = 5
+
+## LENGTH SCALE
 # maps length scale to specific feb files
 scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 			   '0.08': 'models/uniax/scale/comp/0.08.feb',
@@ -166,6 +176,9 @@ def constant_permeability(job, K_val = default_perm):
 		xml = "Material/material[@id='1']/permeability/perm",
 		units = "MPa",
 		description = "permeability")
+
+def vary_permeability (job, k_low = default_k_low, k_high = default_k_high, k_n = default_k_n):
+	pass
 
 def frequency_sweep (job, loading_depth = default_loading_depth, relaxation_time = default_relaxation_time, oscillation_amplitude = default_oscillation_amplitude, period_low = default_period_low, period_high = default_period_high, period_n = default_period_n):
 	""" add pre-stress and oscillation frequency to job.

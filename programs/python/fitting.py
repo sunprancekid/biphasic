@@ -16,7 +16,7 @@ import copy
 # conda
 import pandas as pd
 # local - febio
-from febio.job import Job
+from febio.job import Job, gen_log_scale_range
 from febio.sweep import Sweep
 from febio.optimization import Optimization as Opt
 from febio.simulation import Simulation
@@ -55,6 +55,14 @@ default_emod = 0.5
 default_z = 0.125
 # sweep
 default_n_period = 20
+
+## PERMEABILITY MODULATION
+# default minimum permeability to test
+default_permeability_low = 0.00001
+# default maximum permeability to test
+default_permeability_high = 0.001
+# default number of permerabilities to test
+default_permeability_n = 5
 
 ## VISCOELASTIC OPTIMIZATION
 # path to objective function in feb file
@@ -234,6 +242,54 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     job_ve.save_parameters()
     # the viscoelastic model is exactly the same as the optimization model
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
+
+def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_permeability_high, k_n = default_permeability_n, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
+    """ initialize a series of fitting where the permeability varies
+
+    Arguments:
+    ----------
+    jd : str
+    k_lo : float
+    k_hi : float
+    k_n : int
+    emod : float
+    z : float
+    osc_amp : float
+    relax_time : float
+    load_depth : float
+    min_freq : float
+    max_freq : float
+    norm : bool
+
+    Returns:
+    --------
+    bool
+        'True' if successful, else 'False'
+    """
+
+    ## check method arguments
+    # jd must be specified
+    if jd is None:
+        print("ERROR :: fitting.vary_fit_perm() :: job directory 'jd' must be specified.")
+        return False
+    # check that z exists in the feb dictionary for poroelastic and viscoelastic jobs
+    z_str = str(z)
+    if z_str not in list(dict_feb.keys()):
+        print("ERROR :: fitting.vary_fit_perm() :: length scale value 'z' ('') does not correspond to any values in 'dict_feb'.")
+        return False
+    #
+
+    # loop through k, initialize fitting jobs
+    k_list = gen_log_scale_range(n = k_n, min_val = k_lo, max_val = k_hi)
+    for i in range(len(k_list)):
+        # establish the permeability value
+        k_val = k_list[i]
+        # get the viscoelastic and poroelastic models corresponding to the length scale
+        pe_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_pe.feb"
+        ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_ve.feb"
+        # init fit
+        init_fit(jd = jd, jn = "k_{0}".format(i+1), emod = emod, perm = k_val, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
+
 
 def update_fit (jd = None, jn = None, overwrite = True, force = False):
     """ update fit job directories based on their status.
