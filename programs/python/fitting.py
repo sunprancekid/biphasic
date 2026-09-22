@@ -523,6 +523,9 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         o = OptFile()
         # add optimizable parameters
         ## tau and gamma can depend on previous simulations
+        df_res = j_op.get_optimization_results()
+        print(df_res)
+        exit()
         # get the simulation results to the left, fast
         # as time increases, we expect gamma to increase (high), tau to decrease (low) and emod to be constant
         j = 0
