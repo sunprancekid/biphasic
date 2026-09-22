@@ -288,10 +288,11 @@ def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_pe
         pe_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_pe.feb"
         ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_ve.feb"
         # init fit
+        ## TODO add length scale as constant parameter to pe config.
         init_fit(jd = jd, jn = "k_{0}".format(i+1), emod = emod, perm = k_val, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
 
-def update_fit (jd = None, jn = None, overwrite = True, force = False):
+def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = None):
     """ update fit job directories based on their status.
     
     Arguments:
@@ -319,10 +320,10 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False):
     m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
 
     # used for job naming
-    z_int = None
-    for l in list(dict_feb.keys()):
-        if jn == dict_feb[l]:
-            z_int = list(dict_feb.keys()).index(l) + 1
+    if z_int is None:
+        for l in list(dict_feb.keys()):
+            if jn == dict_feb[l]:
+                z_int = list(dict_feb.keys()).index(l) + 1
 
     ## check the progression of each job through the fitting routines
     # use poroelastic job hirearchy as Ansatz for 'opt' and 've' jobs
