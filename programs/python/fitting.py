@@ -524,75 +524,84 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         # add optimizable parameters
         ## tau and gamma can depend on previous simulations
         df_res = j_op.get_optimization_results()
-        print(df_res)
-        exit()
-        # get the simulation results to the left, fast
-        # as time increases, we expect gamma to increase (high), tau to decrease (low) and emod to be constant
-        j = 0
-        g_l = None
-        t_l = None
-        e_l = None
-        while g_l is None:
-            j += 1 # increment j
-            i_l = i - j # decrement the left integer
-            if i_l < 1:
-                # decrimined beyond simulation bounds, use defaults
-                g_l = gamma_max
-                t_l = tau_min
-                e_l = emod_min
-            else:
-                # attempt to parse simulation data
-                n_l = j_op.df_parm.iloc[i_l - 1]['n']
-                g_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'g1_opt')
-                t_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 't1_opt')
-                e_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'E_opt')
+        if df_res is not None:
+            # get the simulation results to the left, fast
+            # as time increases, we expect gamma to increase (high), tau to decrease (low) and emod to be constant
+            j = 0
+            g_l = None
+            t_l = None
+            e_l = None
+            while g_l is None:
+                j += 1 # increment j
+                i_l = i - j # decrement the left integer
+                if i_l < 1:
+                    # decrimined beyond simulation bounds, use defaults
+                    g_l = gamma_max
+                    t_l = tau_min
+                    e_l = emod_min
+                else:
+                    # attempt to parse simulation data
+                    n_l = j_op.df_parm.iloc[i_l - 1]['n']
+                    g_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'g1_opt')
+                    t_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 't1_opt')
+                    e_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'E_opt')
 
-        # get the results to the right, slow
-        # as the timescale decreases, we expect gamma to decrease (low), tau in increase (high), and emod to be constant
-        j = 0
-        g_r = None
-        t_r = None
-        e_r = None
-        while g_r is None:
-            j += 1 # increment j
-            i_r = i + j
-            if i_r > j_pe.get_sim_num():
-                # increment beyond simulation bounds, use defaults
-                g_r = gamma_min
-                t_r = tau_max
-                e_r = emod_max
-            else:
-                # attempt to parse the simulation data
-                n_r = j_op.df_parm.iloc[i_r - 1]['n']
-                g_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'g1_opt')
-                t_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 't1_opt')
-                e_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'E_opt')
+            # get the results to the right, slow
+            # as the timescale decreases, we expect gamma to decrease (low), tau in increase (high), and emod to be constant
+            j = 0
+            g_r = None
+            t_r = None
+            e_r = None
+            while g_r is None:
+                j += 1 # increment j
+                i_r = i + j
+                if i_r > j_pe.get_sim_num():
+                    # increment beyond simulation bounds, use defaults
+                    g_r = gamma_min
+                    t_r = tau_max
+                    e_r = emod_max
+                else:
+                    # attempt to parse the simulation data
+                    n_r = j_op.df_parm.iloc[i_r - 1]['n']
+                    g_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'g1_opt')
+                    t_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 't1_opt')
+                    e_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'E_opt')
 
-        if j_pe.get_sim_num() > 2:
-            # if the number of simulations is greater than two, use an average for the elastic modulus
-            n_e = 0 # number of elastic modulus values counted
-            a_e = 0. # accumulation of elastic modulus values
-            for j in range(j_pe.get_sim_num()):
-                # n_e += 1
-                n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
-                v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
-                if v_e is not None:
-                    a_e += v_e
-                    n_e += 1
-            # if n_e is greater than two, use the second standard deviation to set the bounds
-            if n_e > 2:
-                avg = a_e / n_e
-                var = 0.
+            if j_pe.get_sim_num() > 2:
+                # if the number of simulations is greater than two, use an average for the elastic modulus
+                n_e = 0 # number of elastic modulus values counted
+                a_e = 0. # accumulation of elastic modulus values
                 for j in range(j_pe.get_sim_num()):
+                    # n_e += 1
                     n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
                     v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
-                    if v_e is not None: var += math.pow(v_e - avg, 2)
-                # the bounds are two standard deviations outside of the average
-                e_l = avg - 2 * math.sqrt(var / (n_e - 1))
-                e_r = avg + 2 * math.sqrt(var / (n_e - 1))
+                    if v_e is not None:
+                        a_e += v_e
+                        n_e += 1
+                # if n_e is greater than two, use the second standard deviation to set the bounds
+                if n_e > 2:
+                    avg = a_e / n_e
+                    var = 0.
+                    for j in range(j_pe.get_sim_num()):
+                        n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
+                        v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
+                        if v_e is not None: var += math.pow(v_e - avg, 2)
+                    # the bounds are two standard deviations outside of the average
+                    e_l = avg - 2 * math.sqrt(var / (n_e - 1))
+                    e_r = avg + 2 * math.sqrt(var / (n_e - 1))
+            else:
+                print("err")
+                exit()
+
         else:
-            print("err")
-            exit()
+            # optimization simulations have not been completed yet and therefore cannot
+            # use default ranges to initialize the optimization parameters
+            g_r = gamma_min
+            g_l = gamma_max
+            t_r = tau_min
+            t_l = tau_max
+            e_r = emod_min
+            e_l = emod_max
 
 
         ## append the values to the optimization file
