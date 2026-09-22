@@ -587,6 +587,9 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                 # the bounds are two standard deviations outside of the average
                 e_l = avg - 2 * math.sqrt(var / (n_e - 1))
                 e_r = avg + 2 * math.sqrt(var / (n_e - 1))
+        else:
+            print("err")
+            exit()
 
 
         ## append the values to the optimization file
