@@ -20,7 +20,26 @@ import xml.etree.ElementTree as ET # handles xml formatting
 ELM_PROP = ['p']
 
 ## METHODS
-# none
+# adds part to model file
+def add_part_to_model3d():
+    """adds nodes and elements to mesh for 3d model.
+
+    Arguments:
+    ----------
+    nodes :
+    elements :
+    elmementTypes :
+    reset : bool
+
+    Returns:
+    -------
+    bool
+    """
+    # print all nodes and their positions
+    # print all elements and their nodes
+    # iteratively add nodes and elements to MESH section
+    # check for either test4 or hex8 elements.\
+    # tube: https://www.youtube.com/watch?v=cQwYmk3bMSo&t=114s
 
 ## CLASSES
 # model class

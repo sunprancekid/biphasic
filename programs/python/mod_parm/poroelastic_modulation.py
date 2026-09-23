@@ -159,6 +159,9 @@ def constant_bulk_modulus (job, E_val = default_bulk):
 		units = "MPa",
 		description = "bulk_modulus")
 
+def vary_bulk_modulus (job, e_low = None, e_high = None, e_n = None):
+
+
 def constant_permeability(job, K_val = default_perm):
 	"""
 
