@@ -64,6 +64,14 @@ default_permeability_high = 0.001
 # default number of permerabilities to test
 default_permeability_n = 5
 
+## ELASTIC MODULUS MODULTATION
+# default minimum elastic modulus to test
+default_emod_low = 0.05
+# default maximum elastic modulus to test
+default_emod_high = 5.
+# default number of elastic moduli to test
+default_emod_n = 5
+
 ## VISCOELASTIC OPTIMIZATION
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
@@ -244,7 +252,7 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
 def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_permeability_high, k_n = default_permeability_n, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
-    """ initialize a series of fitting where the permeability varies
+    """ initialize a series of fitting where the permeability varies.
 
     Arguments:
     ----------
@@ -290,6 +298,66 @@ def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_pe
         # init fit
         ## TODO add length scale as constant parameter to pe config.
         init_fit(jd = jd, jn = "k_{0}".format(i+1), emod = emod, perm = k_val, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
+
+def vary_fit_elastic_modulus (jd = None, e_lo = default_emod_low, e_hi = default_emod_high, e_n = default_emod_n, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
+    """ initialize a series of fitting experiments where the elastic modulus varies.
+
+    Arguments:
+    ----------
+    jd : str
+        path to directory that contains job.
+    e_lo : float
+        lowest elastic modulus value to test
+    e_hi : float
+        highest elastic modulus value to test
+    e_n : int
+        number of different elastic moduli to test, including the highest and lowest
+    perm : float
+        constant permeability assigned to the biphasic materil.
+    z : float
+        length scale to used, correspond to model
+    osc_amp : float
+        oscillation amplitude assigned after pre-loading
+    relax_time : float
+        length of time (seconds) the material is allowed to relax
+    load_depth : float
+        depth of pre-stress loading
+    min_freq : float
+        lowest frequency to test
+    max_freq : float
+        highest frequency to test
+    norm : bool
+        determines if the frequency values passed to method are already normalized
+
+    Returns:
+    --------
+    bool
+        'True' if operation was successful, else 'False'
+    """
+    ## check method arguments
+    # jd must be specified
+    if jd is None:
+        print("ERROR :: fitting.vary_fit_elastic_modulus() :: job directory 'jd' must be specified.")
+        return False
+    # check that z exists in the feb dictionary for poroelastic and viscoelastic jobs
+    z_str = str(z)
+    if z_str not in list(dict_feb.keys()):
+        print("ERROR :: fitting.vary_fit_elastic_modulus() :: length scale value 'z' ('') does not correspond to any values in 'dict_feb'.")
+        return False
+    #
+
+    # loop through k, initialize fitting jobs
+    e_list = gen_log_scale_range(n = e_n, min_val = e_lo, max_val = e_hi)
+    for i in range(len(e_list)):
+        # establish the permeability value
+        e_val = e_list[i]
+        print(e_val)
+        # get the viscoelastic and poroelastic models corresponding to the length scale
+        pe_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_pe.feb"
+        ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_ve.feb"
+        # init fit
+        ## TODO add length scale as constant parameter to pe config.
+        init_fit(jd = jd, jn = "e_{0}".format(i+1), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
 
 def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = None):
