@@ -501,8 +501,8 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         os.makedirs(dir_op)
 
         # set job id
-        jobid = "o{0}".format(n)
-        if z_int > 0: jobid = "z{0}-o{1}".format(z_int, n)
+        # jobid = "o{0}".format(n)
+        # if z_int > 0: jobid = "z{0}-o{1}".format(z_int, n)
 
         # get the simulation stress-strain data from the poroelastic file
         s_pe = j_pe.get_simulation(i)
