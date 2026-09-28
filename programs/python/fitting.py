@@ -361,7 +361,6 @@ def vary_fit_elastic_modulus (jd = None, e_lo = default_emod_low, e_hi = default
         ## TODO add length scale as constant parameter to pe config.
         init_fit(jd = jd, jn = "e_{0}".format(i+1), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
-
 def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = None):
     """ update fit job directories based on their status.
     
@@ -393,9 +392,8 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
     e_val = j_pe.get_key_value (key = 'E', n = 1)
     k_val = j_pe.get_key_value (key = 'K', n = 1)
     l_val = j_pe.get_key_value (key = 'L', n = 1)
-    if l_val is None:
-        pass
-        ## TODO is there a way that I can get the length scale from some aspect of the model files ..?
+    if l_val is None: pass
+    ## TODO is there a way that I can get the length scale from some aspect of the model files ..?
 
     # used for job naming
     if z_int is None:
@@ -422,7 +420,8 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             # if method results 'False', optimization simulation has not completed yet
             if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
         else:
-            # parse bulk modulus and relaxation constant from other jobs
+            # use poroelastic parameters to estimate the bulk modulus
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, ))
             continue
 
         continue
@@ -523,8 +522,37 @@ def force_viscoelastic_optimization (jd = None, jn = None, overwrite = True, z_i
     pass
 
 # add optimization routine
-def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_val = None, gamma_val = None, tau_val = None):
+def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_force_val = None, emod_start_val = None, emod_max_val = None, emod_min_val = None, gamma_force_val = None, gamma_start_val = None, gamma_max_val = None, gamma_min_val = None, tau_force_val = None, tau_start_val = None, tau_max_val = None, tau_min_val = None):
     """ update optimization portion of fitting routine.
+
+    here, the optimization portion of a fitting routine is updated. First, the
+    routine checks if the data from the poroelastic portion of the fitting
+    process has been completed. If it has, then it uses the force data from
+    the final cycle of the poroelastic simulation to generate an optimization
+    process in which up to three viscoelastic parameters for the SLS model
+    are optimized to reproduce the force data.
+
+    For any initial optimization process, this routine generated an optimization
+    file in which all three viscoelastic parameters (bulk modulus, time constant,
+    and relaxation constant) can all be a wide range of values with bounds ranging
+    between the default values specified as parameters in the module (e.g.
+    'gamma_low').
+
+    Additional, this method allows the user to optionally assign the starting
+    value and the bounds for any or all of the viscoelastic parameters used
+    in the optimization search. For example, in the case of the bulk modulus,
+    if ...
+
+    If two optimization jobs which timescales (period, frequency) which bound the
+    simulation in question (here, 'i') have been completed, this routine uses
+    the results from those opimization routines to bound the search space used
+    by the optimization file for this job. For example, if two optimization job
+    have been completed, where one timescale is less than the current timescale
+    and another greater than the current timescale, then this routine takes, for
+    example, the time constant from either of those bounded optimization routines
+    and assumes that the time constant for the current simulation cannot be
+    greater than or less than the time constant for the bounding simulations.
+
 
     Arguments:
     ----------
@@ -538,12 +566,30 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         overwrite existing files if they are incomplete
     z_int : int (optional)
         correspond to index in 'dict_feb'
-    emod_val : float or None (optional)
-        optional value to assign bulk modulus ddo not have access to Scholar Profiles. Souring optimization.
-    gamma_val : float or None (optional)
-        optional value to assign the relaxation constant during optimization.
-    tau_val : float or None (optional)
-        optional value to assign the time constant during optimization.
+    emod_force_val : float or None (optional)
+        specify elastic modulus in model file and bypass optimization
+    emod_start_val : float or None (optional)
+        specify the starting value assigned to elastic modulus optimization.
+    emod_min_val : float or None (optional)
+        specify the upper bound for elastic modulus optimization search.
+    emod_max_val : float or None (optional)
+        specify the lower bound for elastic modulus optimization search.
+    gamma_force_val : float or None (optional)
+        specify relaxation constant in model file and bypass optimization
+    gamma_start_val : float or None (optional)
+        specify the starting value for relaxation constant assign optimization.
+    gamma_min_val : float or None (optional)
+        specify the upper bound for relaxation constant optimization search.
+    gamma_max_val : float or None (optional)
+        specify the lower bound for relaxation constant optimization search.
+    tau_force_val : float or None (optional)
+        specify time constant in model file and bypass optimization.
+    tau_start_val : float or None (optional)
+        specify the starting value assign to time constant optimization.
+    tau_min_val : float or None (optional)
+        specify the upper bound for time constant optimization.
+    tau_max_val : float or None (optional)
+        specify the lower bound for time constant optimization
 
     Returns:
     --------
@@ -590,11 +636,11 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         ## generate the model file
         m = j_ve.parameterize_model(m = m_op, n = n)
         # if a bulk modulus was specified, specify it in the model file
-        if emod_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_val, format = "{0:.4e}")
+        if emod_force_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_force_val, format = "{0:.4e}")
         # if a realxation constant was specified, specify it in the model file
-        if gamma_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format = "{0:.4e}")
+        if gamma_force_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format = "{0:.4e}")
         # if a time constant was specified, specify it in the model file
-        if tau_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format = "{0:.4e}")
+        if tau_force_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format = "{0:.4e}")
         m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
         ## GENERATE OPTIMIZATION FILE
@@ -670,7 +716,6 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
             else:
                 print("err")
                 exit()
-
         else:
             # optimization simulations have not been completed yet and therefore cannot
             # use default ranges to initialize the optimization parameters
@@ -681,23 +726,72 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
             e_r = emod_min
             e_l = emod_max
 
-
-        ## append the values to the optimization file
-        # relaxation constant
+        ## at this point, the bounds for each optimization parameter have been
+        ## assigned based on which simulations have been completed. Now, assign
+        ## min, max and starting values if they were not specified in the method call
+        # relaxation constant (gamma) - bounds
         if g_r < g_l:
-            o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_r) # relaxation constant
+            # gamma right (slow) is smaller than gamma left (fast)
+            if gamma_min_val is None: gamma_min_val = g_r
+            if gamma_max_val is None: gamma_max_val = g_l
         else: # g_l < g_r
-            o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_l)
-        # time constant
+            # gamma left (fast) is smaller than gamma right (slow)
+            if gamma_min_val is None: gamma_min_val = g_l
+            if gamma_max_val is None: gamma_max_val = g_r
+        # relaxation constant (gamma) - starting value
+        if gamma_start_val is None: gamma_start_val = (gamma_min_val + gamma_max_val) / 2.
+        if (gamma_start_val < gamma_min_val) or (gamma_start_val > gamma_max_val):
+            # the starting value is outside of the bounds, inform user
+            print("WARNING :: fitting.update_optimization() :: relaxation constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside the set bounds ({2:.4e}, {3:.4e}).".format(gamma_start_val, "{0}{1}/".format(jd, jn), gamma_min_val, gamma_max_val))
+        # time constant (tau) - bounds
         if t_r < t_l:
-            o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_r) # time constant
+            # tau right (slow) is smaller than tau left (fast)
+            if tau_min_val is None: tau_min_val = t_r
+            if tau_max_val is None: tau_max_val = t_l
         else: # t_l < t_r
-            o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_l)
-        # elastic modulus
+            # tau left (fast) is smaller than tau right (slow)
+            if tau_min_val is None: tau_min_val = t_l
+            if tau_max_val is None: tau_max_val = t_r
+        # time constant (tau) - starting value
+        if tau_start_val is None: tau_start_val = (tau_min_val + tau_max_val) / 2.
+        if (tau_start_val < tau_min_val) or (tau_start_val > tau_max_val):
+            # the starting value is outside of the bounds, inform user
+            print("WARNING :: fitting.update_optimization() :: time constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ({2:.4e}, {3:.4e}).".format(tau_start_val, "{0}{1}/".format(jd, jn), tau_min_val, tau_max_val))
+        # elastic modulus - bounds
         if e_r < e_l:
-            o.add_parameters(min_val = e_r, max_val = e_l, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_r)
+            # emod right (fast) is smaller than emod left (slow)
+            if emod_min_val is None: emod_min_val = e_r
+            if emod_max_val is None: emod_max_val = e_l
         else: # e_l < e_r
-            o.add_parameters(min_val = e_l, max_val = e_r, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_l)
+            # emod left (slow) is smaller than emod right (fast)
+            if emod_min_val is None: emod_min_val = e_l
+            if emod_max_val is None: emod_max_val = e_r
+        # elastic modulus - starting value
+        if emod_start_val is None: emod_start_val = (emod_min_val + emod_max_val) / 2.
+        if (emod_start_val < emod_min_val) or (emod_start_val > emod_max_val):
+            # the starting value is outside of the bounds, inform user
+            print("WARNING :: fitting.update_optimization() :: elastic modulus optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ('{2:.4e}', '{3:.4e}').".format(emod_start_val, "{0}{1}/".format(jd, jn), emod_min_val, emod_max_val))
+
+        ## append the values to the optimization file, only append if a value
+        ## corresponding to the parameter has not been specified in the model file
+        # relaxation constant
+        if gamma_force_val is None:
+            if g_r < g_l:
+                o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_r) # relaxation constant
+            else: # g_l < g_r
+                o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_l)
+        # time constant
+        if tau_force_val is None:
+            if t_r < t_l:
+                o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_r) # time constant
+            else: # t_l < t_r
+                o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_l)
+        # elastic modulus
+        if emod_force_val is None:
+            if e_r < e_l:
+                o.add_parameters(min_val = e_r, max_val = e_l, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_r)
+            else: # e_l < e_r
+                o.add_parameters(min_val = e_l, max_val = e_r, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_l)
 
         o.set_optimization_function(name = obj_fun) # optimization function
         o.set_objective_tolerance(value = obj_tol) # objective tolerance
