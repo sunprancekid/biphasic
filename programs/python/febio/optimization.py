@@ -422,7 +422,7 @@ class Optimization (object):
         str
             path to the simulation summary file.
         """
-        return summary_file_format.format(self.jd, self.jn)
+        return summary_file_format.format(self.get_jobid(), self.jn)
 
     def has_summary (self):
         """ checks if summary file exists within the simulation directory.
@@ -435,7 +435,7 @@ class Optimization (object):
         --------
         None
         """
-        return path.os.exists(self.get_summary_file_format())
+        return os.path.exists(self.get_summary_file_format())
 
     def get_summary (self):
         """ return summary of optimization simulations.
