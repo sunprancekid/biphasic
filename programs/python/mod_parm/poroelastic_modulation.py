@@ -40,6 +40,8 @@ default_period_high = 100000. # one hundred thousand, 1e6
 default_period_n = 40
 # default constant bulk modulus
 default_bulk = 1.129
+# default / assumed length scale
+default_length_scale = 0.125
 
 ## PERMEABILITY
 # default material permeability
@@ -159,8 +161,26 @@ def constant_bulk_modulus (job, E_val = default_bulk):
 		units = "MPa",
 		description = "bulk_modulus")
 
-# def vary_bulk_modulus (job, e_low = None, e_high = None, e_n = None):
+def constant_length_scale (job, L_val = default_length_scale):
+	""" assign constant length scale to poroelstic job.
 
+	Arguments:
+	----------
+	job : Job
+		poroelastic job
+	L_val : float
+		assumed length scale assigned to simulation.
+
+	Returns:
+	--------
+	Job
+		'job' with additional parameter
+	"""
+	job.add_constant_parameter(val = L_val,
+		key = 'L',
+		xml = None,
+		units = 'mm',
+		description = 'length_scale')
 
 def constant_permeability(job, K_val = default_perm):
 	"""

@@ -23,7 +23,7 @@ from febio.simulation import Simulation
 from febio.feb.model_file import ModelFile
 from febio.feb.optimization_file import OptimizationFile as OptFile
 from febio.slurm.submit import gen_slurm_script
-from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, frequency_sweep
+from mod_parm.poroelastic_modulation import constant_bulk_modulus, constant_permeability, constant_length_scale, frequency_sweep
 from util.smoothie import log2lin, lin2log
 # local - plotting
 from plot.figure import Figure
@@ -204,6 +204,8 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     j_pe = Job("{0}{1}".format(jd, jn), 'pe')
     constant_bulk_modulus (job = j_pe, E_val = emod)
     constant_permeability (job = j_pe, K_val = perm)
+    constant_length_scale (job = j_pe, L_val = z)
+    ## assign the length scale
     # here the loading depth and oscillation amplitude are scaled by the the implicit geometric length scale
     frequency_sweep (job = j_pe, 
         loading_depth = (z / default_z) * load_depth, 
@@ -386,6 +388,14 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
     m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
     m_op = ModelFile ("{0}{1}/opt/opt.feb".format(jd, jn))
     m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
+
+    ## get the assigned poroelastic parameters from the poroelastic job
+    e_val = j_pe.get_key_value (key = 'E', n = 1)
+    k_val = j_pe.get_key_value (key = 'K', n = 1)
+    l_val = j_pe.get_key_value (key = 'L', n = 1)
+    if l_val is None:
+        pass
+        ## TODO is there a way that I can get the length scale from some aspect of the model files ..?
 
     # used for job naming
     if z_int is None:
