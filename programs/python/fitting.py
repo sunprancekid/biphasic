@@ -421,8 +421,9 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
         else:
             # use poroelastic parameters to estimate the bulk modulus
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, ))
-            continue
+            ## NOTE :: for now, we assume that the viscoelastic bulk can be forced to a value which
+            ## was emperically determined to correspond to a poroelastic elastic modulus of 0.5 MPa
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = 0.48863)): continue
 
         continue
 
@@ -636,11 +637,11 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         ## generate the model file
         m = j_ve.parameterize_model(m = m_op, n = n)
         # if a bulk modulus was specified, specify it in the model file
-        if emod_force_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_force_val, format = "{0:.4e}")
+        if emod_force_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_force_val, format_str = "{0:.4e}")
         # if a realxation constant was specified, specify it in the model file
-        if gamma_force_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format = "{0:.4e}")
+        if gamma_force_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format_str = "{0:.4e}")
         # if a time constant was specified, specify it in the model file
-        if tau_force_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format = "{0:.4e}")
+        if tau_force_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format_str = "{0:.4e}")
         m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
 
         ## GENERATE OPTIMIZATION FILE
