@@ -270,7 +270,6 @@ class Optimization (object):
         if np.isnan(val): return None
         else: return val
 
-
     def generate_optimized_model (self, m, n):
         """ creates optimized model file from the results of an optimization job.
 
@@ -407,6 +406,23 @@ class Optimization (object):
             true
         """
         pass
+
+    def get_sim_num(self):
+        """ returns the integer number of simulations associated with job set.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        int
+            number of simulations associated with job.
+        """
+        if self.has_parameters():
+            return len(self.df_parm.index)
+        else:
+            return 0
 
     ## SUMMARY ## 
 

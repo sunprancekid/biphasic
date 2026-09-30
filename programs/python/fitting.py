@@ -81,18 +81,21 @@ obj_tol = 1.0e-18
 gamma_min = 0.0000001
 gamma_max = 100.
 gamma_start = 0.1
+gamma_key = 'g1_key'
 gamma_name = "fem.material('Material1').g1"
 gamma_xml = "Material/material[@id='1']/g1"
 # tau min, max, start, and name
 tau_min = 0.01
 tau_max = 100000.
 tau_start = 10.
+tau_key = 't1_opt'
 tau_name = "fem.material('Material1').t1"
 tau_xml = "Material/material[@id='1']/t1"
 # elastic modulus min, max, start, and name
 emod_min = 0.35
 emod_max = 0.55
 emod_start = 0.45
+emod_key = 'E_opt'
 emod_name = "fem.material('Material1').elastic.E"
 emod_xml = "Material/material[@id='1']/elastic/E"
 
@@ -623,83 +626,43 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
     # if the directory does not eixst
     if not os.path.exists(dir_op):
         # if the  does not, make the directory
-        os.makedirs(dir_op)
 
-        # set job id
-        # jobid = "o{0}".format(n)
-        # if z_int > 0: jobid = "z{0}-o{1}".format(z_int, n)
-
+        ## ESTABLISH FILES, DATA
         # get the simulation stress-strain data from the poroelastic file
         s_pe = j_pe.get_simulation(i)
         f_d = s_pe.get_displacement_force_lag()
         f_d['f'] = -1 * f_d['f'] # transform force to negative value
-
-        ## generate the model file
-        m = j_ve.parameterize_model(m = m_op, n = n)
-        # if a bulk modulus was specified, specify it in the model file
-        if emod_force_val is not None: m.update_element_value(elm_path = emod_xml, value = emod_force_val, format_str = "{0:.4e}")
-        # if a realxation constant was specified, specify it in the model file
-        if gamma_force_val is not None: m.update_element_value(elm_path = gamma_xml, value = gamma_val, format_str = "{0:.4e}")
-        # if a time constant was specified, specify it in the model file
-        if tau_force_val is not None: m.update_element_value(elm_path = tau_xml, value = tau_val, format_str = "{0:.4e}")
-        m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
-
-        ## GENERATE OPTIMIZATION FILE
+        # start optimization file
         o = OptFile()
-        # add optimizable parameters
-        ## tau and gamma can depend on previous simulations
+        o.set_optimization_function(name = obj_fun) # optimization function
+        o.set_objective_tolerance(value = obj_tol) # objective tolerance
+        o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
+        # generate model file
+        m = j_ve.parameterize_model(m = m_op, n = n)
+        # get results from optimization job
         df_res = j_op.get_optimization_results()
-        if df_res is not None:
-            # get the simulation results to the left, fast
-            # as time increases, we expect gamma to increase (high), tau to decrease (low) and emod to be constant
-            j = 0
-            g_l = None
-            t_l = None
-            e_l = None
-            while g_l is None:
-                j += 1 # increment j
-                i_l = i - j # decrement the left integer
-                if i_l < 1:
-                    # decrimined beyond simulation bounds, use defaults
-                    g_l = gamma_max
-                    t_l = tau_min
-                    e_l = emod_min
-                else:
-                    # attempt to parse simulation data
-                    n_l = j_op.df_parm.iloc[i_l - 1]['n']
-                    g_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'g1_opt')
-                    t_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 't1_opt')
-                    e_l = j_op.get_optimized_parameter_value(n = n_l, o_key = 'E_opt')
 
-            # get the results to the right, slow
-            # as the timescale decreases, we expect gamma to decrease (low), tau in increase (high), and emod to be constant
-            j = 0
-            g_r = None
-            t_r = None
-            e_r = None
-            while g_r is None:
-                j += 1 # increment j
-                i_r = i + j
-                if i_r > j_pe.get_sim_num():
-                    # increment beyond simulation bounds, use defaults
-                    g_r = gamma_min
-                    t_r = tau_max
-                    e_r = emod_max
-                else:
-                    # attempt to parse the simulation data
-                    n_r = j_op.df_parm.iloc[i_r - 1]['n']
-                    g_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'g1_opt')
-                    t_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 't1_opt')
-                    e_r = j_op.get_optimized_parameter_value(n = n_r, o_key = 'E_opt')
-
+        ## ESTABLISH VALUES FOR EACH VISCOELASTIC PARAMETER
+        ## elastic modulus
+        # if a bulk modulus was specified, specify it in the model file
+        if emod_force_val is not None:
+            # specific the elastic modulus value in the model file
+            m.update_element_value(elm_path = emod_xml, value = emod_force_val, format_str = "{0:.4e}")
+        else:
+            # determine the bounds used for elastic modulus during optimization
+            e_l, e_r = get_optimization_bounds(j_op = j_op, i = i, opt_key = emod_key)
+            # if either the left or right bounds could not be parsed, use the defaults
+            if e_l is None: e_l = emod_min
+            if e_r is None: e_r = emod_max
+            # for elastic modulus ONLY - there is no time or length scale dependence
+            # if enough simulations have been completed, used an average value to set the bounds
             if j_pe.get_sim_num() > 2:
                 # if the number of simulations is greater than two, use an average for the elastic modulus
                 n_e = 0 # number of elastic modulus values counted
                 a_e = 0. # accumulation of elastic modulus values
                 for j in range(j_pe.get_sim_num()):
-                    # n_e += 1
                     n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
-                    v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
+                    v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = emod_key) # n -> E_opt
                     if v_e is not None:
                         a_e += v_e
                         n_e += 1
@@ -709,96 +672,89 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                     var = 0.
                     for j in range(j_pe.get_sim_num()):
                         n_tmp = j_op.df_parm.iloc[j - 1]['n'] # i -> n
-                        v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = 'E_opt') # n -> E_opt
+                        v_e = j_op.get_optimized_parameter_value(n = n_tmp, o_key = emod_key) # n -> E_opt
                         if v_e is not None: var += math.pow(v_e - avg, 2)
                     # the bounds are two standard deviations outside of the average
                     e_l = avg - 2 * math.sqrt(var / (n_e - 1))
                     e_r = avg + 2 * math.sqrt(var / (n_e - 1))
-            else:
-                print("err")
-                exit()
-        else:
-            # optimization simulations have not been completed yet and therefore cannot
-            # use default ranges to initialize the optimization parameters
-            g_r = gamma_min
-            g_l = gamma_max
-            t_r = tau_min
-            t_l = tau_max
-            e_r = emod_min
-            e_l = emod_max
-
-        ## at this point, the bounds for each optimization parameter have been
-        ## assigned based on which simulations have been completed. Now, assign
-        ## min, max and starting values if they were not specified in the method call
-        # relaxation constant (gamma) - bounds
-        if g_r < g_l:
-            # gamma right (slow) is smaller than gamma left (fast)
-            if gamma_min_val is None: gamma_min_val = g_r
-            if gamma_max_val is None: gamma_max_val = g_l
-        else: # g_l < g_r
-            # gamma left (fast) is smaller than gamma right (slow)
-            if gamma_min_val is None: gamma_min_val = g_l
-            if gamma_max_val is None: gamma_max_val = g_r
-        # relaxation constant (gamma) - starting value
-        if gamma_start_val is None: gamma_start_val = (gamma_min_val + gamma_max_val) / 2.
-        if (gamma_start_val < gamma_min_val) or (gamma_start_val > gamma_max_val):
-            # the starting value is outside of the bounds, inform user
-            print("WARNING :: fitting.update_optimization() :: relaxation constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside the set bounds ({2:.4e}, {3:.4e}).".format(gamma_start_val, "{0}{1}/".format(jd, jn), gamma_min_val, gamma_max_val))
-        # time constant (tau) - bounds
-        if t_r < t_l:
-            # tau right (slow) is smaller than tau left (fast)
-            if tau_min_val is None: tau_min_val = t_r
-            if tau_max_val is None: tau_max_val = t_l
-        else: # t_l < t_r
-            # tau left (fast) is smaller than tau right (slow)
-            if tau_min_val is None: tau_min_val = t_l
-            if tau_max_val is None: tau_max_val = t_r
-        # time constant (tau) - starting value
-        if tau_start_val is None: tau_start_val = (tau_min_val + tau_max_val) / 2.
-        if (tau_start_val < tau_min_val) or (tau_start_val > tau_max_val):
-            # the starting value is outside of the bounds, inform user
-            print("WARNING :: fitting.update_optimization() :: time constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ({2:.4e}, {3:.4e}).".format(tau_start_val, "{0}{1}/".format(jd, jn), tau_min_val, tau_max_val))
-        # elastic modulus - bounds
-        if e_r < e_l:
-            # emod right (fast) is smaller than emod left (slow)
-            if emod_min_val is None: emod_min_val = e_r
-            if emod_max_val is None: emod_max_val = e_l
-        else: # e_l < e_r
-            # emod left (slow) is smaller than emod right (fast)
-            if emod_min_val is None: emod_min_val = e_l
-            if emod_max_val is None: emod_max_val = e_r
-        # elastic modulus - starting value
-        if emod_start_val is None: emod_start_val = (emod_min_val + emod_max_val) / 2.
-        if (emod_start_val < emod_min_val) or (emod_start_val > emod_max_val):
-            # the starting value is outside of the bounds, inform user
-            print("WARNING :: fitting.update_optimization() :: elastic modulus optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ('{2:.4e}', '{3:.4e}').".format(emod_start_val, "{0}{1}/".format(jd, jn), emod_min_val, emod_max_val))
-
-        ## append the values to the optimization file, only append if a value
-        ## corresponding to the parameter has not been specified in the model file
-        # relaxation constant
-        if gamma_force_val is None:
-            if g_r < g_l:
-                o.add_parameters(min_val = g_r, max_val = g_l, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_r) # relaxation constant
-            else: # g_l < g_r
-                o.add_parameters (min_val = g_l, max_val = g_r, start_val = (g_r + g_l) / 2., name = gamma_name, scale = g_l)
-        # time constant
-        if tau_force_val is None:
-            if t_r < t_l:
-                o.add_parameters(min_val = t_r, max_val = t_l, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_r) # time constant
-            else: # t_l < t_r
-                o.add_parameters(min_val = t_l, max_val = t_r, start_val = (t_r + t_l) / 2., name = tau_name, scale = t_l)
-        # elastic modulus
-        if emod_force_val is None:
+            ## if any bounds were specified in the method call, overwrite the defaults
+            # elastic modulus - bounds
             if e_r < e_l:
-                o.add_parameters(min_val = e_r, max_val = e_l, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_r)
+                # emod right (fast) is smaller than emod left (slow)
+                if emod_min_val is None: emod_min_val = e_r
+                if emod_max_val is None: emod_max_val = e_l
             else: # e_l < e_r
-                o.add_parameters(min_val = e_l, max_val = e_r, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_l)
+                # emod left (slow) is smaller than emod right (fast)
+                if emod_min_val is None: emod_min_val = e_l
+                if emod_max_val is None: emod_max_val = e_r
+            # elastic modulus - starting value
+            if emod_start_val is None: emod_start_val = (emod_min_val + emod_max_val) / 2.
+            if (emod_start_val < emod_min_val) or (emod_start_val > emod_max_val):
+                # the starting value is outside of the bounds, inform user
+                print("WARNING :: fitting.update_optimization() :: elastic modulus optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ('{2:.4e}', '{3:.4e}').".format(emod_start_val, "{0}{1}/".format(jd, jn), emod_min_val, emod_max_val))
+            ## apply bounds to optimization file
+            o.add_parameters(min_val = emod_min_val, max_val = emod_max_val, start_val = emod_start_val, name = emod_name, scale = emod_min_val)
 
-        o.set_optimization_function(name = obj_fun) # optimization function
-        o.set_objective_tolerance(value = obj_tol) # objective tolerance
-        o.add_data_list(x_list = f_d['t'].tolist(), y_list = f_d['f'].to_list()) # add optimization data (from poroelastic simulation)
+        ## relaxation constant
+        # if a realxation consemod_nametant was specified, specify it in the model file
+        if gamma_force_val is not None:
+            m.update_element_value(elm_path = gamma_xml, value = gamma_val, format_str = "{0:.4e}")
+        else:
+            # determing the bounds from previous simulations
+            g_l, g_r = get_optimization_bounds(j_op = j_op, i = i, opt_key = gamma_key)
+            # if either the left or right bounds could not be parse, used the defaults
+            if g_l is None: g_l = gamma_max
+            if g_r is None: g_r = gamma_min
+            ## set min and max values if not specified in method call
+            # relaxation constant (gamma) - bounds
+            if g_r < g_l:
+                # gamma right (slow) is smaller than gamma left (fast)
+                if gamma_min_val is None: gamma_min_val = g_r
+                if gamma_max_val is None: gamma_max_val = g_l
+            else: # g_l < g_r
+                # gamma left (fast) is smaller than gamma right (slow)
+                if gamma_min_val is None: gamma_min_val = g_l
+                if gamma_max_val is None: gamma_max_val = g_r
+            # relaxation constant (gamma) - starting value
+            if gamma_start_val is None: gamma_start_val = (gamma_min_val + gamma_max_val) / 2.
+            if (gamma_start_val < gamma_min_val) or (gamma_start_val > gamma_max_val):
+                # the starting value is outside of the bounds, inform user
+                print("WARNING :: fitting.update_optimization() :: relaxation constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside the set bounds ({2:.4e}, {3:.4e}).".format(gamma_start_val, "{0}{1}/".format(jd, jn), gamma_min_val, gamma_max_val))
+            ## apply bounds to optimization file
+            o.add_parameters(min_val = gamma_min_val, max_val = gamma_max_val, start_val = gamma_start_val, name = gamma_name, scale = gamma_min_val)
+
+        ## time constant
+        # if a time constant was specified, specify it in the model file
+        if tau_force_val is not None:
+            m.update_element_value(elm_path = tau_xml, value = tau_val, format_str = "{0:.4e}")
+        else:
+            # determine bounds from previous simulations
+            t_l, t_r = get_optimization_bounds(j_op = j_op, i = i, opt_key = tau_key)
+            # if either of the left or right bounds could not be parsed, use the defaults
+            if t_l is None: t_l = tau_max
+            if t_r is None: t_r = tau_min
+            ## set min and max values if not specified in method call
+            # time constant (tau) - bounds
+            if t_r < t_l:
+                # tau right (slow) is smaller than tau left (fast)
+                if tau_min_val is None: tau_min_val = t_r
+                if tau_max_val is None: tau_max_val = t_l
+            else: # t_l < t_r
+                # tau left (fast) is smaller than tau right (slow)
+                if tau_min_val is None: tau_min_val = t_l
+                if tau_max_val is None: tau_max_val = t_r
+            # time constant (tau) - starting value
+            if tau_start_val is None: tau_start_val = (tau_min_val + tau_max_val) / 2.
+            if (tau_start_val < tau_min_val) or (tau_start_val > tau_max_val):
+                # the starting value is outside of the bounds, inform user
+                print("WARNING :: fitting.update_optimization() :: time constant optimization starting value ({0:.4e}) for simulation '{1:s}' is outside of the set bounds ({2:.4e}, {3:.4e}).".format(tau_start_val, "{0}{1}/".format(jd, jn), tau_min_val, tau_max_val))
+            ## apply bounds to optimization file
+            o.add_parameters(min_val = tau_min_val, max_val = tau_max_val, start_val = tau_start_val, name = tau_name, scale = tau_min_val)
+
+        ## save files
+        os.makedirs(dir_op) # directory does not exist by definition
         o.save_optimization_file(filepath = "{0}{1}.opt".format(dir_op, jobid)) # write the optimization file to the simulation directory
-
+        m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
         # write slurm file
         gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_op, jobid),
             jobid = jobid,
@@ -819,6 +775,59 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         # from here, the optimizatoin results can be parse from the job.
 
     return True
+
+def get_optimization_bounds (j_op, i, opt_key):
+    """ get bounds for optimization job 'i' from completed optimization jobs.
+
+    helped method for 'update_optimization'. if boundaries cannot be parsed,
+    'None' values are returned.
+
+    Arguments:
+    ----------
+    j_op : Optimization
+        optimization job set
+    i : int
+        corresonds to specific job in 'j_op' which boundaries should be generated for.
+    opt_key : str
+        corresonds to column key / parameter value in 'j_op' results data frame.
+
+    Returns:
+    --------
+    int
+        left (fast) boundary value
+    int
+        right (slow) boundary value
+    """
+    ## CHECK ARGUMENTS
+    # check the the results data frame exist
+    df_res = j_op.get_optimization_results()
+    if df_res is None: return None, None
+    # results data frame should have at least three row
+    if j_op.get_sim_num() < 3: return None, None
+    # 'opt_key' must exist in the results data frame
+    if opt_key not in df_res.columns: return None, None
+    ## PARSE BOUNDARIES
+    # get left value
+    j = 0
+    l_val = None # initialize the left value
+    while l_val is None: # until l_val is not None
+        j += 1 # increment j
+        i_l = i - j # decrement the left integer
+        # if decimentation is beyond simulation number, exit
+        if i_l < 1: break # exit loop
+        # attempt to parse optimized value
+        else: l_val = j_op.get_optimized_parameter_value(n = j_op.df_parm.iloc[i_l - 1]['n'], o_key = opt_key)
+    # get the right value
+    j = 0
+    r_val = None # initialize the left value
+    while r_val is None: # until r_val is not None
+        j += 1 # increment j
+        i_r = i + j # increment the right integer
+        # if incrementation is beyond the simulation number
+        if i_r > j_op.get_sim_num(): break # exit loop
+        # attempt to parse the optimized value
+        else: r_val = j_op.get_optimized_parameter_value(n = j_op.df_parm.iloc[i_r - 1]['n'], o_key = opt_key)
+    return l_val, r_val
 
 # update poroelastic jobs in fit job
 def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int = None):
@@ -1066,7 +1075,7 @@ def step_four (jd, jn, show = True, save = False):
     # compare the viscoleastic / poroelastic model stress curves ..
     for i in range(1, sv.get_sim_num() + 1):
         sim_ve = sv.get_simulation(i)
-        sim_pe = sp.get_simulation(i)
+        sim_pe = sp.get_simulation(i)which boundaries are being generated for.
 
         # TODO can I adjust the markers so that the fitting is more obvious?
         # in time
