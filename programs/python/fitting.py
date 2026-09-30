@@ -751,7 +751,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
             ## apply bounds to optimization file
             o.add_parameters(min_val = tau_min_val, max_val = tau_max_val, start_val = tau_start_val, name = tau_name, scale = tau_min_val)
 
-        ## save files
+        ## SAVE FILES
         os.makedirs(dir_op) # directory does not exist by definition
         o.save_optimization_file(filepath = "{0}{1}.opt".format(dir_op, jobid)) # write the optimization file to the simulation directory
         m.save_model(saveto = dir_op, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
@@ -1075,7 +1075,7 @@ def step_four (jd, jn, show = True, save = False):
     # compare the viscoleastic / poroelastic model stress curves ..
     for i in range(1, sv.get_sim_num() + 1):
         sim_ve = sv.get_simulation(i)
-        sim_pe = sp.get_simulation(i)which boundaries are being generated for.
+        sim_pe = sp.get_simulation(i)
 
         # TODO can I adjust the markers so that the fitting is more obvious?
         # in time
