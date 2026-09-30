@@ -423,8 +423,8 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             # used to the poroelastic elastic modulus to determine the optimization boundaries
             e_min_bound, e_max_bound = None, None
             if j_pe.get_sim_num() <= 2:
-                e_min_bound = e_val * (0.95)
-                e_max_bound = e_val
+                e_min_bound = float(e_val) * (0.95)
+                e_max_bound = float(e_val)
             # if method results 'False', optimization simulation has not completed yet
             if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_min_val = e_min_bound, emod_max_val = e_max_bound)): continue
         else:
