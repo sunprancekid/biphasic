@@ -396,7 +396,7 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
     k_val = j_pe.get_key_value (key = 'K', n = 1)
     l_val = j_pe.get_key_value (key = 'L', n = 1)
     if l_val is None: pass
-    ## TODO is there a way that I can get the length scale from some aspect of the model files ..?
+    ## TODO is there a way to get the length scale from some aspect of the model files ..?
 
     # used for job naming
     if z_int is None:
@@ -420,8 +420,13 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
 
         ## update optimization routine
         if not force:
+            # used to the poroelastic elastic modulus to determine the optimization boundaries
+            e_min_bound, e_max_bound = None, None
+            if j_pe.get_sim_num() <= 2:
+                e_min_bound = e_val * (0.95)
+                e_max_bound = e_val
             # if method results 'False', optimization simulation has not completed yet
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_min_val = e_min_bound, emod_max_val = e_max_bound)): continue
         else:
             # use poroelastic parameters to estimate the bulk modulus
             ## NOTE :: for now, we assume that the viscoelastic bulk can be forced to a value which
@@ -509,21 +514,6 @@ def add_fit_timescales (jd = None, jn = None):
     j_pe.save_parameters(overwrite = True)
     j_pe.jn = "ve"
     j_pe.save_parameters(overwrite = True)
-
-# update optimization while forcing other optimization values to remain constant
-def force_viscoelastic_optimization (jd = None, jn = None, overwrite = True, z_int = None, force = False):
-    """
-
-    Arguments:
-    ----------
-    None
-
-    Returns:
-    --------
-    bool
-        'True' if optimization corresponding to simulation has been completed, else 'False'.
-    """
-    pass
 
 # add optimization routine
 def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_force_val = None, emod_start_val = None, emod_max_val = None, emod_min_val = None, gamma_force_val = None, gamma_start_val = None, gamma_max_val = None, gamma_min_val = None, tau_force_val = None, tau_start_val = None, tau_max_val = None, tau_min_val = None):
