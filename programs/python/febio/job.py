@@ -535,10 +535,6 @@ class Job (object):
         else:
             related = 0
         if log:
-            if e_r < e_l:
-                o.add_parameters(min_val = e_r, max_val = e_l, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_r)
-            else: # e_l < e_r
-                o.add_parameters(min_val = e_l, max_val = e_r, start_val = (e_r + e_l) / 2., name = emod_name, scale = e_l)
             log = 1
         else:
             log = 0
