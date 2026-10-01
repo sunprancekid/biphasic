@@ -613,6 +613,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
     n = j_op.df_parm.iloc[i-1]['n']
     jobid = "o{0}".format(n)
     if not (z_int is None): jobid = "z{0}-o{1}".format(z_int, n)
+    else: jobid = "{0:s}-o{1}".format(jn, n)
     # if the directory does not eixst
     if not os.path.exists(dir_op):
         # if the  does not, make the directory
