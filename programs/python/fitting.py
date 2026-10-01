@@ -81,7 +81,7 @@ obj_tol = 1.0e-18
 gamma_min = 0.0000001
 gamma_max = 100.
 gamma_start = 0.1
-gamma_key = 'g1_key'
+gamma_key = 'g1_opt'
 gamma_name = "fem.material('Material1').g1"
 gamma_xml = "Material/material[@id='1']/g1"
 # tau min, max, start, and name
@@ -657,7 +657,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
                         a_e += v_e
                         n_e += 1
                 # if n_e is greater than two, use the second standard deviation to set the bounds
-                if n_e > 2:
+                if n_e > 1:
                     avg = a_e / n_e
                     var = 0.
                     for j in range(j_pe.get_sim_num()):
