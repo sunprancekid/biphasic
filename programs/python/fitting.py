@@ -862,6 +862,7 @@ def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int 
     n = j_pe.df_parm.iloc[i-1]['n']
     jobid = "p{0}".format(n)
     if not (z_int is None): jobid = "z{0}-p{1}".format(z_int, n)
+    else: jobid = "{0:s}-p{1}".format(jn, n)
     # if the directory does not eixst
     if not os.path.exists(dir_pe):
         ## establish the simulation
