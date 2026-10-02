@@ -76,7 +76,7 @@ default_emod_n = 5
 # path to objective function in feb file
 obj_fun = "fem.rigidbody('Material2').Fz"
 # amount by which the object function needs to be reduced to match the specified data
-obj_tol = 1.0e-18
+obj_tol = 1.0e-19
 # gamma min, max, start, and name
 gamma_min = 0.0000001
 gamma_max = 100.
