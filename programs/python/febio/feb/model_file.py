@@ -11,7 +11,9 @@
 ## MODULES
 # native, conda
 import sys, os
+from febio.feb.optimization_file import add_element_to_tree
 import xml.etree.ElementTree as ET # handles xml formatting
+# import gmsh
 # local
 # none
 
@@ -21,22 +23,35 @@ ELM_PROP = ['p']
 
 ## METHODS
 # adds part to model file
-def add_part_to_model3d():
-    """adds nodes and elements to mesh for 3d model.
+def add_part_to_model3d(feb_model, element_type, element_nodes, element_tags, node_tags, node_coordinates):
+    """ translated gmsh model to febio model.
 
     Arguments:
     ----------
-    nodes :
-    elements :
-    elmementTypes :
-    reset : bool
+    feb_model : ModelFile
+        xml formatted model for febio simulation
+    element_type : int
+        integer corresponding to element type in gmsh
+    element_nodes : []
+    element_tags : []
+    node_tags : []
+        list of cordinate numbers
+    node_coordinates : []
+        list of spatial coordinates for each node in 3-dim
 
     Returns:
     -------
     bool
     """
+    # if unspecified, create empty model
     # print all nodes and their positions
+    for t, xyz in zip(node_tags, node_coordinates):
+        print(f"Node #{t} is at {xyz}.")
+
     # print all elements and their nodes
+    for t, node in zip(element_tags, element_nodes):
+        print(f"Element #{t} has nodes {node}")
+
     # iteratively add nodes and elements to MESH section
     # check for either test4 or hex8 elements.\
     # tube: https://www.youtube.com/watch?v=cQwYmk3bMSo&t=114s
@@ -73,7 +88,7 @@ class ModelFile(object):
         add intructions to model file to write property data from specific elements to logfile.
     """
 
-    def __init__ (self, feb_file):
+    def __init__ (self, feb_file = None):
         """
 
         Arguments:
@@ -83,18 +98,52 @@ class ModelFile(object):
 
         Returns:
         --------
-        Model
-            initialized Model object
+        None
         """
         # check that the path exists
-        if not os.path.exists(feb_file):
-            print("ERROR :: Model.__init__() :: path to model file '{0}' cannot be found.".format(feb_file))
-            return None
-        # load file tree
-        self.feb_file = feb_file
-        self.tree = ET.parse(feb_file)
-        self.root = self.tree.getroot()
-        # TODO get max number of elements from meshing file
+        if feb_file is not None:
+            if not os.path.exists(feb_file):
+                print("ERROR :: Model.__init__() :: path to model file '{0}' cannot be found.".format(feb_file))
+                # return None
+                self.reset_model()
+            else:
+                # load file tree
+                self.feb_file = feb_file
+                self.tree = ET.parse(feb_file)
+                self.root = self.tree.getroot()
+                # TODO get max number of elements from meshing file
+        else:
+            # create empty base feb model and return
+            self.reset_model(self)
+
+    def reset_model (self):
+        """ reset element tree root, add base branches.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # establish base
+        self.root = ET.Element("febio_spec", attrib = {'version' : "4.0"})
+        self.tree = ET.ElementTree(self.root)
+        # add base branches
+        # Globals
+        # self.add_element_to_tree(path = "", new_element = "GLobals")
+        add_element_to_tree(root = self.root, elm_path = '', tag = 'Globals')
+        add_element_to_tree(root = self.root, elm_path = 'Globals', tag = 'Constants')
+        add_element_to_tree(root = self.root, elm_path = 'Globals/Constants', tag = 'T', value = '0')
+        add_element_to_tree(root = self.root, elm_path = 'Globals/Constants', tag = 'P', value = '0')
+        # Material
+        # MeshDomains
+        # Boundary
+        # Rigid
+        # Contact
+        # LoadData
+        # Output
 
     def save_model (self, saveto = None, saveas = None, overwrite = False):
         """ save model file.
