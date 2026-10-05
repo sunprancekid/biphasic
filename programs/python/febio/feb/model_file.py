@@ -11,11 +11,10 @@
 ## MODULES
 # native, conda
 import sys, os
-from febio.feb.optimization_file import add_element_to_tree
 import xml.etree.ElementTree as ET # handles xml formatting
 # import gmsh
 # local
-# none
+from util.xml_file import add_element_to_tree, rec_elm_tree
 
 ## PARAMETERS
 # accepted element data properties
@@ -23,13 +22,14 @@ ELM_PROP = ['p']
 
 ## METHODS
 # adds part to model file
-def add_part_to_model3d(feb_model, element_type, element_nodes, element_tags, node_tags, node_coordinates):
+def add_part_to_model3d(feb_model, namem, element_type, element_nodes, element_tags, node_tags, node_coordinates):
     """ translated gmsh model to febio model.
 
     Arguments:
     ----------
     feb_model : ModelFile
         xml formatted model for febio simulation
+    name : str
     element_type : int
         integer corresponding to element type in gmsh
     element_nodes : []
@@ -52,6 +52,8 @@ def add_part_to_model3d(feb_model, element_type, element_nodes, element_tags, no
     for t, node in zip(element_tags, element_nodes):
         print(f"Element #{t} has nodes {node}")
 
+    # add NODES as OBJECT
+    # add ELEMENTS as PART
     # iteratively add nodes and elements to MESH section
     # check for either test4 or hex8 elements.\
     # tube: https://www.youtube.com/watch?v=cQwYmk3bMSo&t=114s
@@ -116,6 +118,29 @@ class ModelFile(object):
             # create empty base feb model and return
             self.reset_model(self)
 
+    def __str__ (self):
+        """ returns string format of model file in xlm format.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+        """
+        # get absolute paths for all elements in tree
+        l = rec_elm_tree(self.root)
+        # convert list of elements to string
+        s = ""
+        for i in range(len(l)):
+            # append element absolute path
+            s += l[i]
+            # add newline character if not last string
+            if i != len(l) - 1: s += "\n"
+        # return string
+        return s
+
     def reset_model (self):
         """ reset element tree root, add base branches.
 
@@ -133,12 +158,16 @@ class ModelFile(object):
         # add base branches
         # Globals
         # self.add_element_to_tree(path = "", new_element = "GLobals")
-        add_element_to_tree(root = self.root, elm_path = '', tag = 'Globals')
-        add_element_to_tree(root = self.root, elm_path = 'Globals', tag = 'Constants')
-        add_element_to_tree(root = self.root, elm_path = 'Globals/Constants', tag = 'T', value = '0')
-        add_element_to_tree(root = self.root, elm_path = 'Globals/Constants', tag = 'P', value = '0')
+        add_element_to_tree (root = self.root, elm_path = '', tag = 'Globals')
+        add_element_to_tree (root = self.root, elm_path = 'Globals', tag = 'Constants')
+        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'T', value = '0')
+        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'P', value = '0')
+        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'R', value = '8.31446e-06')
+        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'Fc', value = '9.64853e-05')
         # Material
+        add_element_to_tree (root = self.root, elm_path = 'Material')
         # MeshDomains
+        add_element_to_tree (root = self.root, elm_path = '', tag = 'Mesh')
         # Boundary
         # Rigid
         # Contact
