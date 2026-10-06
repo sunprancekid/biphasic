@@ -21,42 +21,7 @@ from util.xml_file import xmlFile, add_element_to_tree
 ELM_PROP = ['p']
 
 ## METHODS
-# adds part to model file
-def add_part_to_model3d(feb_model, namem, element_type, element_nodes, element_tags, node_tags, node_coordinates):
-    """ translated gmsh model to febio model.
-
-    Arguments:
-    ----------
-    feb_model : ModelFile
-        xml formatted model for febio simulation
-    name : str
-    element_type : int
-        integer corresponding to element type in gmsh
-    element_nodes : []
-    element_tags : []
-    node_tags : []
-        list of cordinate numbers
-    node_coordinates : []
-        list of spatial coordinates for each node in 3-dim
-
-    Returns:
-    -------
-    bool
-    """
-    # if unspecified, create empty model
-    # print all nodes and their positions
-    for t, xyz in zip(node_tags, node_coordinates):
-        print(f"Node #{t} is at {xyz}.")
-
-    # print all elements and their nodes
-    for t, node in zip(element_tags, element_nodes):
-        print(f"Element #{t} has nodes {node}")
-
-    # add NODES as OBJECT
-    # add ELEMENTS as PART
-    # iteratively add nodes and elements to MESH section
-    # check for either test4 or hex8 elements.\
-    # tube: https://www.youtube.com/watch?v=cQwYmk3bMSo&t=114s
+# none
 
 ## CLASSES
 # model class
@@ -112,18 +77,25 @@ class ModelFile(xmlFile):
         # establish base
         self.root = ET.Element("febio_spec", attrib = {'version' : "4.0"})
         self.tree = ET.ElementTree(self.root)
+        # add module
+        self.add_element_to_tree(path = "", new_element = "Module", attributes = {'type': "biphasic"})
+        self.add_element_to_tree(path = "Module", new_element = "units", value = "mm-N-s")
         # add base branches
         # Globals
         self.reset_globals()
         # Material
-        add_element_to_tree (root = self.root, elm_path = '', tag = 'Material')
+        self.add_element_to_tree(path = "", new_element = "Material")
         # MeshDomains
-        add_element_to_tree (root = self.root, elm_path = '', tag = 'Mesh')
+        self.add_element_to_tree(path = "", new_element = "Mesh")
+        self.add_element_to_tree(path = "", new_element = "MeshDomains")
         # Boundary
         # Rigid
         # Contact
+        # Step
+        self.add_element_to_tree(path = "", new_element = "Step")
         # LoadData
         # Output
+        self.reset_output()
 
     def save_model (self, saveto = None, saveas = None, overwrite = False):
         """ save model file.
@@ -214,7 +186,110 @@ class ModelFile(xmlFile):
         """
         pass
 
+    ## MATERIALS ##
+
+    def has_material(self, material_name = None):
+        """ checks if material exists in mode file.
+
+        Arguments:
+        ----------
+        material_name : str
+            name of material which exists in 'febio_spec/Material'
+
+        Returns:
+        --------
+        bool
+            'True' if model file has material, else 'False'.
+        """
+        pass
+
+    ## MESH ##
+    def add_geometry (self, name = None, material = None, element_type = None, element_nodes = None, element_tags = None, node_tags = None, node_coordinates = None):
+        """ add geometry as object and part to model.
+
+        NOTE: currently meshing implemented for 'hex8' element types (element_type = 5).
+
+        Arguments:
+        ----------
+        name : str
+            object and part name in model file.
+        material : str (optional)
+            attach already existing material to object in 'MeshDomains'
+        element_type : int
+            defines element type, according to 'gmsh' element type integers.
+        element_nodes : ndarray
+            2D array containing node ids making each element.
+        element_types : ndarray
+            1D array containing id for each element.
+        node_tags : []
+            1D array containing id for each node.
+        node_coordinates : [][]
+            2D array containing 3D coordinates for each node.
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'.
+        """
+        ## check method arguments
+        # element type
+        if element_type != 5:
+            raise Exception ("ERROR :: ModelFile.add_geometry() :: method currently only supports 'hex8' element types (corresponding to 'element_type = 5').")
+        else:
+            element_name = 'hex8'
+        # geometry material
+        if material is not None:
+            # check that the material exists in the model file
+            pass
+        # geometry name
+        if name is None:
+            # update object and part names
+            object_name = "object1"
+            part_name = "part1"
+        else:
+            # used name to specify object and part names
+            object_name = name + "_object"
+            part_name = name + "_part"
+
+        ## add NODES as OBJECT
+        self.add_element_to_tree (path = 'Mesh', new_element = 'Nodes', attributes = {'name': object_name})
+        for t, xyz in zip(node_tags, node_coordinates):
+            self.add_element_to_tree(path = 'Mesh/Nodes', new_element = 'node', value = f"{xyz[0]},{xyz[1]},{xyz[2]}", attributes = {'id': f"{t}"}, duplicate = True)
+
+        ## add ELEMENTS as PART
+        self.add_element_to_tree (path = 'Mesh', new_element = 'Elements', attributes = {'type': "hex8", 'name': part_name})
+        for t, node in zip(element_tags, element_nodes):
+            self.add_element_to_tree(path = 'Mesh/Elements', new_element = 'elem', value = f"{node[0]},{node[1]},{node[2]},{node[3]},{node[4]},{node[5]},{node[6]},{node[7]}", attributes = {'id': f"{t}"}, duplicate = True)
+
+        # add material, if specified
+        if material is not None:
+            pass
+
     ## OUTPUT ##
+
+    # reset output
+    def reset_output (self):
+        """ reset output.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # add plotfile defaults
+        self.add_element_to_tree(path = "", new_element = "Output")
+        self.add_element_to_tree(path = "Output", new_element = "plotfile", attributes = {'type': "febio"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "displacement"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "stress"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "relative volume"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "solid stress"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "effective fluid pressure"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "fluid pressure"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "var", attributes = {'type': "fluid flux"}, duplicate = True)
+        self.add_element_to_tree(path = "Output/plotfile", new_element = "compression", value = "1")
 
     # get element
     def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None, delim = None):
@@ -297,7 +372,6 @@ class ModelFile(xmlFile):
         self.add_element_to_tree(path = 'Output/logfile', new_element = 'element_data', value = elements_str, attributes = attrib_dict)
         return True
 
-    ## TODO :: add methods for writing plotfile, rigid_body data
 
 
 if __name__ == "__main__":
