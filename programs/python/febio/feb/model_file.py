@@ -14,7 +14,7 @@ import sys, os
 import xml.etree.ElementTree as ET # handles xml formatting
 # import gmsh
 # local
-from util.xml_file import add_element_to_tree, rec_elm_tree
+from util.xml_file import xmlFile, add_element_to_tree, rec_elm_tree
 
 ## PARAMETERS
 # accepted element data properties
@@ -60,7 +60,7 @@ def add_part_to_model3d(feb_model, namem, element_type, element_nodes, element_t
 
 ## CLASSES
 # model class
-class ModelFile(object):
+class ModelFile(xmlFile):
 
     """ handles xml formatted feb model files.
 
@@ -102,21 +102,13 @@ class ModelFile(object):
         --------
         None
         """
-        # check that the path exists
-        if feb_file is not None:
-            if not os.path.exists(feb_file):
-                print("ERROR :: Model.__init__() :: path to model file '{0}' cannot be found.".format(feb_file))
-                # return None
-                self.reset_model()
-            else:
-                # load file tree
-                self.feb_file = feb_file
-                self.tree = ET.parse(feb_file)
-                self.root = self.tree.getroot()
-                # TODO get max number of elements from meshing file
-        else:
-            # create empty base feb model and return
-            self.reset_model(self)
+        try:
+            # attempt to load file
+            super().__init__(feb_file)
+            self.feb_file = feb_file
+        except:
+            # file cannot be loaded, reset model
+            self.reset_model()
 
     def __str__ (self):
         """ returns string format of model file in xlm format.
@@ -165,7 +157,7 @@ class ModelFile(object):
         add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'R', value = '8.31446e-06')
         add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'Fc', value = '9.64853e-05')
         # Material
-        add_element_to_tree (root = self.root, elm_path = 'Material')
+        add_element_to_tree (root = self.root, elm_path = '', tag = 'Material')
         # MeshDomains
         add_element_to_tree (root = self.root, elm_path = '', tag = 'Mesh')
         # Boundary

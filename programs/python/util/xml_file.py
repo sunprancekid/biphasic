@@ -179,7 +179,21 @@ def remove_element_from_tree (root, elm_path):
         root.remove(elm)
 
 ## CLASSES
-# none
+# handles xml files
+class xmlFile (object):
+
+    def __init__ (self, xml_file = None):
+        # if file exists, load file
+        if os.path.exists(xml_file):
+            self.xml_file = xml_file
+            self.tree = ET.parse(xml_file)
+            self.root = self.tree.getroot()
+        else:
+            raise Exception("ERROR :: xmlFile.__init()__ :: file '{0}' does not exist.".format(xml_file))
+
+
+    def __str__ ():
+        pass
 
 
 ## ARGUMENTS
