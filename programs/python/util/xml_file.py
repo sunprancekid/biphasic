@@ -192,8 +192,28 @@ class xmlFile (object):
             raise Exception("ERROR :: xmlFile.__init()__ :: file '{0}' does not exist.".format(xml_file))
 
 
-    def __str__ ():
-        pass
+    def __str__ (self):
+        """ returns all xml path in tree as string.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        str
+        """
+        # get absolute paths for all elements in tree
+        l = rec_elm_tree(self.root)
+        # convert list of elements to string
+        s = ""
+        for i in range(len(l)):
+            # append element absolute path
+            s += l[i]
+            # add newline character if not last string
+            if i != len(l) - 1: s += "\n"
+        # return string
+        return s
 
 
 ## ARGUMENTS

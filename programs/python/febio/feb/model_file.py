@@ -14,7 +14,7 @@ import sys, os
 import xml.etree.ElementTree as ET # handles xml formatting
 # import gmsh
 # local
-from util.xml_file import xmlFile, add_element_to_tree, rec_elm_tree
+from util.xml_file import xmlFile, add_element_to_tree
 
 ## PARAMETERS
 # accepted element data properties
@@ -105,33 +105,10 @@ class ModelFile(xmlFile):
         try:
             # attempt to load file
             super().__init__(feb_file)
-            self.feb_file = feb_file
+            self.feb_file = self.xml_file
         except:
             # file cannot be loaded, reset model
             self.reset_model()
-
-    def __str__ (self):
-        """ returns string format of model file in xlm format.
-
-        Arguments:
-        ----------
-        None
-
-        Returns:
-        --------
-        str
-        """
-        # get absolute paths for all elements in tree
-        l = rec_elm_tree(self.root)
-        # convert list of elements to string
-        s = ""
-        for i in range(len(l)):
-            # append element absolute path
-            s += l[i]
-            # add newline character if not last string
-            if i != len(l) - 1: s += "\n"
-        # return string
-        return s
 
     def reset_model (self):
         """ reset element tree root, add base branches.
