@@ -96,7 +96,7 @@ def add_element_to_tree(root, elm_path, tag, value = None, attributes = None, du
         name of new element in element tree
     value : str
         value which is stored in new element
-    attributes : dictYou do not need to try/except while you are popping a key which is unavailable. Here is how you can do this.
+    attributes : dictY
         attributes associated with element
     duplicate : bool (optional, default is 'False')
         if 'True', adds duplicate tag to elm path if it already exists
@@ -181,8 +181,50 @@ def remove_element_from_tree (root, elm_path):
 ## CLASSES
 # handles xml files
 class xmlFile (object):
+    """ class used for handling xml formatted files as objects.
 
+    Attributes:
+    -----------
+    xml_file : str
+        path to xml file
+    root : ET
+        root for xml tree
+    tree : ET
+        xml element tree base
+
+    Methods:
+    --------
+    __init__():
+        initialize xml object
+    __str__():
+        return xml object state as string
+    tree_has_element():
+        determines if element path exists in element tree
+    tree_has_multiple_elements():
+        determines if multiple elements paths exist in element tree
+    show_tree_sub_elements():
+        returns string containg all subelements from element path.
+    update_element_value():
+        repalce element value.
+    add_element_to_tree():
+        add new element to tree
+    remove_element_from_tree():
+        remove existing element from tree
+    """
+    # init
     def __init__ (self, xml_file = None):
+        """ initialize xml object.
+
+        attempts to load xml_file. if the file does not exist or cannot be
+        loaded then an exception is thrown.
+
+        Arguments:
+        xml_file : str
+            path to xml file.
+
+        Returns:
+        None
+        """
         # if file exists, load file
         if os.path.exists(xml_file):
             self.xml_file = xml_file
@@ -191,7 +233,7 @@ class xmlFile (object):
         else:
             raise Exception("ERROR :: xmlFile.__init()__ :: file '{0}' does not exist.".format(xml_file))
 
-
+    # str
     def __str__ (self):
         """ returns all xml path in tree as string.
 
@@ -214,6 +256,166 @@ class xmlFile (object):
             if i != len(l) - 1: s += "\n"
         # return string
         return s
+
+    def tree_has_element(self, elm_path = None):
+        """ check it element path exists within model tree.
+
+        Arguments:
+        ----------
+        elm_path : str
+            xml format path
+
+        Returns:
+        --------
+        bool
+            'True' is the element pathway exists, else 'False'.
+        """
+        if elm_path is None:
+            return False
+        elm = self.root.findall(elm_path)
+        if elm is None or (isinstance(elm, list) and len(elm) == 0):
+            return False
+        else:
+            return True
+
+    def tree_has_multiple_elements (self, elm_path = None):
+        """ checks if multiple elements exists in tree at specified location.
+
+        Parameters:
+        -----------
+        elm_path : str
+            path to element in model tree
+
+        Returns:
+        --------
+        bool
+            'True' if path describes multiple elements in model tree, else 'False'
+        """
+        if elm_path is None:
+            return False
+        elm = self.root.findall(elm_path)
+        if elm is None or (isinstance(elm, list) and len(elm) == 1):
+            return False
+        else:
+            return True
+
+    # show sub elements
+    def show_tree_sub_elements (self, path = None):
+        """ returns string that has all subpaths below path.
+
+        Arguments:
+        ----------
+        path : str
+            path in model xml tree which exists.
+
+        Returns:
+        --------
+        str
+        """
+        # check that the path exists
+        if self.tree_has_element(path):
+            # get all elements in tree
+            l = rec_elm_tree(self.root, abs_path = None)
+            # convert list of elements to string
+            s = ""
+            for i in range(len(l)):
+                # append element absolute path, only if it contains the subpath
+                if path in l[i]:
+                    if s: s += "\n"
+                    s += l[i]
+                    # add newline character if not last string
+                    # if i != len(l) - 1: s += "\n"
+            # return string
+            return s
+        else:
+            return ""
+
+    # update element
+    def update_element_value (self, elm_path, value, format_str = "{0}"):
+        """ updates tag associated with element.
+
+        if element path correspondes to multiple elements, method aborts.
+
+        Arguments:
+        ----------
+        elm_path : str
+            path to element in model, there cannot be duplicate
+        value
+            value stored in element, can be any type but will be stored as string
+        format_str : str (optional, default is "{0}")
+            optional format string
+
+        Returns:
+        --------
+        bool
+            'True' if operation is successful, else 'False'
+        """
+        # check the element path
+        if not self.tree_has_element(elm_path):
+            print("ERROR :: ModelFile.update_element_value() :: model does not have any elements corresponding to '{0}'.".format(elm_path))
+            return False
+        elif self.tree_has_multiple_elements():
+            print("ERROR :: ModelFile.update_element_value() :: model has multiple elements corresponding to {0}.".format(elm_path))
+            return False
+
+        # get the element, update it's value
+        for elm in self.root.findall(elm_path):
+            elm.text = format_str.format(value)
+
+        return True
+
+    # add element
+    def add_element_to_tree (self, path = None, new_element = None, value = None, attributes = None, duplicate = False):
+        """ adds element to model tree.
+
+        Arguments:
+        ----------
+        path : str
+            path in tree which points to location to store element
+        new_element : str
+            name of element stored at path
+        value : str
+            value which is stored in element tree
+        attributes : dict
+            additional properties which are associated with element
+        duplicate : bool (default is 'False')
+            if 'True', checks that element does not already exist in path before appending.
+
+        Returns:
+        --------
+        bool
+            'True' if operation successful, else 'False.'
+        """
+        # check if duplicates exist
+        if self.tree_has_multiple_elements(path):
+            print("ERROR :: Model.add_element_to_tree() :: unable able to add element '{0}', multiple paths '{1}' exist.")
+            return False
+        # check that value is a string
+        if not isinstance(value, str):
+            print("ERROR :: Model.add_element_to_tree() :: method argument 'value' must be type 'str'.")
+            return False
+        # get element at path
+        add_element_to_tree(root = self.root, elm_path = path, tag = new_element, value = value, attributes = attributes, duplicate = duplicate)
+
+    # remove element
+    def remove_element_from_tree (self, path = None):
+        """ remove specified path and subelements from the model tree.
+
+        Arguments:
+        ----------
+        path : str
+            existing xml path in model tree
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'.
+        """
+        if self.tree_has_element(path):
+            remove_element_from_tree(self.root, path)
+            return True
+        else:
+            return False
 
 
 ## ARGUMENTS
