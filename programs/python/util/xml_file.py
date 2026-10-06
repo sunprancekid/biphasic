@@ -257,6 +257,20 @@ class xmlFile (object):
         # return string
         return s
 
+    # write xml file
+    def write_xml (self):
+        """ write xml file with tab indentations.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        pass
+
     def tree_has_element(self, elm_path = None):
         """ check it element path exists within model tree.
 
