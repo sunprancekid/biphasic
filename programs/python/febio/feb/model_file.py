@@ -76,18 +76,6 @@ class ModelFile(xmlFile):
         save model tree to file.
     update_model():
         save model tree file to location of original feb file.
-    show_tree_sub_elements():
-        write elements below specified path to CLT, if any.
-    tree_has_element():
-        check if element exists within model tree.
-    tree_has_multiple_elements():
-        check if multiple elements exist within model tree.
-    add_element_to_tree():
-        add element to model tree.
-    remove_element_from_tree():
-        removes element from model tree.
-    add_element_data_to_logfile_output():
-        add intructions to model file to write property data from specific elements to logfile.
     """
 
     def __init__ (self, feb_file = None):
@@ -126,13 +114,7 @@ class ModelFile(xmlFile):
         self.tree = ET.ElementTree(self.root)
         # add base branches
         # Globals
-        # self.add_element_to_tree(path = "", new_element = "GLobals")
-        add_element_to_tree (root = self.root, elm_path = '', tag = 'Globals')
-        add_element_to_tree (root = self.root, elm_path = 'Globals', tag = 'Constants')
-        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'T', value = '0')
-        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'P', value = '0')
-        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'R', value = '8.31446e-06')
-        add_element_to_tree (root = self.root, elm_path = 'Globals/Constants', tag = 'Fc', value = '9.64853e-05')
+        self.reset_globals()
         # Material
         add_element_to_tree (root = self.root, elm_path = '', tag = 'Material')
         # MeshDomains
@@ -196,7 +178,43 @@ class ModelFile(xmlFile):
         """
         return self.save_model(self.feb_file, overwrite = overwrite)
 
-    ## XLM ROOT / TREE
+    ## GLOBALS ##
+
+    def reset_globals(self):
+        """ assign default global values.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # if globals already exists in root, remove element
+        self.remove_element_from_tree('Globals')
+        # readd globals with default values
+        self.add_element_to_tree(path = '', new_element = 'Globals')
+        self.add_element_to_tree(path = 'Globals', new_element = 'Constants')
+        self.add_element_to_tree (path = 'Globals/Constants', new_element = 'T', value = '0')
+        self.add_element_to_tree (path = 'Globals/Constants', new_element = 'P', value = '0')
+        self.add_element_to_tree (path = 'Globals/Constants', new_element = 'R', value = '8.31446e-06')
+        self.add_element_to_tree (path = 'Globals/Constants', new_element = 'Fc', value = '9.64853e-05')
+
+    def set_globals(self):
+        """ assign or update global values.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        pass
+
+    ## OUTPUT ##
 
     # get element
     def add_element_data_to_logfile_output (self, elements = None, properties = None, filename = None, delim = None):

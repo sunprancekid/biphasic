@@ -387,13 +387,13 @@ class xmlFile (object):
             'True' if operation successful, else 'False.'
         """
         # check if duplicates exist
-        if self.tree_has_multiple_elements(path):
-            print("ERROR :: Model.add_element_to_tree() :: unable able to add element '{0}', multiple paths '{1}' exist.")
-            return False
-        # check that value is a string
-        if not isinstance(value, str):
-            print("ERROR :: Model.add_element_to_tree() :: method argument 'value' must be type 'str'.")
-            return False
+        # if self.tree_has_multiple_elements(path):
+        #     print("ERROR :: Model.add_element_to_tree() :: unable able to add element '{0}', multiple paths '{1}' exist.")
+        #     return False
+        # # check that value is a string
+        # if not isinstance(value, str):
+        #     print("ERROR :: Model.add_element_to_tree() :: method argument 'value' must be type 'str'.")
+        #     return False
         # get element at path
         add_element_to_tree(root = self.root, elm_path = path, tag = new_element, value = value, attributes = attributes, duplicate = duplicate)
 
