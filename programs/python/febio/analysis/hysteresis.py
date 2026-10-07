@@ -135,7 +135,62 @@ def calculate_hysteresis_work(period, time, work):
 
     return hys
 
-# determine the prework performed by the simulation during the relaxation phase
+# calcualte complex modulus with fft
+def calculate_complex_mod_fft (period, time, pos, force):
+    """ use fast fourier transform to
+
+    Arguments:
+    ----------
+    period : float
+    time : array
+    pos : array
+    force : array
+
+    Returns:
+    --------
+    float
+        dynamic or complex modulus value
+    float
+        storage modulus value
+    float
+        loss modulus value
+    float
+        phase shift (radians)
+    """
+    # normalize the time by dropping the
+
+    # fit unevenly spaced stress data to evenly spaced
+#     sampling_rate = 10
+#     spline = CubicSpline(t[i], stress[i])
+#     x_even = np.linspace(min(t[i]), max(t[i]), num=sampling_rate)
+#     y_even = spline(x_even)
+#
+#     ## fast fourier transform on evenly sampled data
+#     fft_output = np.fft.fft(y_even)
+#     frequencies = np.fft.fftfreq(len(y_even), d=(max(t[i])/sampling_rate))
+#     # magnitude = np.abs(fft_output)
+#     # positive_mask = frequencies >= 0
+#     # clean_freqs = frequencies[positive_mask]
+#     # clean_mag = fft_output[positive_mask]
+
+    ## show stress data
+    fig = Figure()
+    fig.append_lists(xlist = time, ylist = force, label = "stress-data")
+    # fig.append_lists(xlist = x_even.tolist(), ylist = y_even.tolist(), label = "spline-interpolation")
+    gen_plot(fig, show = True)
+    exit()
+
+    ## plot real fft
+    fig = Figure()
+    fig.append_lists(xlist = frequencies.tolist(), ylist = fft_output.real.tolist(), label = 'fft')
+    # gen_plot (fig, show = True)
+
+    print(1. / max(t[i]))
+    # for k in range(sampling_rate):
+    print("Freq {0}: Real={1}, Imag={2}".format(frequencies[1], fft_output.real[1], fft_output.imag[1]))
+    # print(fft_output.tolist())
+
+    exit()
 
 # calculate the complex modulus
 def calculate_complex_mod (period, time, pos, force):
@@ -154,8 +209,9 @@ def calculate_complex_mod (period, time, pos, force):
 
     Return:
     -------
-    List[float]
-        dynamic loss modulus of each cycle.
+    DataFrame
+        dynamic modulus, storage modulus, loss modulus, and phase shift for
+        each cycle.
     """
     ## get the stress strain information for each cycle, find the max
     # determine the number of cycles that were performed
@@ -221,49 +277,17 @@ def calculate_complex_mod (period, time, pos, force):
             stress[i][j] = (stress[i][j] - min_stress[i]) / (max_stress[i] - min_stress[i])
             strain[i][j] = (strain[i][j] - min_strain[i]) / (max_strain[i] - min_strain[i])
 
-        ## determine the phase shift for the normalized strain data
-        # x_fit = t[i]
-        # y_fit = strain[i]
-        # popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
-        # delta_strain = popt[0]
-        #
-        # ## determine the phase shift for the normalized stress data
-        # x_fit = t[i]
-        # y_fit = stress[i]
-        # popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
-        # delta_stress = popt[0]
+        # determine the phase shift for the normalized strain data
+        x_fit = t[i]
+        y_fit = strain[i]
+        popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
+        delta_strain = popt[0]
 
-        ## fit unevenly spaced stress data to evenly spaced
-        # sampling_rate = 10
-        # spline = CubicSpline(t[i], stress[i])
-        # x_even = np.linspace(min(t[i]), max(t[i]), num=sampling_rate)
-        # y_even = spline(x_even)
-        #
-        # ## fast fourier transform on evenly sampled data
-        # fft_output = np.fft.fft(y_even)
-        # frequencies = np.fft.fftfreq(len(y_even), d=(max(t[i])/sampling_rate))
-        # # magnitude = np.abs(fft_output)
-        # # positive_mask = frequencies >= 0
-        # # clean_freqs = frequencies[positive_mask]
-        # # clean_mag = fft_output[positive_mask]
-        #
-        # ## show stress data
-        # fig = Figure()
-        # # fig.append_lists(xlist = t[i], ylist = stress[i], label = "stress-data")
-        # fig.append_lists(xlist = x_even.tolist(), ylist = y_even.tolist(), label = "spline-interpolation")
-        # # gen_plot(fig, show = True)
-        #
-        # ## plot real fft
-        # fig = Figure()
-        # fig.append_lists(xlist = frequencies.tolist(), ylist = fft_output.real.tolist(), label = 'fft')
-        # # gen_plot (fig, show = True)
-        #
-        # print(1. / max(t[i]))
-        # # for k in range(sampling_rate):
-        # print("Freq {0}: Real={1}, Imag={2}".format(frequencies[1], fft_output.real[1], fft_output.imag[1]))
-        # # print(fft_output.tolist())
-        #
-        # exit()
+        ## determine the phase shift for the normalized stress data
+        x_fit = t[i]
+        y_fit = stress[i]
+        popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
+        delta_stress = popt[0]
 
         ## TODO 
         ## - check the stress - strain lag according to equations

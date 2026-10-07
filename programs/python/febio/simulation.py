@@ -976,7 +976,7 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def parse_complex_modulus (self, overwrite = True):
+    def parse_complex_modulus (self, overwrite = True. fft = False):
         """ Use cyclic loading data to determing the complex modulus properties.
 
         complex modulus properties include phase shift (delta), storage modulus (G'), 
@@ -992,6 +992,8 @@ class Simulation (object):
         ----------
         overwrite : bool
             determines if previously calculated complex modulus should be overwritten.
+        fft : bool
+            determines if FFT is used to calculate complex modulus properties
 
         Returns:
         --------
@@ -1001,7 +1003,7 @@ class Simulation (object):
         """
         ## load module
         ## TODO :: move module above once hysteresis has been completely refactored
-        from febio.analysis.hysteresis import calculate_complex_mod
+        from febio.analysis.hysteresis import calculate_complex_mod, calculate_complex_mod_fft
 
         ## TODO load from local file, if it already exists
         ## if not, calculate the data and save it to a local file
@@ -1033,7 +1035,10 @@ class Simulation (object):
                     force.pop(i)
 
             ## pass data to method
-            df = calculate_complex_mod(period, time, pos, force)
+            if not fft:
+                df = calculate_complex_mod(period, time, pos, force)
+            else:
+                df = calculate_complex_mod_fft (period, time, pos, force)
 
             ## save data to local file
             df.to_csv("{0}/{1}".format(self.sd, file_complex_modulus), index  = False)
