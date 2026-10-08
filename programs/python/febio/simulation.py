@@ -976,7 +976,7 @@ class Simulation (object):
 
     ## ANALYSIS - HYSTERESIS ##
 
-    def parse_complex_modulus (self, overwrite = True. fft = False):
+    def parse_complex_modulus (self, overwrite = True, fft = None):
         """ Use cyclic loading data to determing the complex modulus properties.
 
         complex modulus properties include phase shift (delta), storage modulus (G'), 
@@ -992,7 +992,7 @@ class Simulation (object):
         ----------
         overwrite : bool
             determines if previously calculated complex modulus should be overwritten.
-        fft : bool
+        fft : int
             determines if FFT is used to calculate complex modulus properties
 
         Returns:
@@ -1035,10 +1035,11 @@ class Simulation (object):
                     force.pop(i)
 
             ## pass data to method
-            if not fft:
+            if fft is None:
                 df = calculate_complex_mod(period, time, pos, force)
             else:
-                df = calculate_complex_mod_fft (period, time, pos, force)
+                df = calculate_complex_mod_fft (period, time, pos, force, n = fft)
+                return df
 
             ## save data to local file
             df.to_csv("{0}/{1}".format(self.sd, file_complex_modulus), index  = False)

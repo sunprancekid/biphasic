@@ -32,6 +32,8 @@ xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
 xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 # number of final time points to include with hystersis calculation
 num_prev_hys = 30
+# default fft sample size
+default_fft_sample = 200
 
 
 ## METHODS
@@ -136,8 +138,19 @@ def calculate_hysteresis_work(period, time, work):
     return hys
 
 # calcualte complex modulus with fft
-def calculate_complex_mod_fft (period, time, pos, force):
-    """ use fast fourier transform to
+def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample):
+    """ use fast fourier transform to complex modulus properties.
+
+    Since the data set from the FEBio simulation is unevenly spaced, this
+    method first uses a cubic spline fitting to respace each data point
+    evenly based on the unevenly space data. Then this method passes the
+    evenly spaced data to the fast fourier transform (fft) method.
+
+    The storage modulus is the real portion of the fft at the frequency
+    corresponding to the oscillation frequency, the loss modulus is the
+    imaginary portion of the fft at the same frequency. This two values
+    from fft are used to calculate the phase shift and the magnitude
+    of the complex modulus.
 
     Arguments:
     ----------
@@ -145,6 +158,8 @@ def calculate_complex_mod_fft (period, time, pos, force):
     time : array
     pos : array
     force : array
+    n : int (optional)
+        number of data point per cycle when respacing force and position data
 
     Returns:
     --------
@@ -157,40 +172,53 @@ def calculate_complex_mod_fft (period, time, pos, force):
     float
         phase shift (radians)
     """
-    # normalize the time by dropping the
+    # determine the number of cycles that were performed
+    n_cyc = max(time) / period
+    # round the integer based on it's proximity to the integer value
+    if (n_cyc % 1) > 0.5: n_cyc = math.ceil(n_cyc) # round up
+    else: n_cyc = math.floor(n_cyc) # round down
 
-    # fit unevenly spaced stress data to evenly spaced
-#     sampling_rate = 10
-#     spline = CubicSpline(t[i], stress[i])
-#     x_even = np.linspace(min(t[i]), max(t[i]), num=sampling_rate)
-#     y_even = spline(x_even)
-#
-#     ## fast fourier transform on evenly sampled data
-#     fft_output = np.fft.fft(y_even)
-#     frequencies = np.fft.fftfreq(len(y_even), d=(max(t[i])/sampling_rate))
-#     # magnitude = np.abs(fft_output)
-#     # positive_mask = frequencies >= 0
-#     # clean_freqs = frequencies[positive_mask]
-#     # clean_mag = fft_output[positive_mask]
+    # fit unevenly spaced stress data to evenly spaced data using cubic spline curve fitting
+    n_sample = n * n_cyc # sample should be n x (number of total number of points provided to method)
+    spline_strain = CubicSpline(time, pos)
+    spline_stress = CubicSpline(time, force)
+    x_even = np.linspace(min(time), max(time), num=n_sample)
+    y_strain_even = spline_strain(x_even)
+    y_stress_even = spline_stress(x_even)
+
+    ## fast fourier transform on evenly sampled data
+    fft_strain = np.fft.fft(y_strain_even)
+    fft_stress = np.fft.fft(y_stress_even)
+    frequencies = np.fft.fftfreq(len(x_even), d=(max(time)/n_sample))
 
     ## show stress data
     fig = Figure()
-    fig.append_lists(xlist = time, ylist = force, label = "stress-data")
-    # fig.append_lists(xlist = x_even.tolist(), ylist = y_even.tolist(), label = "spline-interpolation")
+    # fig.append_lists(xlist = time, ylist = force, label = "stress-data")
+    fig.append_lists(xlist = x_even.tolist(), ylist = y_strain_even.tolist(), label = "spline-interpolation")
+    gen_plot(fig, show = True)
+    fig = Figure()
+    # fig.append_lists(xlist = time, ylist = force, label = "stress-data")
+    fig.append_lists(xlist = x_even.tolist(), ylist = y_stress_even.tolist(), label = "spline-interpolation")
     gen_plot(fig, show = True)
     exit()
 
-    ## plot real fft
-    fig = Figure()
-    fig.append_lists(xlist = frequencies.tolist(), ylist = fft_output.real.tolist(), label = 'fft')
-    # gen_plot (fig, show = True)
-
-    print(1. / max(t[i]))
+    # find the frequency that corresponds to the period
+    val = min(frequencies, key = lambda x:abs(x-(1. / period)))
+    idx = np.where(frequencies == val)[0]
+    print(1. / period)
     # for k in range(sampling_rate):
-    print("Freq {0}: Real={1}, Imag={2}".format(frequencies[1], fft_output.real[1], fft_output.imag[1]))
+    print("Freq: {0}; Strain: Real={1:.3e}, Imag={2:.3e}; Stress: Real={3:.3e}, Imag={4:.3e}".format(frequencies[idx], fft_strain.real[idx][0] / n_sample, fft_strain.imag[idx][0] / n_sample, fft_stress.real[idx][0] / n_sample, fft_stress.imag[idx][0] / n_sample))
     # print(fft_output.tolist())
 
-    exit()
+    ## plot real fft
+    # fig = Figure()
+    # fig.append_lists(xlist = frequencies.tolist(), ylist = fft_output.real.tolist(), label = 'fft')
+    # fig.set_axis_limits(akey = 'x', min_val = frequencies[1], max_val = frequencies[idx])
+    # gen_plot (fig, show = True)
+    # exit()
+
+    return fft_strain.real[idx][0]
+
 
 # calculate the complex modulus
 def calculate_complex_mod (period, time, pos, force):
