@@ -191,33 +191,26 @@ def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample)
     fft_stress = np.fft.fft(y_stress_even)
     frequencies = np.fft.fftfreq(len(x_even), d=(max(time)/n_sample))
 
-    ## show stress data
-    fig = Figure()
-    # fig.append_lists(xlist = time, ylist = force, label = "stress-data")
-    fig.append_lists(xlist = x_even.tolist(), ylist = y_strain_even.tolist(), label = "spline-interpolation")
-    gen_plot(fig, show = True)
-    fig = Figure()
-    # fig.append_lists(xlist = time, ylist = force, label = "stress-data")
-    fig.append_lists(xlist = x_even.tolist(), ylist = y_stress_even.tolist(), label = "spline-interpolation")
-    gen_plot(fig, show = True)
-    exit()
-
     # find the frequency that corresponds to the period
     val = min(frequencies, key = lambda x:abs(x-(1. / period)))
     idx = np.where(frequencies == val)[0]
-    print(1. / period)
-    # for k in range(sampling_rate):
-    print("Freq: {0}; Strain: Real={1:.3e}, Imag={2:.3e}; Stress: Real={3:.3e}, Imag={4:.3e}".format(frequencies[idx], fft_strain.real[idx][0] / n_sample, fft_strain.imag[idx][0] / n_sample, fft_stress.real[idx][0] / n_sample, fft_stress.imag[idx][0] / n_sample))
-    # print(fft_output.tolist())
+    # print("Freq: {0}; Strain: Real={1:.3e}, Imag={2:.3e}; Stress: Real={3:.3e}, Imag={4:.3e}".format(frequencies[idx], fft_strain.real[idx][0] / n_sample, fft_strain.imag[idx][0] / n_sample, fft_stress.real[idx][0] / n_sample, fft_stress.imag[idx][0] / n_sample))
 
-    ## plot real fft
-    # fig = Figure()
-    # fig.append_lists(xlist = frequencies.tolist(), ylist = fft_output.real.tolist(), label = 'fft')
-    # fig.set_axis_limits(akey = 'x', min_val = frequencies[1], max_val = frequencies[idx])
-    # gen_plot (fig, show = True)
-    # exit()
+    # use fft peaks at period to determine properties
+    ## TODO add strain and stress amplitudes to the calculation
+    stmod = abs(fft_stress.real[idx][0]) / n_sample
+    lomod = abs(fft_stress.imag[idx][0]) / n_sample
+    delta = lomod / somod
+    if delta > (math.pi / 2):
+        # delta is outside bounds for inverse tangent calculation
+        Exception("ERROR :: hysteresis.calculate_complex_mod_fft() :: loss modulus to storage modulus ratio is greater than (pi / 2.), unable to calculate phase shift.")
+        delta = None
+    else:
+        # delta is within the bounds of the inverse tangent function
 
-    return fft_strain.real[idx][0]
+    df = pd.DataFrame.from_dict({'cycle': [n_cyc], 'delta': [delta], 'store-mod': [stmod], 'loss-mod': [lomod], 'dynamic-mod': [dymod]})
+
+    return abs(fft_stress.imag[idx][0] / fft_strain.real[idx][0])
 
 
 # calculate the complex modulus
