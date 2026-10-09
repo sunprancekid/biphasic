@@ -10,6 +10,7 @@
 
 ## MODULES
 # febio
+from febio.feb.mode_file import ModelFile
 from febio.feb.geometry.slab import gen_3d_slab_with_hole
 
 ## PARAMETERS
