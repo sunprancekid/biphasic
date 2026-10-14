@@ -271,47 +271,109 @@ class xmlFile (object):
         """
         pass
 
-    def tree_has_element(self, elm_path = None):
+    def get_elements (self, elm_path = None, attrib_dict = None, value = None):
+        """ returns list of elements in tree that match the criteria.
+
+        Arguments:
+        ----------
+        elm_path : str (optional)
+            path in tree
+        attrib_dict : Dictionary (optional)
+            list of attributes that element must have
+        value : str (optional)
+            value associated with element(s)
+
+        Returns:
+        --------
+        List
+            list of elements that match the crieteria
+        """
+        if elm_path is None or (not isinstance(elm_path, str)):
+            # if path is unspecified, return empty list
+            return []
+        # get all elements that match path
+        elm_list = self.root.findall(elm_path)
+        # check if elements in list match additional criteria
+        if (len(elm_list) != 0) and ((attrib_dict is not None) or (value is not None)):
+            # traverse list in reverse order
+            for i in (range(len(elm_list) -1, -1, -1)):
+                # check for the attributes in element 'i'
+                remove = False
+                ## check attributes, if specified
+                if attrib_dict is not None:
+                    # loop through all keys in criteria attribute dictionary passed to method
+                    for j in attrib_dict.keys():
+                        # check if key and corresponding value exist in the current element 'i'
+                        if j not in elm_list[i].attrib:
+                            remove = True # current element does not have key
+                        else:
+                            # check that the key values are the same
+                            if not isinstance(attrib_dict[j], str):
+                                # type cast all key values as strings if they are not already
+                                if str(attrib_dict[j]) != elm_list[i].attrib[j]: remove = True
+                            else:
+                                if attrib_dict[j] != elm_list[i].attrib[j]: remove = True
+
+                ## check values, if specified
+                if value is not None:
+                    # check if the values match
+                    if not isinstance(value, str):
+                        # if criteria value is not str, type cast it as such
+                        if str(value) != elm_list[i].text: remove = True
+                    else:
+                        if value != elm_list[i].text: remove = True
+
+                # if remove is True, remove element from list
+                if remove is True: elm_list.pop(i)
+
+        # return remaining elements
+        return elm_list
+
+    def tree_has_element(self, elm_path = None, attrib_dict = None, value = None):
         """ check it element path exists within model tree.
 
         Arguments:
         ----------
-        elm_path : str
-            xml format path
+        elm_path : str (optional)
+            path in tree
+        attrib_dict : Dictionary (optional)
+            list of attributes that element must have
+        value : str (optional)
+            value associated with element(s)
 
         Returns:
         --------
         bool
             'True' is the element pathway exists, else 'False'.
         """
-        if elm_path is None:
-            return False
-        elm = self.root.findall(elm_path)
-        if elm is None or (isinstance(elm, list) and len(elm) == 0):
-            return False
-        else:
-            return True
+        # get all elements that match criteria
+        elm_list = self.get_elements(elm_path = elm_path, attrib_dict = attrib_dict, value = value)
+        # return boolean based on criteria
+        if len(elm_list) == 1: return True
+        else: return False
 
-    def tree_has_multiple_elements (self, elm_path = None):
+    def tree_has_multiple_elements (self, elm_path = None, attrib_dict = None, value = None):
         """ checks if multiple elements exists in tree at specified location.
 
         Parameters:
         -----------
-        elm_path : str
-            path to element in model tree
+        elm_path : str (optional)
+            path in tree
+        attrib_dict : Dictionary (optional)
+            list of attributes that element must have
+        value : str (optional)
+            value associated with element(s)
 
         Returns:
         --------
         bool
             'True' if path describes multiple elements in model tree, else 'False'
         """
-        if elm_path is None:
-            return False
-        elm = self.root.findall(elm_path)
-        if elm is None or (isinstance(elm, list) and len(elm) == 1):
-            return False
-        else:
-            return True
+        # get all elements that match criteria
+        elm_list = self.get_elements(elm_path = elm_path, attrib_dict = attrib_dict, value = value)
+        # return boolean based on criteria
+        if len(elm_list) > 1: return True
+        else: return False
 
     # show sub elements
     def show_tree_sub_elements (self, path = None):

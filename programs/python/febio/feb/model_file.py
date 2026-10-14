@@ -203,10 +203,14 @@ class ModelFile(xmlFile):
         bool
             'True' if model file has material, else 'False'.
         """
+        # get all paths that match the criteria
         pass
 
     def add_biphasic_material (self, phi, fluid_density, tau, elastic_modulus, poisson_ratio, permeability, material_name = None, material_id = None):
         """ add biphasic material to model.
+
+        for this biphasic material, the solid is isotropic elastic and the
+        permeability is constant isotropic.
 
         material cannot be added to model if another material with either the
         same 'material_id' or 'material_name' already exists in the model.
@@ -227,6 +231,9 @@ class ModelFile(xmlFile):
         bool
             'True' if successful, else 'False.'
         """
+        # check that the material name and id is unique
+        # if the material id is unspecified, find the first unused integer
+        # check that the model module is biphasic
         pass
 
     ## MESH ##
