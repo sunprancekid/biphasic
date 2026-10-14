@@ -19,6 +19,18 @@ from util.xml_file import xmlFile, add_element_to_tree
 ## PARAMETERS
 # accepted element data properties
 ELM_PROP = ['p']
+# default biphasic material properties
+default_biphasic_phi0 = 0.2
+default_biphasic_elastic_modulus = 0.5 # MPa
+default_biphasic_permeability = 0.001 ## mm ^4 / Ns
+default_biphasic_tau = 0
+default_biphasic_poisson_ratio = 0.33
+default_biphasic_fluid_density = 1.0
+default_biphasic_solid_density = 1.0
+biphasic_poisson_ratio_min = 0.05
+biphasic_poisson_ratio_max = 0.45
+biphasic_phi0_min = 0.01
+biphasic_phi0_max = 0.99
 
 ## METHODS
 # none
@@ -203,10 +215,13 @@ class ModelFile(xmlFile):
         bool
             'True' if model file has material, else 'False'.
         """
-        # get all paths that match the criteria
-        pass
+        attrib_dict = {}
+        if material_name is not None: attrib_dict.update({'name': material_name})
+        if material_id is not None: attrib_dict.update({'id': material_id})
+        if material_type is not None: attrib_dict.update({'type': material_type})
+        return self.tree_has_element(elm_path = "Material/material", attrib_dict = attrib_dict) or self.tree_has_multiple_elements(elm_path = "Material/material", attrib_dict = attrib_dict)
 
-    def add_biphasic_material (self, phi, fluid_density, tau, elastic_modulus, poisson_ratio, permeability, material_name = None, material_id = None):
+    def add_biphasic_material (self, phi0 = None, elastic_modulus = None, poisson_ratio = None, permeability = None, material_name = None, material_id = None):
         """ add biphasic material to model.
 
         for this biphasic material, the solid is isotropic elastic and the
@@ -217,14 +232,18 @@ class ModelFile(xmlFile):
 
         Arguments:
         ----------
-        phi : float
-        fluid_denisty : float
-        tau : float
-        elastic_modulus : float
-        poisson_ratio : float
-        permeability : float
+        phi0 : float (optional, default is 'default_biphasic_phi0')
+            initial material solid fraction, must be a value within range (0., 1.)
+        elastic_modulus : float (optional, default is 'default_biphasic_elastic_modulus')
+            solid isotropic elastic modulus, units MPa
+        poisson_ratio : float (optional, default is 'default_biphasic_poisson_ratio')
+            solid poisson_ratio, must be a value within range (0., 1.)
+        permeability : float (optional, default is 'default_biphasic_permeability')
+            fluid permeability through solid, units mm^4 / N*s
         material_name : str (optional)
+            name of material in model file, default is 'elastic_biphasic'
         material_id : int (optional)
+            material id, default is lowest unused integer
 
         Returns:
         --------
@@ -232,15 +251,72 @@ class ModelFile(xmlFile):
             'True' if successful, else 'False.'
         """
         # check that the material name and id is unique
+        if self.has_material(material_name = material_name, material_id = material_id, material_type = "biphasic") and (material_name is not None or material_id is not None):
+            # the material already exists, it cannot be added to the current model
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: material already exists in current model with attributes {0}.".format({"name": material_name, "id": material_id, "type": "biphasic"}))
+            return False
+
         # if the material id is unspecified, find the first unused integer
+        if material_id is None:
+            i = 0
+            while True:
+                i += 1
+                if not self.has_material(material_id = i):
+                    material_id = i
+                    break
+        # if the material name is unspecified, use "elastic_phasic"
+        if material_name is None: material_name = "elastic_biphasic"
+
+        # check method arguments for material values within boundaries
+        # phi0
+        if phi0 is None:
+            phi0 = default_biphasic_phi0
+        elif (not isinstance(phi0, float)) or (phi0 < biphasic_phi0_min) or (phi0 > biphasic_phi0_max):
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: method argument 'phi0' is either not type 'float', or is outside the boundaries of ({0}, {1}) .. assigning 'phi0' default value of {2}.".format(biphasic_phi0_min, biphasic_phi0_max, default_biphasic_phi0))
+            phi0 = default_biphasic_phi0
+        # elastic modulus
+        if elastic_modulus is None:
+            elastic_modulus = default_biphasic_elastic_modulus
+        elif (not isinstance(elastic_modulus, float)) and (not isinstance(elastic_modulus, int)):
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: method argument 'elastic_modulus' is not type 'float' or 'int' .. assigning 'elastic_modulus' default value '{0}'.".format(default_biphasic_elastic_modulus))
+            elastic_modulus = default_biphasic_elastic_modulus
+        # poisson ratio
+        if poisson_ratio is None:
+            poisson_ratio = default_biphasic_poisson_ratio
+        elif not isinstance(poisson_ratio, float) or (poisson_ratio <= biphasic_poisson_ratio_min) or (poisson_ratio >= biphasic_poisson_ratio_max):
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: method argument 'poisson_ratio' is either not type 'float' or outside the boundaries of ({0}, {1}) .. assigning 'poisson_ratio' default vaule of {2}.".format(biphasic_poisson_ratio_min, biphasic_poisson_ratio_max, default_biphasic_poisson_ratio))
+            poisson_ratio = default_biphasic_poisson_ratio
+        # permeability
+        if permeability is None:
+            permeability = default_biphasic_permeability
+        elif (not isinstance(permeability, float) and (not isinstance(permeability, int))):
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: method argument 'permeability' is not type 'float' or 'int' .. assigning 'permeability' default value '{0}'.".format(default_biphasic_permeability))
+            permeability = default_biphasic_permeability
+
         # check that the model module is biphasic
-        pass
+        print(material_id)
+        # add biphasic material with specified values
+        self.add_element_to_tree(path = "Material", new_element = "material", attributes = {"name": material_name, "id": str(material_id), "type": "biphasic"}, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "phi0", value = default_biphasic_phi0, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "fluid_density", value = default_biphasic_fluid_density, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "tau", value = default_biphasic_tau, duplicate = True)
+        # biphasic solid
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "solid", attributes = {'type': "isotropic_elastic"}, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "density", value = default_biphasic_solid_density, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "E", value = default_biphasic_elastic_modulus, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "v", value = default_biphasic_poisson_ratio, duplicate = True)
+        # biphasic permeability
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "permeability", attributes = {'type': "perm-const-iso"}, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/permeability".format(material_id), new_element = "perm", value = default_biphasic_permeability, duplicate = True)
+        # successful
+        return True
+
 
     ## MESH ##
     def add_geometry (self, name = None, material = None, element_type = None, element_nodes = None, element_tags = None, node_tags = None, node_coordinates = None):
         """ add geometry as object and part to model.
 
-        NOTE: currently meshing implemented for 'hex8' element types (element_type = 5).
+        NOTE: currently meshing implemented for 'hex8' element types (element_type = 5 in gmsh module).
 
         Arguments:
         ----------
