@@ -250,6 +250,10 @@ class ModelFile(xmlFile):
         bool
             'True' if successful, else 'False.'
         """
+        # check that the module for the feb model is biphasic
+        if not self.tree_has_element(elm_path = "Module", attrib_dict = {"type": "biphasic"}):
+            Exception("ERROR :: ModelFile.add_biphasic_material() :: biphasic material cannot be added to ModelFile whose 'Module' is not 'biphasic'.")
+            return False
         # check that the material name and id is unique
         if self.has_material(material_name = material_name, material_id = material_id, material_type = "biphasic") and (material_name is not None or material_id is not None):
             # the material already exists, it cannot be added to the current model
@@ -294,20 +298,19 @@ class ModelFile(xmlFile):
             permeability = default_biphasic_permeability
 
         # check that the model module is biphasic
-        print(material_id)
         # add biphasic material with specified values
         self.add_element_to_tree(path = "Material", new_element = "material", attributes = {"name": material_name, "id": str(material_id), "type": "biphasic"}, duplicate = True)
-        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "phi0", value = default_biphasic_phi0, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "phi0", value = phi0, duplicate = True)
         self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "fluid_density", value = default_biphasic_fluid_density, duplicate = True)
         self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "tau", value = default_biphasic_tau, duplicate = True)
         # biphasic solid
         self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "solid", attributes = {'type': "isotropic_elastic"}, duplicate = True)
         self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "density", value = default_biphasic_solid_density, duplicate = True)
-        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "E", value = default_biphasic_elastic_modulus, duplicate = True)
-        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "v", value = default_biphasic_poisson_ratio, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "E", value = elastic_modulus, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/solid".format(material_id), new_element = "v", value = poisson_ratio, duplicate = True)
         # biphasic permeability
         self.add_element_to_tree(path = "Material/material[@id='{0}']".format(material_id), new_element = "permeability", attributes = {'type': "perm-const-iso"}, duplicate = True)
-        self.add_element_to_tree(path = "Material/material[@id='{0}']/permeability".format(material_id), new_element = "perm", value = default_biphasic_permeability, duplicate = True)
+        self.add_element_to_tree(path = "Material/material[@id='{0}']/permeability".format(material_id), new_element = "perm", value = permeability, duplicate = True)
         # successful
         return True
 
