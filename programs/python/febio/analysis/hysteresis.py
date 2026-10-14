@@ -34,6 +34,8 @@ xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 num_prev_hys = 30
 # default fft sample size
 default_fft_sample = 200
+# default strain error tolerance
+default_strain_err_tol = 0.0000000001 # .00001%
 
 
 ## METHODS
@@ -138,7 +140,7 @@ def calculate_hysteresis_work(period, time, work):
     return hys
 
 # calcualte complex modulus with fft
-def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample):
+def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample, strain_err_tol = default_strain_err_tol):
     """ use fast fourier transform to complex modulus properties.
 
     Since the data set from the FEBio simulation is unevenly spaced, this
@@ -160,6 +162,8 @@ def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample)
     force : array
     n : int (optional)
         number of data point per cycle when respacing force and position data
+    strain_err_tol : float
+        minimum strain error between final cycle for any other cycle to be used in fft calculation
 
     Returns:
     --------
@@ -178,39 +182,96 @@ def calculate_complex_mod_fft (period, time, pos, force, n = default_fft_sample)
     if (n_cyc % 1) > 0.5: n_cyc = math.ceil(n_cyc) # round up
     else: n_cyc = math.floor(n_cyc) # round down
 
-    # fit unevenly spaced stress data to evenly spaced data using cubic spline curve fitting
-    n_sample = n * n_cyc # sample should be n x (number of total number of points provided to method)
-    spline_strain = CubicSpline(time, pos)
-    spline_stress = CubicSpline(time, force)
-    x_even = np.linspace(min(time), max(time), num=n_sample)
-    y_strain_even = spline_strain(x_even)
-    y_stress_even = spline_stress(x_even)
+    ## sort stress, strain, and time by cycle
+    # loop through all points, accumulate stress and strain for each cycle
+    t = [[] for i in range(n_cyc)]
+    stress = [[] for i in range(n_cyc)]
+    strain = [[] for i in range(n_cyc)]
+    for i in range(len(time)):
+        # accumulate stress strain data
+        j = math.floor(time[i] / period)
+        if j < n_cyc:
+            t[j].append(time[i])
+            # the strain is the prescribed displacement of the indenter
+            strain[j].append(-pos[i])
+            # the stress is the resulting force the indenter experiences from the material
+            stress[j].append(force[i])
+
+    ## determine strain and stress amplitudes
+    # min and max stress / strain for normalization
+    max_strain = [[] for i in range(n_cyc)]
+    min_strain = [[] for i in range(n_cyc)]
+    max_stress = [[] for i in range(n_cyc)]
+    min_stress = [[] for i in range(n_cyc)]
+    strain_amplitude = [[] for i in range(n_cyc)]
+    stress_amplitude = [[] for i in range(n_cyc)]
+    # loop through all cycles
+    for i in range(n_cyc):
+        ## get max and min stress / strain for cycle
+        max_strain[i] = max(strain[i])
+        min_strain[i] = min(strain[i])
+        max_stress[i] = max(stress[i])
+        min_stress[i] = min(stress[i])
+        strain_amplitude[i] = max_strain[i] - min_strain[i]
+        stress_amplitude[i] = max_stress[i] - min_stress[i]
+
+    ## use stress and strain amplitude to determine cycles which have equilibriated
+    # the cycles which are equilibriated have the same strain amplitude as the
+    # the final cycle. using these cycles ensures that the data is consistent
+    cyc_fft = [] # list of cycles whole strain amplitude is within the tolerance of the final cycle
+    strain_amp_abs = 0.
+    stress_amp_abs = 0.
+    amp_abs_count = 0
+    for i in range(n_cyc):
+        if ((strain_amplitude[i] - strain_amplitude[-1]) / strain_amplitude[-1]) < strain_err_tol:
+            cyc_fft.append(i)
+            strain_amp_abs += strain_amplitude[i]
+            stress_amp_abs += stress_amplitude[i]
+            amp_abs_count += 1
+    # normalize strain / stress amplitude accumulation
+    stress_amp_abs /= amp_abs_count
+    strain_amp_abs /= amp_abs_count
+
+    ## accumulate data from cycles which have meet the criteria for cycles
+    time_fft = []
+    strain_fft = []
+    stress_fft = []
+    for i in cyc_fft:
+        for j in range(len(t[i])):
+            time_fft.append(t[i][j])
+            strain_fft.append(strain[i][j])
+            stress_fft.append(stress[i][j])
+    # normalize time
+    for i in range(len(time_fft)): time_fft[i] -= max(time_fft)
+
+    ## fit unevenly spaced stress / strain data to evenly spaced data using cubic spline curve fitting
+    n_sample = n * amp_abs_count # total number of points in fft calculation
+    spline_strain = CubicSpline(time_fft, strain_fft) # create spline curve for strain data
+    spline_stress = CubicSpline(time_fft, stress_fft) # create spline curve for stress data
+    x_even = np.linspace(min(time_fft), max(time_fft), num=n_sample) # evenly spaced time (x) data
+    y_strain_even = spline_strain(x_even) # use cubic spline to estimate data relative to evenly spaced x coordinates
+    y_stress_even = spline_stress(x_even) # use cubic spline to estimate data relative to evenly spaced x coordinates
 
     ## fast fourier transform on evenly sampled data
     fft_strain = np.fft.fft(y_strain_even)
     fft_stress = np.fft.fft(y_stress_even)
-    frequencies = np.fft.fftfreq(len(x_even), d=(max(time)/n_sample))
+    frequencies = np.fft.fftfreq(len(x_even), d=((max(time_fft) - min(time_fft))/n_sample)) # frequencies
 
-    # find the frequency that corresponds to the period
-    val = min(frequencies, key = lambda x:abs(x-(1. / period)))
-    idx = np.where(frequencies == val)[0]
-    # print("Freq: {0}; Strain: Real={1:.3e}, Imag={2:.3e}; Stress: Real={3:.3e}, Imag={4:.3e}".format(frequencies[idx], fft_strain.real[idx][0] / n_sample, fft_strain.imag[idx][0] / n_sample, fft_stress.real[idx][0] / n_sample, fft_stress.imag[idx][0] / n_sample))
+    ## find the frequency that corresponds to the period
+    val_freq = min(frequencies, key = lambda x:abs(x-(-1. / period)))
+    idx_freq = np.where(frequencies == val_freq)[0]
+    # print(1./period)
+    # print("Freq: {0}; Strain: Real={1:.3e}, Imag={2:.3e}; Stress: Real={3:.3e}, Imag={4:.3e}".format(frequencies[idx_freq][0], fft_strain.real[idx_freq][0] / n_sample, fft_strain.imag[idx_freq][0] / n_sample, fft_stress.real[idx_freq][0] / n_sample, fft_stress.imag[idx_freq][0] / n_sample))
 
-    # use fft peaks at period to determine properties
-    ## TODO add strain and stress amplitudes to the calculation
-    stmod = abs(fft_stress.real[idx][0]) / n_sample
-    lomod = abs(fft_stress.imag[idx][0]) / n_sample
-    delta = lomod / somod
-    if delta > (math.pi / 2):
-        # delta is outside bounds for inverse tangent calculation
-        Exception("ERROR :: hysteresis.calculate_complex_mod_fft() :: loss modulus to storage modulus ratio is greater than (pi / 2.), unable to calculate phase shift.")
-        delta = None
-    else:
-        # delta is within the bounds of the inverse tangent function
+    ## use fft peaks at period to determine properties
+    stmod = abs(fft_stress.real[idx_freq][0]) / n_sample
+    lomod = abs(fft_stress.imag[idx_freq][0]) / n_sample
+    dymod = math.sqrt(math.pow(stmod, 2) + math.pow(lomod, 2))
+    delta = np.arctan(lomod / stmod)
 
-    df = pd.DataFrame.from_dict({'cycle': [n_cyc], 'delta': [delta], 'store-mod': [stmod], 'loss-mod': [lomod], 'dynamic-mod': [dymod]})
+    df = pd.DataFrame.from_dict({'cycle': [n_cyc], 'delta': [delta], 'store-mod': [(stress_amp_abs / strain_amp_abs) * stmod], 'loss-mod': [(stress_amp_abs / strain_amp_abs) * lomod], 'dynamic-mod': [(stress_amp_abs / strain_amp_abs) * dymod]})
 
-    return abs(fft_stress.imag[idx][0] / fft_strain.real[idx][0])
+    return df
 
 
 # calculate the complex modulus

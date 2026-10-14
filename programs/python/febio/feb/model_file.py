@@ -188,18 +188,44 @@ class ModelFile(xmlFile):
 
     ## MATERIALS ##
 
-    def has_material(self, material_name = None):
+    def has_material(self, material_name = None, material_id = None, material_type = None):
         """ checks if material exists in mode file.
 
         Arguments:
         ----------
         material_name : str
             name of material which exists in 'febio_spec/Material'
+        material_id : str or int
+        material_type : str
 
         Returns:
         --------
         bool
             'True' if model file has material, else 'False'.
+        """
+        pass
+
+    def add_biphasic_material (self, phi, fluid_density, tau, elastic_modulus, poisson_ratio, permeability, material_name = None, material_id = None):
+        """ add biphasic material to model.
+
+        material cannot be added to model if another material with either the
+        same 'material_id' or 'material_name' already exists in the model.
+
+        Arguments:
+        ----------
+        phi : float
+        fluid_denisty : float
+        tau : float
+        elastic_modulus : float
+        poisson_ratio : float
+        permeability : float
+        material_name : str (optional)
+        material_id : int (optional)
+
+        Returns:
+        --------
+        bool
+            'True' if successful, else 'False.'
         """
         pass
 
