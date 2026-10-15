@@ -1000,7 +1000,7 @@ class Simulation (object):
 
         """
         ## load module
-        from febio.analysis.hysteresis import calculate_complex_mod, calculate_complex_mod_fft
+        from febio.analysis.hysteresis import calculate_complex_mod
 
         if (not overwrite) and os.path.exists("{0}/{1}".format(self.sd, file_complex_modulus)):
             # load the file if overwrite has not been specified, and

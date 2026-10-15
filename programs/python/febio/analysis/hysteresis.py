@@ -136,6 +136,7 @@ def calculate_hysteresis_work(period, time, work):
     return hys
 
 # calculate the complex modulus
+# calculate the complex modulus
 def calculate_complex_mod (period, time, pos, force):
     """ calculate the complex modulus for each cycle in cyclic pertibation.
 
@@ -152,9 +153,8 @@ def calculate_complex_mod (period, time, pos, force):
 
     Return:
     -------
-    DataFrame
-        dynamic modulus, storage modulus, loss modulus, and phase shift for
-        each cycle.
+    List[float]
+        dynamic loss modulus of each cycle.
     """
     ## get the stress strain information for each cycle, find the max
     # determine the number of cycles that were performed
@@ -214,13 +214,12 @@ def calculate_complex_mod (period, time, pos, force):
 
         ## normalize each data point
         for j in range(len(stress[i])):
-            t[i][j] = t[i][j] # / period # reduce the time scale by the period
+            t[i][j] = t[i][j] / period # reduce the time scale by the period
             # reduce the stress / strain by the max and minimum values
-            # stress[i][j] = 2. * ((stress[i][j] - min_stress[i]) / (max_stress[i] - min_stress[i]) - 0.5)
             stress[i][j] = (stress[i][j] - min_stress[i]) / (max_stress[i] - min_stress[i])
             strain[i][j] = (strain[i][j] - min_strain[i]) / (max_strain[i] - min_strain[i])
 
-        # determine the phase shift for the normalized strain data
+        ## determine the phase shift for the normalized strain data
         x_fit = t[i]
         y_fit = strain[i]
         popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
@@ -232,16 +231,30 @@ def calculate_complex_mod (period, time, pos, force):
         popt, pcov = curve_fit(f = sin_shift, xdata =  x_fit, ydata = y_fit, bounds = Bounds(0., 2. * math.pi))
         delta_stress = popt[0]
 
+        ## TODO
+        ## - check the stress - strain lag according to equations
+        ## - new equation, use the sin fit
+        ## - recaculate phase shift, storage mod, loss mod, and dynamic modulus; return all
+
         ## CALCULATE PROPERTIES
         # delta - phase shift
         # the degree (literally) to which stress leads strain
-        delta.append((delta_stress - delta_strain) * (180. / (math.pi)))
+        delta.append((delta_stress - delta_strain) * (180. / (2. * math.pi)))
         # storage modulus - cos of dynamic modlus
-        stmod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.cos(delta[-1] * (math.pi) / 180.))
+        stmod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.cos(delta[-1] * (2. * math.pi) / 180.))
         # loss modulus - sin of dynamic moudlus
-        lomod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.sin(delta[-1] * (math.pi) / 180.))
+        lomod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.sin(delta[-1] * (2. * math.pi) / 180.))
         # dynamic modulus - magnitude of components (storage, loss moduli)
         dymod.append(math.sqrt(math.pow(stmod[-1], 2) + math.pow(lomod[-1], 2)))
+
+        ## NOTE right now the dynamic modulus displays behavior opposite
+        ## to what one expects from literature (one expects the dynamic mod
+        ## to be highest at fast cycles and lowest at slow cycles).
+        ## TODO Double check definitions
+        # calculate the difference in phase shift between stress and strain, convert from radians to degrees
+
+        # dynamic modulus is related to the phase shift according to:
+        # max_stress / max_strain * cos(delta)
 
     # return as data frame
     df = pd.DataFrame.from_dict({'cycle': [i for i in range(n_cyc)], 'delta': delta, 'store-mod': stmod, 'loss-mod': lomod, 'dynamic-mod': dymod})
