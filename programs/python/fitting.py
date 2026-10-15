@@ -15,6 +15,7 @@ import sys, os, math
 import copy
 # conda
 import pandas as pd
+from scipy.interpolate import CubicSpline
 # local - febio
 from febio.job import Job, gen_log_scale_range
 from febio.sweep import Sweep
@@ -397,9 +398,9 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
     m_ve = ModelFile ("{0}{1}/ve/ve.feb".format(jd, jn))
 
     ## get the assigned poroelastic parameters from the poroelastic job
-    e_val = j_pe.get_key_value (key = 'E', n = 1)
-    k_val = j_pe.get_key_value (key = 'K', n = 1)
-    l_val = j_pe.get_key_value (key = 'L', n = 1)
+    e_val = float(j_pe.get_key_value (key = 'E', n = 1))
+    k_val = float(j_pe.get_key_value (key = 'K', n = 1))
+    l_val = float(j_pe.get_key_value (key = 'L', n = 1))
     if l_val is None: pass
     ## TODO is there a way to get the length scale from some aspect of the model files ..?
 
@@ -434,9 +435,13 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_min_val = e_min_bound, emod_max_val = e_max_bound)): continue
         else:
             # use poroelastic parameters to estimate the bulk modulus
+            tau_poro = (2. * math.pi / j_pe.df_parm.iloc[i-1]['OT']) * (pow(e_val, -1.) * pow(k_val, -1.) * pow(l_val, 2.))
+            # use cublic spline to estimate the proper gamma value by the normalized poroelastic time scale
+            spline_gamma = CubicSpline(list(reversed(gamma_x_norm)), list(reversed(gamma_y_norm)))
+            gamma_force = spline_gamma(tau_poro)
             ## NOTE :: for now, we assume that the viscoelastic bulk can be forced to a value which
             ## was emperically determined to correspond to a poroelastic elastic modulus of 0.5 MPa
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = 0.48863)): continue
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = 0.48863, gamma_force_val = gamma_force)): continue
 
         continue
 

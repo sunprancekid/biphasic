@@ -13,7 +13,6 @@ import pandas as pd
 import numpy as np
 import xml.etree.ElementTree as ET
 from scipy.optimize import curve_fit, Bounds
-from scipy.interpolate import CubicSpline
 # local
 from plot.figure import Figure
 from plot.plot import gen_bar_chart, gen_plot
