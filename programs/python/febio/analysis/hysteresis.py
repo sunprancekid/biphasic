@@ -32,10 +32,6 @@ xml_relax_step_size = "Step/step[@id='1']/Control/step_size"
 xml_relax_num_step = "Step/step[@id='1']/Control/time_steps"
 # number of final time points to include with hystersis calculation
 num_prev_hys = 30
-# default fft sample size
-default_fft_sample = 200
-# default strain error tolerance
-default_strain_err_tol = 0.0000000001 # .00001%
 
 
 ## METHODS
@@ -241,9 +237,9 @@ def calculate_complex_mod (period, time, pos, force):
         # the degree (literally) to which stress leads strain
         delta.append((delta_stress - delta_strain) * (180. / (math.pi)))
         # storage modulus - cos of dynamic modlus
-        stmod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.cos(delta[-1] * (2. * math.pi) / 180.))
+        stmod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.cos(delta[-1] * (math.pi) / 180.))
         # loss modulus - sin of dynamic moudlus
-        lomod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.sin(delta[-1] * (2. * math.pi) / 180.))
+        lomod.append(((max_stress[i] - min_stress[i]) / (max_strain[i] - min_strain[i])) * math.sin(delta[-1] * (math.pi) / 180.))
         # dynamic modulus - magnitude of components (storage, loss moduli)
         dymod.append(math.sqrt(math.pow(stmod[-1], 2) + math.pow(lomod[-1], 2)))
 
@@ -252,8 +248,6 @@ def calculate_complex_mod (period, time, pos, force):
 
     # return delta, dymod
     return df
-
-# calculate the loss modulus / phase shift
 
 
 if __name__ == '__main__':
