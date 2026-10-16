@@ -699,7 +699,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         ## relaxation constant
         # if a realxation consemod_nametant was specified, specify it in the model file
         if gamma_force_val is not None:
-            m.update_element_value(elm_path = gamma_xml, value = gamma_val, format_str = "{0:.4e}")
+            m.update_element_value(elm_path = gamma_xml, value = gamma_force_val, format_str = "{0:.4e}")
         else:
             # determing the bounds from previous simulations
             g_l, g_r = get_optimization_bounds(j_op = j_op, i = i, opt_key = gamma_key)
@@ -727,7 +727,7 @@ def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int
         ## time constant
         # if a time constant was specified, specify it in the model file
         if tau_force_val is not None:
-            m.update_element_value(elm_path = tau_xml, value = tau_val, format_str = "{0:.4e}")
+            m.update_element_value(elm_path = tau_xml, value = tau_force_val, format_str = "{0:.4e}")
         else:
             # determine bounds from previous simulations
             t_l, t_r = get_optimization_bounds(j_op = j_op, i = i, opt_key = tau_key)
