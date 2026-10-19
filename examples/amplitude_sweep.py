@@ -76,7 +76,41 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
         mi = j.parameterize_model(m = m, n = i) # parameterize model
         mi.save_model(saveto = sd, saveas = "{0}-{1}.feb".format(jn, i))
         gen_slurm_script(filepath = "{0}{1}-{2}.slurm.sub".format(sd, jn, i), jobid = "{0}-{1}".format(jn, i), feb_file = "{0}{1}-{2}.feb".format(sd, jn, i), time_limit = slurm_timelimit, del_xplt = True)
-        print(sd)
+
+# create testing array
+def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
+    """ vary the loading depth, test range of amplitudes at each loading depth.
+
+    Arguments:
+    ----------
+    jd : str
+        path to job directory
+    z : int
+        length scale, corresponds to model file in 'pe.scale_dict'
+    min_ld : float
+        smallest loading depth to test
+    max_ld : float
+        largest loading depth to test
+    n_ld : number of loading depths between largest and smallest to test
+
+    Returns:
+    --------
+    None
+    """
+    # based on the z_int
+    z_str = str(z)
+    if not z_str in list(pe.scale_dict.keys()):
+        print("ERROR :: amplitude_sweep.vary_loading_depth() :: method argument 'z' ({0}) must be a key in 'pe.scale_dict'.".format(z_str))
+
+    # find the model file
+    m = "/home/mipkg/dorsey/Desktop/biphasic/" + pe.scale_dict[z_str]
+
+    # generate a range of length scales to test
+    if min_ld is None: min_ld = z / 10.
+    if max_ld is None: max_ld = z / 2.
+    ld = [ min_ld + (max_ld - min_ld) * ((i) / (n_ld - 1)) for i in range(n_ld)]
+    for i in range(len(ld)):
+        initialize_amplitude_sweep(jd = jd, jn = "l{0}".format(i), m = m, ld = ld[i])
 
 
 if __name__ == "__main__":
