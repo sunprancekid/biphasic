@@ -75,7 +75,7 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
         sd = j.get_simulation(i).get_simulation_path()
         mi = j.parameterize_model(m = m, n = i) # parameterize model
         mi.save_model(saveto = sd, saveas = "{0}-{1}.feb".format(jn, i))
-        gen_slurm_script(filepath = sd, jobid = "{0}-{1}".format(jn, i), feb_file = "{0}{1}-{2}.feb".format(sd, jn, i), time_limit = slurm_timelimit, delxplt = True)
+        gen_slurm_script(filepath = sd, jobid = "{0}-{1}".format(jn, i), feb_file = "{0}{1}-{2}.feb".format(sd, jn, i), time_limit = slurm_timelimit, del_xplt = True)
         print(sd)
 
 
