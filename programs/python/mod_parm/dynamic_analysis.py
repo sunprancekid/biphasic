@@ -10,6 +10,7 @@
 
 ## MODULES
 # febio
+import math
 from febio.job import Job
 
 
@@ -82,7 +83,7 @@ val_ot_eq =  f"0.5*sin((2*{math.pi:.8f}/OT)*(t-RT))"
 # xml path for oscillation equation
 xml_ot_eq = "LoadData/load_controller[@name='tip_oscillation_controller']/math"
 # key for oscilation equation variable
-key_ot_eq = f"{key_ot}}Ma"
+key_ot_eq = f"{key_ot}Ma"
 # string description of oscillation equation
 descrip_ot_eq = "tip_oscillation_equation"
 # units associlated with variable
@@ -140,166 +141,166 @@ units_ot_mn = None
 ## METHODS
 # set constant loading depth
 def set_loading_depth(job, val = default_ld_set):
-    """ assign constant loading depth to job.
+	""" assign constant loading depth to job.
 
-    Arguments:
-    ----------
-    job : Job
-        job to add constant parameter to.
-    val : float
-        constant number
+	Arguments:
+	----------
+	job : Job
+		job to add constant parameter to.
+	val : float
+		constant number
 
-    Returns:
-    --------
-    bool
-        'True' if addition was successful, else 'False'
-    """
-    return job.add_constant_parameter(val = val, key = key_ld, xml = xml_ld, units = units_ld, description = descrip_ld, related = False, symbolic = False)
+	Returns:
+	--------
+	bool
+		'True' if addition was successful, else 'False'
+	"""
+	return job.add_constant_parameter(val = val, key = key_ld, xml = xml_ld, units = units_ld, description = descrip_ld, related = False, symbolic = False)
 
 # vary loading depth
 def vary_loading_depth(job, minval, maxval, nval, log = False):
-    """ assign variable loading depth to job.
+	""" assign variable loading depth to job.
 
-    Arguments:
-    ----------
-    job : Job
-        job to add variable parameter to.
-    maxval : float
-        largest value to apply to parameter.
-    minval : float
-        smallest value to apply to parameter.
-    nval : int
-        number of total parameters that should be applied.
-    log : bool (optional, default is 'False')
-        generate variable parameter set on log scale
+	Arguments:
+	----------
+	job : Job
+		job to add variable parameter to.
+	maxval : float
+		largest value to apply to parameter.
+	minval : float
+		smallest value to apply to parameter.
+	nval : int
+		number of total parameters that should be applied.
+	log : bool (optional, default is 'False')
+		generate variable parameter set on log scale
 
-    Returns:
-    --------
-    bool
-        'True' if addition was succesful, else 'False'.
-    """
-    job.add_variable_parameter(minval = minval, maxval = maxval, nval =nval, log = False, key = key_ld, xml = xml_ld, units = units_ld, description = descrip_ld, related = False, log = log)
+	Returns:
+	--------
+	bool
+		'True' if addition was succesful, else 'False'.
+	"""
+	job.add_variable_parameter(minval = minval, maxval = maxval, nval = nval, log = log, key = key_ld, xml = xml_ld, units = units_ld, description = descrip_ld, related = False)
 
 # set constant relaxation time
-def set_relaxation_time():
-    """ assign constant relaxation time to job.
+def set_relaxation_time(job, val):
+	""" assign constant relaxation time to job.
 
-    Argumnts:
-    ---------
-    job : Job
-        job to assign constant relaxation time to
-    val : float
-        relaxation time value
+	Argumnts:
+	---------
+	job : Job
+		job to assign constant relaxation time to
+	val : float
+		relaxation time value
 
-    Returns:
-    --------
-    bool
-        'True' if successful, else 'False'
-    """
-    # the relaxation time step size controls the maximum size of the time integration
+	Returns:
+	--------
+	bool
+		'True' if successful, else 'False'
+	"""
+	# the relaxation time step size controls the maximum size of the time integration
 	job.add_constant_parameter(val = 0.1, key = key_rt_ss, xml = xml_rt_ss, units = units_rt_ss, description = descrip_rt_ss, related = False)
 	# the relaxation step number defines the number of steps which would be required
 	# to be taken to reach to the set relaxation time (next parameter) if each step
 	# were the maximum step size (previous parameter)
 	job.add_constant_parameter(val = "{0} / {1}".format(key_rt, key_rt_ss), key = key_rt_sl, xml = xml_rt_sl, units = units_rt_sl, description = descrip_rt_sl, related = True)
-    ## NOTE: this parameter needs to go after the other relaxation parameters
-    ## because other key values depend on it
+	## NOTE: this parameter needs to go after the other relaxation parameters
+	## because other key values depend on it
 	job.add_constant_parameter(val = val, key = key_rt, xml = None, units = units_rt, description = descrip_rt, related = False)
 
 # vary relaxation time
 def vary_relaxation_time(job, minval, maxval, nval, log = False):
-    """ assign variable relaxation time to job.
+	""" assign variable relaxation time to job.
 
-    Arguments:
-    ----------
-    job : Job
-        job to add variable parameter to.
-    maxval : float
-        largest value to apply to parameter.
-    minval : float
-        smallest value to apply to parameter.
-    nval : int
-        number of total parameters that should be applied.
-    log : bool (optional, default is 'False')
-        generate variable parameter set on log scale
+	Arguments:
+	----------
+	job : Job
+		job to add variable parameter to.
+	maxval : float
+		largest value to apply to parameter.
+	minval : float
+		smallest value to apply to parameter.
+	nval : int
+		number of total parameters that should be applied.
+	log : bool (optional, default is 'False')
+		generate variable parameter set on log scale
 
-    Returns:
-    --------
-    bool
-        'True' if successfully added to job, else 'False'
-    """
-    # the relaxation time step size controls the maximum size of the time integration
+	Returns:
+	--------
+	bool
+		'True' if successfully added to job, else 'False'
+	"""
+	# the relaxation time step size controls the maximum size of the time integration
 	job.add_constant_parameter(val = 0.1, key = key_rt_ss, xml = xml_rt_ss, units = units_rt_ss, description = descrip_rt_ss, related = False)
 	# the relaxation step number defines the number of steps which would be required
 	# to be taken to reach to the set relaxation time (next parameter) if each step
 	# were the maximum step size (previous parameter)
 	job.add_constant_parameter(val = "{0} / {1}".format(key_rt, key_rt_ss), key = key_rt_sl, xml = xml_rt_sl, units = units_rt_sl, description = descrip_rt_sl, related = True)
-    ## NOTE: this parameter needs to go after the other relaxation parameters
-    ## because other key values depend on it
+	## NOTE: this parameter needs to go after the other relaxation parameters
+	## because other key values depend on it
 	job.add_variable_parameter(minval = minval, maxval = maxval, nval = nval, key = key_rt, xml = None, units = units_rt, description = descrip_rt, related = False, log = log)
 
 # set constant oscillation amplitude
 def set_oscillation_amplitude(job, val):
-    """ assign constant oscillation amplitude.
+	""" assign constant oscillation amplitude.
 
-    Arguments:
-    ----------
-    job
-    val
+	Arguments:
+	----------
+	job
+	val
 
-    Returns:
-    --------
-    bool
-        'True' if constant value was succesfully added to job, else 'False'.
-    """
+	Returns:
+	--------
+	bool
+		'True' if constant value was succesfully added to job, else 'False'.
+	"""
 	job.add_constant_parameter(val = val, key = key_oa, xml = xml_oa, units = units_oa, description = descrip_oa, related = False)
 
 # vary oscillation amplitude
 def vary_oscillation_amplitude(job, maxval, minval, nval, log = False):
-    """ assign variable oscillation amplitude to job.
+	""" assign variable oscillation amplitude to job.
 
 
-    Arguments:
-    ----------
-    job : Job
-        job to add variable parameter to.
-    maxval : float
-        largest value to apply to parameter.
-    minval : float
-        smallest value to apply to parameter.
-    nval : int
-        number of total parameters that should be applied.
-    log : bool (optional, default is 'False')
-        generate variable parameter set on log scale
+	Arguments:
+	----------
+	job : Job
+		job to add variable parameter to.
+	maxval : float
+		largest value to apply to parameter.
+	minval : float
+		smallest value to apply to parameter.
+	nval : int
+		number of total parameters that should be applied.
+	log : bool (optional, default is 'False')
+		generate variable parameter set on log scale
 
-    Returns:
-    --------
-    bool
-        'True' if successfully added to job, else 'False'
-    """
+	Returns:
+	--------
+	bool
+		'True' if successfully added to job, else 'False'
+	"""
 	job.add_variable_parameter(minval = minval, maxval = maxval, nval = nval, key = key_oa, xml = xml_oa, units = units_oa, description = descrip_oa, related = False, log = log)
 
 # set constant oscillation period
 def set_oscillation_period(job, val, n_cycles, n_steps):
-    """ set constant oscillation period.
+	""" set constant oscillation period.
 
-    Arguments:
-    ----------
-    job : Job
-        job to add variable parameter to
-    val : float
-        oscillation period
-    n_cycles : float
-        total number of oscillation cycles which are performed
-    n_steps : float
-        number of intergrate time steps each oscillation cycle
+	Arguments:
+	----------
+	job : Job
+		job to add variable parameter to
+	val : float
+		oscillation period
+	n_cycles : float
+		total number of oscillation cycles which are performed
+	n_steps : float
+		number of intergrate time steps each oscillation cycle
 
-    Returns:
-    --------
-    bool
-        'True' if constant value was successfully added to job, else 'False'
-    """
-    # constant time scale parameters
+	Returns:
+	--------
+	bool
+		'True' if constant value was successfully added to job, else 'False'
+	"""
+	# constant time scale parameters
 	job.add_constant_parameter (val = val, key = key_ot, xml = xml_ot, units = units_ot, description = descrip_ot)
 	# oscillation equation - equation used to control the tip discplacement wrt time
 	job.add_constant_parameter (val = val_ot_eq, key = key_ot_eq, xml = xml_ot_eq, units = units_ot_eq, description = descrip_ot_eq, related = True, symbolic = True)
@@ -311,33 +312,33 @@ def set_oscillation_period(job, val, n_cycles, n_steps):
 	job.add_constant_parameter (val = val_ot_nt, key = key_ot_nt , xml = xml_ot_nt, units = units_ot_nt, description = descrip_ot_nt, related = True)
 	# max time integration step size, assumed average step size when determining simulation length
 	job.add_constant_parameter (val = val_ot_mx, key = key_ot_mx, xml = xml_ot_mx, units = units_ot_mx, description = descrip_ot_mx, related = True)
-    # min time integration step size for oscillation step, initial step size
+	# min time integration step size for oscillation step, initial step size
 	return job.add_constant_parameter (val = val_ot_mn, key = key_ot_mn, xml = xml_ot_mn, units = units_ot_mn, description = descip_ot_mn, related = True)
 
 # vary oscillation amplitude
 def vary_oscillation_period(job, maxval, minval, nval, log = False):
-    """ assign variable oscillation period to job.
+	""" assign variable oscillation period to job.
 
 
-    Arguments:
-    ----------
-    job : Job
-        job to add variable parameter to.
-    maxval : float
-        largest value to apply to parameter.
-    minval : float
-        smallest value to apply to parameter.
-    nval : int
-        number of total parameters that should be applied.
-    log : bool (optional, default is 'False')
-        generate variable parameter set on log scale
+	Arguments:
+	----------
+	job : Job
+		job to add variable parameter to.
+	maxval : float
+		largest value to apply to parameter.
+	minval : float
+		smallest value to apply to parameter.
+	nval : int
+		number of total parameters that should be applied.
+	log : bool (optional, default is 'False')
+		generate variable parameter set on log scale
 
-    Returns:
-    --------
-    bool
-        'True' if successfully added to job, else 'False'
-    """
-    # constant time scale parameters
+	Returns:
+	--------
+	bool
+		'True' if successfully added to job, else 'False'
+	"""
+	# constant time scale parameters
 	job.add_variable_parameter (minval = minval, maxval = maxval, nval = nval, key = key_ot, xml = xml_ot, units = units_ot, description = descrip_ot, log = log)
 	# oscillation equation - equation used to control the tip discplacement wrt time
 	job.add_constant_parameter (val = val_ot_eq, key = key_ot_eq, xml = xml_ot_eq, units = units_ot_eq, description = descrip_ot_eq, related = True, symbolic = True)
@@ -349,13 +350,13 @@ def vary_oscillation_period(job, maxval, minval, nval, log = False):
 	job.add_constant_parameter (val = val_ot_nt, key = key_ot_nt , xml = xml_ot_nt, units = units_ot_nt, description = descrip_ot_nt, related = True)
 	# max time integration step size, assumed average step size when determining simulation length
 	job.add_constant_parameter (val = val_ot_mx, key = key_ot_mx, xml = xml_ot_mx, units = units_ot_mx, description = descrip_ot_mx, related = True)
-    # min time integration step size for oscillation step, initial step size
+	# min time integration step size for oscillation step, initial step size
 	return job.add_constant_parameter (val = val_ot_mn, key = key_ot_mn, xml = xml_ot_mn, units = units_ot_mn, description = descip_ot_mn, related = True)
 
 # set constant oscillation frequency
 def set_oscillation_frequency():
-    pass
+	pass
 
 # vary oscillation frequency
 def vary_oscillation_frequency():
-    pass
+	pass

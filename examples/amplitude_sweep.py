@@ -1,11 +1,12 @@
 
 ## MODULES
 # native, conda
-import sys, os
+import sys, os, math
 # febio
 import mod_parm.dynamic_analysis as dma
 import mod_parm.poroelastic_modulation as pe
 from febio.job import Job
+from febio.slurm.submit import gen_slurm_script
 
 ## PARAMETERS
 # model file
@@ -22,6 +23,8 @@ val_relaxation_time = 10
 val_ell = 0.125
 # number of oscillation amplitudes to test
 n_osc_amp = 20
+# time limit assigned to simulations on slurm
+slurm_timelimit = "40:00"
 
 ## METHODS
 # initialize job
@@ -61,15 +64,19 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     dma.set_loading_depth(j, ld)
     dma.set_relaxation_time(j, val_relaxation_time)
     # oscillation time scale is at resonant poroelastic timescale
-    dma.set_oscillation_period(j, 2. * math.pi / tau_poro)
+    dma.set_oscillation_period(j, 2. * math.pi / tau_poro, n_cycles = 10, n_steps = 60)
     # vary the oscillation amplitude linearly from 0.05 to the loading depth
-    dma.vary_oscilation_amplitude(j, minval = 0.01 * ld, maxval = ld, nval = n)
+    dma.vary_oscillation_amplitude(j, minval = 0.01 * ld, maxval = ld, nval = n)
     # generate parameters, initialize files
     j.generate_parameters()
     j.save_config()
     j.save_parameters()
-    j.generate_parameterized_models(m = m)
-    ## TODO generate slurm scripts
+    for i in range(1, j.get_sim_num() + 1):
+        sd = j.get_simulation(i).get_simulation_path()
+        mi = j.parameterize_model(m = m, n = i) # parameterize model
+        mi.save_model(saveto = sd, saveas = "{0}-{1}.feb".format(jn, i))
+        gen_slurm_script(filepath = sd, jobid = "{0}-{1}".format(jn, i), febfile = "{0}{1}-{2}.feb".format(sd, jn, i), timelimit = slurm_timelimit, delxplt = True)
+        print(sd)
 
 
 if __name__ == "__main__":
@@ -82,5 +89,7 @@ if __name__ == "__main__":
 
     ## SCRIPT
     # initialize job that has amplitude sweep
-    initialize_amplitude_sweep(jd, jn)
+    print(m)
+    exit()
+    initialize_amplitude_sweep(jd, jn, m = "/home/mpikg/dorsey/Desktop/biphasic/" + m)
 

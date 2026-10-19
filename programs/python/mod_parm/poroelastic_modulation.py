@@ -307,10 +307,6 @@ def frequency_sweep (job, loading_depth = default_loading_depth, relaxation_time
 		description = "oscillation_initial_step",
 		related = True)
 
-def amplitude_sweep (job, loading_depth = default_loading_depth, relaxation_time = default_relaxation_time, oscilation_period = default_oscillation_period, amplitude_low = default_amplitude_low, amplitude_high = default_amplitude_high, amplitude_n = default_amplitude_n):
-	""" """
-	pass
-
 # default oscillation period
 
 ## CLASSES

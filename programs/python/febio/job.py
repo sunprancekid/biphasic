@@ -796,6 +796,7 @@ class Job (object):
 
         return m
 
+
     ## SCALING ANALYSIS ##
 
     def show_hysteresis(self, n = None, show = True, save = False):
