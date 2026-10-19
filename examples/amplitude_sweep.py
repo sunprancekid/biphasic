@@ -103,8 +103,7 @@ def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
         print("ERROR :: amplitude_sweep.vary_loading_depth() :: method argument 'z' ({0}) must be a key in 'pe.scale_dict'.".format(z_str))
 
     # find the model file
-    m = "/home/mipkg/dorsey/Desktop/biphasic/" + pe.bend_scale_dict[z_str]
-
+    m = "/home/mpikg/dorsey/Desktop/biphasic/" + pe.bend_scale_dict[z_str]
     # generate a range of length scales to test
     if min_ld is None: min_ld = z / 10.
     if max_ld is None: max_ld = z / 2.
