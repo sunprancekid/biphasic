@@ -10,7 +10,7 @@ from febio.slurm.submit import gen_slurm_script
 
 ## PARAMETERS
 # model file
-m = pe.scale_dict['0.125']
+m = pe.bend_scale_dict['0.125']
 # permeability
 val_perm = 0.0001
 # elastic modulus
@@ -22,7 +22,7 @@ val_relaxation_time = 10
 # length scale associated with model
 val_ell = 0.125
 # number of oscillation amplitudes to test
-n_osc_amp = 20
+n_osc_amp = 10
 # time limit assigned to simulations on slurm
 slurm_timelimit = "40:00"
 
@@ -74,7 +74,7 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     for i in range(1, j.get_sim_num() + 1):
         sd = j.get_simulation(i).get_simulation_path()
         mi = j.parameterize_model(m = m, n = i) # parameterize model
-        mi.save_model(saveto = sd, saveas = "{0}-{1}.feb".format(jn, i))
+        mi.save_model(saveto = sd, saveas = "{0}-p{1}.feb".format(jn, i))
         gen_slurm_script(filepath = "{0}{1}-{2}.slurm.sub".format(sd, jn, i), jobid = "{0}-{1}".format(jn, i), feb_file = "{0}{1}-{2}.feb".format(sd, jn, i), time_limit = slurm_timelimit, del_xplt = True)
 
 # create testing array
