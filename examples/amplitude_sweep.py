@@ -89,7 +89,5 @@ if __name__ == "__main__":
 
     ## SCRIPT
     # initialize job that has amplitude sweep
-    print(m)
-    exit()
     initialize_amplitude_sweep(jd, jn, m = "/home/mpikg/dorsey/Desktop/biphasic/" + m)
 
