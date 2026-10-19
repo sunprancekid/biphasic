@@ -99,7 +99,7 @@ def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
     """
     # based on the z_int
     z_str = str(z)
-    if not z_str in list(pe.scale_dict.keys()):
+    if not z_str in list(pe.bend_scale_dict.keys()):
         print("ERROR :: amplitude_sweep.vary_loading_depth() :: method argument 'z' ({0}) must be a key in 'pe.scale_dict'.".format(z_str))
 
     # find the model file
