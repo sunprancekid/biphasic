@@ -91,7 +91,7 @@ units_ot_eq = None
 
 # number of cycles
 # key used for cycle number variable
-key_ot_nc = f"{key_ot}NCy"
+key_ot_nc = f"NCy"
 # description for variable
 descrip_ot_nc = "number_oscillation_cycles"
 
