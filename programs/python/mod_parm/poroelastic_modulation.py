@@ -54,13 +54,21 @@ default_k_high = 1.0
 default_k_n = 5
 
 ## LENGTH SCALE
-# maps length scale to specific feb files
-scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
+# maps length scale to model feb files for uniaxial beam compression
+uniax_scale_dict = { '0.05': 'models/uniax/scale/comp/0.05.feb',
 			   '0.08': 'models/uniax/scale/comp/0.08.feb',
 			  '0.125': 'models/uniax/scale/comp/0.125.feb',
 			   '0.20': 'models/uniax/scale/comp/0.2.feb',
 			   '0.50': 'models/uniax/scale/comp/0.5.feb',
 			   '1.00': 'models/uniax/scale/comp/1.0.feb'}
+
+# maps length scale to model files for beam bending
+bend_scale_dict = {'0.05': "models/bend/scale/z_0050/bend_pe.feb",
+				'0.08': "models/bend/scale/z_0080/bend_pe.feb",
+				'0.125': "models/bend/scale/z_0125/bend_pe.feb",
+				'0.2': "models/bend/scale/z_0200/bend_pe.feb",
+				'0.5': "models/bend/scale/z_0500/bend_pe.feb",
+				'1.0': "models/bend/scale/z_1000/bend_pe.feb"}
 
 
 ## METHODS
