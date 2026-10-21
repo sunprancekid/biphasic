@@ -73,7 +73,7 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     j.save_config()
     j.save_parameters()
     for i in range(1, j.get_sim_num() + 1):
-        jobid = "{1}-p{2}".format(jn, i)
+        jobid = "{0}-p{1}".format(jn, i)
         sd = j.get_simulation(i).get_simulation_path()
         mi = j.parameterize_model(m = m, n = i) # parameterize model
         mi.save_model(saveto = sd, saveas = "{0}.feb".format(jobid))
