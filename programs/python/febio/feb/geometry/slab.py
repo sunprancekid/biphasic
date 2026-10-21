@@ -42,113 +42,113 @@ default_slab_mesh_lc_max = 5.
 ## METHODS
 # generate plate geometry
 def gen_3d_slab_with_hole(lx = default_slab_lx, ly = default_slab_ly, lz = default_slab_lz, dx = default_slab_oval_dx, dy = default_slab_oval_dy, lc_min = default_slab_mesh_lc_min, lc_max = default_slab_mesh_lc_max, show = True, save = False, hex_mesh = True):
-	""" generates 3d febio model for slab geometry with hole.
+    """ generates 3d febio model for slab geometry with hole.
 
-	Arguments:
-	----------
-	lx, ly, lz : float (mm)
-		slab dimensions (lz is the oval cut out direction)
-	dx, dy : float (mm)
-		oval diameters in x- and y-axis (must be less than lx, ly)
-	lc_min : float (mm)
-		characteristic mesh size at the edge of the hole
-	lc_max : float (mm)
-		characteristic mesh size far from the hole (reached at the slab boundary)
-	show : bool
-		display meshing in gmsh GUI
-	save : bool
-		write gmsh to feb model, save
-	hex_mesh : bool
-		if 'True', generate hex mesh. Otherwise, generates with triagnular mesh.
+    Arguments:
+    ----------
+    lx, ly, lz : float (mm)
+        slab dimensions (lz is the oval cut out direction)
+    dx, dy : float (mm)
+        oval diameters in x- and y-axis (must be less than lx, ly)
+    lc_min : float (mm)
+        characteristic mesh size at the edge of the hole
+    lc_max : float (mm)
+        characteristic mesh size far from the hole (reached at the slab boundary)
+    show : bool
+        display meshing in gmsh GUI
+    save : bool
+        write gmsh to feb model, save
+    hex_mesh : bool
+        if 'True', generate hex mesh. Otherwise, generates with triagnular mesh.
 
-	Returns:
-	--------
-	ModelFile
-		xml formatter feb file if 'save' is 'True' (else None).
-	"""
+    Returns:
+    --------
+    ModelFile
+        xml formatter feb file if 'save' is 'True' (else None).
+    """
 
-	# initialize gmsh API
-	gmsh.initialize()
+    # initialize gmsh API
+    gmsh.initialize()
 
-	# Create a new model named '3d_plate'
-	gmsh.model.add("3d_plate")
+    # Create a new model named '3d_plate'
+    gmsh.model.add("3d_plate")
 
-	# create 2d geometry
-	rect = gmsh.model.occ.addRectangle(0, 0, 0, lx, ly)
-	hole = gmsh.model.occ.addDisk(lx/2, ly/2, 0, dx/2, dy/2)
+    # create 2d geometry
+    rect = gmsh.model.occ.addRectangle(0, 0, 0, lx, ly)
+    hole = gmsh.model.occ.addDisk(lx/2, ly/2, 0, dx/2, dy/2)
 
-	# Cut circular hole from plate
-	plate, _ = gmsh.model.occ.cut([(2, rect)], [(2, hole)])
-	gmsh.model.occ.synchronize()
-	surface_tag = plate[0][1]
+    # Cut circular hole from plate
+    plate, _ = gmsh.model.occ.cut([(2, rect)], [(2, hole)])
+    gmsh.model.occ.synchronize()
+    surface_tag = plate[0][1]
 
-	# find the curve(s) forming the hole edge: those lying entirely inside the hole's bounding box
-	eps = 1e-6
-	hole_curves = [tag for dim, tag in gmsh.model.getEntitiesInBoundingBox(
-		lx/2 - dx/2 - eps, ly/2 - dy/2 - eps, -eps,
-		lx/2 + dx/2 + eps, ly/2 + dy/2 + eps, eps, dim = 1)]
+    # find the curve(s) forming the hole edge: those lying entirely inside the hole's bounding box
+    eps = 1e-6
+    hole_curves = [tag for dim, tag in gmsh.model.getEntitiesInBoundingBox(
+        lx/2 - dx/2 - eps, ly/2 - dy/2 - eps, -eps,
+        lx/2 + dx/2 + eps, ly/2 + dy/2 + eps, eps, dim = 1)]
 
-	# mesh size field: distance from the hole edge
-	dist_field = gmsh.model.mesh.field.add("Distance")
-	gmsh.model.mesh.field.setNumbers(dist_field, "CurvesList", hole_curves)
-	gmsh.model.mesh.field.setNumber(dist_field, "Sampling", 200)
+    # mesh size field: distance from the hole edge
+    dist_field = gmsh.model.mesh.field.add("Distance")
+    gmsh.model.mesh.field.setNumbers(dist_field, "CurvesList", hole_curves)
+    gmsh.model.mesh.field.setNumber(dist_field, "Sampling", 200)
 
-	# distance from the hole edge to the nearest slab edge: lc_max is reached here
-	dist_max = min(lx - dx, ly - dy) / 2
+    # distance from the hole edge to the nearest slab edge: lc_max is reached here
+    dist_max = min(lx - dx, ly - dy) / 2
 
-	# threshold field: lc_min at the hole edge, linearly growing to lc_max at dist_max
-	thr_field = gmsh.model.mesh.field.add("Threshold")
-	gmsh.model.mesh.field.setNumber(thr_field, "InField", dist_field)
-	gmsh.model.mesh.field.setNumber(thr_field, "SizeMin", lc_min)
-	gmsh.model.mesh.field.setNumber(thr_field, "SizeMax", lc_max)
-	gmsh.model.mesh.field.setNumber(thr_field, "DistMin", 0)
-	gmsh.model.mesh.field.setNumber(thr_field, "DistMax", dist_max)
-	gmsh.model.mesh.field.setAsBackgroundMesh(thr_field)
+    # threshold field: lc_min at the hole edge, linearly growing to lc_max at dist_max
+    thr_field = gmsh.model.mesh.field.add("Threshold")
+    gmsh.model.mesh.field.setNumber(thr_field, "InField", dist_field)
+    gmsh.model.mesh.field.setNumber(thr_field, "SizeMin", lc_min)
+    gmsh.model.mesh.field.setNumber(thr_field, "SizeMax", lc_max)
+    gmsh.model.mesh.field.setNumber(thr_field, "DistMin", 0)
+    gmsh.model.mesh.field.setNumber(thr_field, "DistMax", dist_max)
+    gmsh.model.mesh.field.setAsBackgroundMesh(thr_field)
 
-	# let the background field alone control the size
-	gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
-	gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
-	gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
-	gmsh.option.setNumber("Mesh.MeshSizeMin", lc_min)
-	gmsh.option.setNumber("Mesh.MeshSizeMax", lc_max)
+    # let the background field alone control the size
+    gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+    gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+    gmsh.option.setNumber("Mesh.MeshSizeMin", lc_min)
+    gmsh.option.setNumber("Mesh.MeshSizeMax", lc_max)
 
-	if hex_mesh:
-		# recombine triangles into quadrilaterals (Frontal-Delaunay for quads, full-quad recombination)
-		gmsh.model.mesh.setRecombine(2, surface_tag)
-		gmsh.option.setNumber("Mesh.Algorithm", 8)
-		gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 3)
+    if hex_mesh:
+        # recombine triangles into quadrilaterals (Frontal-Delaunay for quads, full-quad recombination)
+        gmsh.model.mesh.setRecombine(2, surface_tag)
+        gmsh.option.setNumber("Mesh.Algorithm", 8)
+        gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 3)
 
-	# extrude the surface in z; recombine=True creates hexahedra from the quad surface mesh
-	n_layers = 5 # TODO: relate to lc_min
-	gmsh.model.occ.extrude([(2, surface_tag)], 0, 0, lz, numElements=[n_layers], recombine=True)
-	gmsh.model.occ.synchronize()
+    # extrude the surface in z; recombine=True creates hexahedra from the quad surface mesh
+    n_layers = 5 # TODO: relate to lc_min
+    gmsh.model.occ.extrude([(2, surface_tag)], 0, 0, lz, numElements=[n_layers], recombine=True)
+    gmsh.model.occ.synchronize()
 
-	# generate 3D mesh
-	gmsh.option.setNumber("Mesh.ElementOrder", 1)
-	gmsh.model.mesh.generate(3)
+    # generate 3D mesh
+    gmsh.option.setNumber("Mesh.ElementOrder", 1)
+    gmsh.model.mesh.generate(3)
 
 
-	# Launch the Gmsh GUI to view the 3D model and mesh
-	if show: gmsh.fltk.run()
+    # Launch the Gmsh GUI to view the 3D model and mesh
+    if show: gmsh.fltk.run()
 
-	# pass model to febio
-	febio_model = None
-	if save:
-		nodeTags, coords, parametricCoord = gmsh.model.mesh.getNodes(-1, -1)
-		if hex_mesh:
-			# get all hex elements
-			elmType = 5
-			elmTags, elmNodes = gmsh.model.mesh.getElementsByType(5, -1)
-		else:
-			# get all triangular elements
-			elmType = 3
-			elmTags, elmNodes = gmsh.model.mesh.getElementsByType(3, -1)
-		febio_model = ModelFile("")
-		febio_model.add_geometry(name = "slab_with_hole", element_type = elmType, node_tags = nodeTags, node_coordinates = coords.reshape(-1, 3), element_nodes = elmNodes.reshape(-1, 8), element_tags = elmTags)
+    # pass model to febio
+    febio_model = None
+    if save:
+        nodeTags, coords, parametricCoord = gmsh.model.mesh.getNodes(-1, -1)
+        if hex_mesh:
+            # get all hex elements
+            elmType = 5
+            elmTags, elmNodes = gmsh.model.mesh.getElementsByType(5, -1)
+        else:
+            # get all triangular elements
+            elmType = 3
+            elmTags, elmNodes = gmsh.model.mesh.getElementsByType(3, -1)
+        febio_model = ModelFile("")
+        febio_model.add_geometry(name = "slab_with_hole", element_type = elmType, node_tags = nodeTags, node_coordinates = coords.reshape(-1, 3), element_nodes = elmNodes.reshape(-1, 8), element_tags = elmTags)
 
-	# Finalize the API to clear memory
-	gmsh.finalize()
-	return febio_model
+    # Finalize the API to clear memory
+    gmsh.finalize()
+    return febio_model
 
 
 ## CLASSES
