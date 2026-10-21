@@ -13,6 +13,7 @@
 # native
 import sys, os, math
 import copy
+import glob
 # conda
 import pandas as pd
 from scipy.interpolate import CubicSpline
@@ -106,6 +107,30 @@ gamma_y_norm = [0.178243533806054, 0.176870108157661, 0.175226061513786, 0.17337
 
 
 ## METHODS
+def update_emod (jd = None, force = False, add = False, results = False):
+    """ update fit where the elastic modulus is being varied.
+
+    Arguments:
+    ----------
+    jd : str
+        path to job directory which contains elastic modulus fit.
+    force : bool
+        force the elastic modulus and relaxation constant when optimizing
+        the solution.
+    add : bool
+        add time scales to all simulations before updating
+    results : bool
+        show the results
+
+    Returns:
+    --------
+    None
+    """
+    # get all simulations in folder that match the pattern
+    l = glob.glob(jd + "e*")
+    print(l)
+    pass
+
 # start fitting job
 def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False, pe_feb = default_feb_pe, ve_feb = default_feb_ve):
     """ initialize the parameters and model files for fitting routine.
@@ -238,12 +263,12 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     # write pe parameters to ve job
     # NOTE: here, elastic modulus, gamma and tau are varied during optimization, and therefore do not need to fixed
     frequency_sweep (job = job_opt,
-                     loading_depth = (z / default_z) * load_depth,
-                     relaxation_time = relax_time,
-                     oscillation_amplitude = (z / default_z) * osc_amp,
-                     period_low = min_period,
-                     period_high = max_period,
-                     period_n = 2) 
+                    loading_depth = (z / default_z) * load_depth,
+                    relaxation_time = relax_time,
+                    oscillation_amplitude = (z / default_z) * osc_amp,
+                    period_low = min_period,
+                    period_high = max_period,
+                    period_n = 2)
     # save parameters
     job_opt.generate_parameters()
     job_opt.save_config()
@@ -368,7 +393,7 @@ def vary_fit_elastic_modulus (jd = None, e_lo = default_emod_low, e_hi = default
         ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_ve.feb"
         # init fit
         ## TODO add length scale as constant parameter to pe config.
-        init_fit(jd = jd, jn = "e{0}".format(i+1), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
+        init_fit(jd = jd, jn = "e{0}".format(i), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
 def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = None):
     """ update fit job directories based on their status.
@@ -1122,6 +1147,35 @@ def step_four (jd, jn, show = True, save = False):
             fig.save_data()
             # show figure
             gen_plot(fig, show = False, save = save)
+
+# show optimization results
+def fig_opt_res (jd = None, jn = None, opt_col = None, norm = False, threshold = None, show = False, saveto = None):
+    """ parse optimization results, display / save them.
+
+    Arguments:
+    ----------
+    jd : dict[str]
+        dictionary that contains list of paths to different 'fit', whose reults
+        should be combined into one figures.
+    opt_col : str
+        opt_dict key's
+    norm : bool
+        if 'True' normalizes the timescale according to the default poroelastic model parameters
+    fit_path : str
+        path to 'fit' directory, generated according to 'fitting.py' protocol
+    save : bool
+        save results to local 'fig' directory.
+    show : bool
+        display results via GUI
+    saveto : str
+        location to save files to (default is 'fig/')entat
+
+    Returns:
+    --------
+    Figure
+        return formatted figure object
+    """
+    pass
 
 if __name__ == "__main__":
 
