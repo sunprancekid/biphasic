@@ -146,6 +146,33 @@ def gen_3d_slab_with_hole(lx = default_slab_lx, ly = default_slab_ly, lz = defau
         febio_model = ModelFile("")
         febio_model.add_geometry(name = "slab_with_hole", element_type = elmType, node_tags = nodeTags, node_coordinates = coords.reshape(-1, 3), element_nodes = elmNodes.reshape(-1, 8), element_tags = elmTags)
 
+    # identify all surfaces, add them to febio model
+    eps = 1e-6
+    surface_nodes = {}
+    for dim, tag in gmsh.model.getEntities(2):
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(dim, tag)
+
+        if abs(zmax - zmin) < eps:
+            # flat in z: bottom or top face
+            name = "z_min" if abs(zmin) < eps else "z_max"
+        elif abs(xmax - xmin) < eps:
+            name = "x_min" if abs(xmin) < eps else "x_max"
+        elif abs(ymax - ymin) < eps:
+            name = "y_min" if abs(ymin) < eps else "y_max"
+        else:
+            # the only curved side wall is the oval hole
+            name = "hole"
+
+        # includeBoundary=True picks up nodes on the edges of the surface too
+        node_tags, node_coords, _ = gmsh.model.mesh.getNodes(dim, tag, includeBoundary = True)
+        surface_nodes[name] = {
+            "surface_tag": tag,
+            "node_tags": node_tags,
+            "coords": node_coords.reshape(-1, 3),
+        }
+
+    ## TODO add all surfaces to febio model
+
     # Finalize the API to clear memory
     gmsh.finalize()
     return febio_model
