@@ -1338,19 +1338,27 @@ class Simulation (object):
         disp = self.get_outfile()['disp'].to_list()
         force = self.get_outfile()['F_mag'].to_list()
 
+        # set the time range
+        if cycle is None:
+            t_min = relax_time
+            t_max = telax_time + period * self.get_number_oscillation_cycles()
+        else:
+            t_min = relax_time + period * (cycle - 1)
+            t_max = relax_time + (period * cycle) * 1.01
+            # TODO more consistent way to include the first point of the next
+            # cycle in the current cycle data (for figure and work calc)
+
         # drop the relaxation time from the work and time
         # reduce time
         for i in range(len(time) - 1, -1, -1):
             # transverse list in reverse order
-            if time[i] >= relax_time:
+            if time[i] >= t_min and time[i] <= t_max:
                 time[i] = time[i] - relax_time
                 disp[i] = -disp[i]
             else:
                 time.pop(i)
                 disp.pop(i)
                 force.pop(i)
-
-        ## TODO :: if cycle_list is specified, use period to find the subset of cyclic loading data
 
         ## plot the data
         if show:
