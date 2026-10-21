@@ -1303,7 +1303,7 @@ class Simulation (object):
                 hys[i] = hys[i] / psw
         return (hys)
 
-    def show_hysteresis (self, cycle = None, show = True, save = False, savedir = None, filename = None):
+    def show_hysteresis (self, cycle = None, show = True, save = False, savedir = None, filename = None, center = False):
         """ show force displacement curve for cyclic loading.
 
         Paramters:
@@ -1318,6 +1318,9 @@ class Simulation (object):
             path to save directory (simulation directory is used if None)
         filename : str or None (optional, default is None)
             save file as ('hys' is used if None)
+        center : bool
+            if 'True', removes force / displacement base, centers lissajou
+            curve at (0, 0)
 
         Returns:
         --------
@@ -1348,6 +1351,9 @@ class Simulation (object):
             # TODO more consistent way to include the first point of the next
             # cycle in the current cycle data (for figure and work calc)
 
+        ## TODO a more accurate way to drop the base line is to fit both
+        ## curves to a sin or cos function and get the amplitude and base
+        ## from the fit directly
         # drop the relaxation time from the work and time
         # reduce time
         for i in range(len(time) - 1, -1, -1):
@@ -1359,6 +1365,18 @@ class Simulation (object):
                 time.pop(i)
                 disp.pop(i)
                 force.pop(i)
+
+        # center data
+        if center:
+            # get min and max force and displacement
+            min_force = min(force)
+            max_force = max(force)
+            min_disp = min(disp)
+            max_disp = max(disp)
+            # center data set
+            for i in range(len(time)):
+                disp[i] = disp[i] - (max_disp + min_disp) / 2.
+                force[i] = force[i] - (max_force + min_force) / 2.
 
         ## plot the data
         if show:
