@@ -2,6 +2,7 @@
 ## MODULES
 # native, conda
 import sys, os, math
+import matplotlib.pyplot as plt
 # febio
 import mod_parm.dynamic_analysis as dma
 import mod_parm.poroelastic_modulation as pe
@@ -72,10 +73,11 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     j.save_config()
     j.save_parameters()
     for i in range(1, j.get_sim_num() + 1):
+        jobid = "{1}-p{2}".format(jn, i)
         sd = j.get_simulation(i).get_simulation_path()
         mi = j.parameterize_model(m = m, n = i) # parameterize model
-        mi.save_model(saveto = sd, saveas = "{0}-p{1}.feb".format(jn, i))
-        gen_slurm_script(filepath = "{0}{1}-{2}.slurm.sub".format(sd, jn, i), jobid = "{0}-{1}".format(jn, i), feb_file = "{0}{1}-{2}.feb".format(sd, jn, i), time_limit = slurm_timelimit, del_xplt = True)
+        mi.save_model(saveto = sd, saveas = "{0}.feb".format(jobid))
+        gen_slurm_script(filepath = "{0}{1}.slurm.sub".format(sd, jobid), jobid = "{0}".format(jobid), feb_file = "{0}{1}.feb".format(sd, jobid), time_limit = slurm_timelimit, del_xplt = True)
 
 # create testing array
 def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
@@ -110,6 +112,37 @@ def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
     ld = [ min_ld + (max_ld - min_ld) * ((i) / (n_ld - 1)) for i in range(n_ld)]
     for i in range(len(ld)):
         initialize_amplitude_sweep(jd = jd, jn = "l{0}".format(i), m = m, ld = ld[i])
+
+# generate results
+def fig_amp_res (jd, jn, show = False, save = False):
+    """ show results from one amplitude sweep.
+
+    Arguments:
+    ----------
+    jd : str
+    jn : str
+    show : bool
+    save : bool
+
+    Returns:
+    --------
+    Figure
+        contains data and plotting instructions.
+    """
+    ## accumulate simulation data
+    j = Job(jd, jn)
+    x = []
+    y = []
+    for i in range(1, j.get_sim_num() + 1):
+        ## collect hysteresis and oscillation amplitude
+        s = j.get_simulation(i) # returns Simulation object
+        x.append(s.get_key_value('OA') / s.get_key_value('LD')) # amplitude assigned to simulation, normalized by loading depth
+        y.append(s.parse_hysteresis_work()[-2]) # second to last cycle
+
+    ## show results
+    f, ax1 = plt.subplots()
+    line = ax1.plot(x, y)
+    plt.show()
 
 
 if __name__ == "__main__":
