@@ -316,7 +316,7 @@ class ModelFile(xmlFile):
 
 
     ## MESH ##
-    def had_object(self, name):
+    def has_object(self, name):
         """ determines if model has object.
 
         objects are list of nodes with specific coordinates.
@@ -331,7 +331,7 @@ class ModelFile(xmlFile):
         bool
             'True' if the object exists in the file, else 'False'.
         """
-        if self.tree_has_element("Mesh/Nodes", attrib_dict = {'name': object_name}): return True
+        if self.tree_has_element("Mesh/Nodes", attrib_dict = {'name': name}): return True
         else: return False
 
     def has_part(self, name):
@@ -416,7 +416,7 @@ class ModelFile(xmlFile):
     def has_surface(self, name):
         pass
 
-    def define_surface(self, name = None, object_name = None):
+    def define_surface(self, surface_name = None, object_name = None, node_tags = None, nodes = None):
         """ define surface on object by specifying set of nodes.
 
         Arguments:
@@ -434,20 +434,24 @@ class ModelFile(xmlFile):
             'True' if successful, else 'False'
         """
         # check that the object already exists in the model file
-        if not self.has_object(object_name):
+        if (not self.has_object(object_name)) or (not isinstance(object_name, str)):
             Exception("ERROR :: ModelFile.define_surface() :: 'object_name' ('{0}') does not exist in model file, cannot procceed.".format(object_name))
             return False
 
         # check that the name does not already eixst
-        if name is None:
+        if surface_name is None:
             # create default name of surface
             pass
         else:
             # check that the name does not already exist
-            if self.has_surface(name)
+            if self.has_surface(surface_name): pass
 
-        # add nodes
-        pass
+        # add NODES as SURFACE
+        self.add_element_to_tree (path = 'Mesh', new_element = 'Surface', attributes = {'name': surface_name})
+        for t, n in zip(node_tags, nodes):
+            self.add_element_to_tree(path = f"Mesh/Surface[@name='{surface_name}']", new_element = 'quad4', value = f"{n[0]},{n[1]},{n[2]},{n[3]}", attributes = {'id': f"{t}"}, duplicate = True)
+            ## TODO determine surface winding ..
+
 
     ## OUTPUT ##
     # reset output
