@@ -316,6 +316,42 @@ class ModelFile(xmlFile):
 
 
     ## MESH ##
+    def had_object(self, name):
+        """ determines if model has object.
+
+        objects are list of nodes with specific coordinates.
+
+        Arguments:
+        ----------
+        name : str
+            name of object in model file.
+
+        Returns:
+        --------
+        bool
+            'True' if the object exists in the file, else 'False'.
+        """
+        if self.tree_has_element("Mesh/Nodes", attrib_dict = {'name': object_name}): return True
+        else: return False
+
+    def has_part(self, name):
+        """ determines if model has part.
+
+        parts are sets of nodes that make individual meshing elements.
+
+        Arguments:
+        ----------
+        name : str
+            name of part in mode file.
+
+        Returns:
+        --------
+        bool
+            'True' if part exists in file, else 'False'.
+        """
+        if self.tree_has_element("Mesh/Elements", attrib_dict = {'name': name}): return True
+        else: return False
+
     def add_geometry (self, name = None, material = None, element_type = None, element_nodes = None, element_tags = None, node_tags = None, node_coordinates = None):
         """ add geometry as object and part to model.
 
@@ -377,8 +413,43 @@ class ModelFile(xmlFile):
         if material is not None:
             pass
 
-    ## OUTPUT ##
+    def has_surface(self, name):
+        pass
 
+    def define_surface(self, name = None, object_name = None):
+        """ define surface on object by specifying set of nodes.
+
+        Arguments:
+        ----------
+        object_name : str
+            name of object in model file that has nodes
+        node_tags : ndarray
+            2D array of node ids, values correspond only to nodes in object
+        name : str (optional)
+            name assigned to surface. default assigned if unsepcified.
+
+        Returns:
+        --------
+        bool
+            'True' if successful, else 'False'
+        """
+        # check that the object already exists in the model file
+        if not self.has_object(object_name):
+            Exception("ERROR :: ModelFile.define_surface() :: 'object_name' ('{0}') does not exist in model file, cannot procceed.".format(object_name))
+            return False
+
+        # check that the name does not already eixst
+        if name is None:
+            # create default name of surface
+            pass
+        else:
+            # check that the name does not already exist
+            if self.has_surface(name)
+
+        # add nodes
+        pass
+
+    ## OUTPUT ##
     # reset output
     def reset_output (self):
         """ reset output.
