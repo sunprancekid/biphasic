@@ -137,8 +137,8 @@ def fig_amp_res (jd, jn, show = False, save = False):
         ## collect hysteresis and oscillation amplitude
         s = j.get_simulation(i) # returns Simulation object
         x.append(s.get_key_value('OA') / s.get_key_value('LD')) # amplitude assigned to simulation, normalized by loading depth
-        y.append(s.parse_hysteresis_work()[-2]) # second to last cycle
-
+        # y.append(s.parse_hysteresis_work()[-2]) # second to last cycle
+        y.append(-s.parse_hysteresis_work()[0]) # second to last cycle
     ## show results
     f, ax1 = plt.subplots()
     line = ax1.plot(x, y)

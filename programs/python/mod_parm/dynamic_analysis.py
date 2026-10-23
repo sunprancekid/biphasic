@@ -105,7 +105,7 @@ descrip_ot_ns = "steps_per_oscillation_cycle"
 # value used for total step number
 val_ot_nt = f"{key_ot_nc} * {key_ot_ns} * 10"
 # xml path for variable in model file
-xml_ot_nt = "Step/step[@id='2']/Control/step_size"
+xml_ot_nt = "Step/step[@id='2']/Control/time_steps"
 # key used for total step number
 key_ot_nt = "ON"
 # string description of variable
