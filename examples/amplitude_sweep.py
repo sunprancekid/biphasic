@@ -1,13 +1,16 @@
 
 ## MODULES
 # native, conda
-import sys, os, math
+import sys, os, math, glob
 import matplotlib.pyplot as plt
 # febio
 import mod_parm.dynamic_analysis as dma
 import mod_parm.poroelastic_modulation as pe
 from febio.job import Job
 from febio.slurm.submit import gen_slurm_script
+# figure
+from plot.figure import Figure
+from plot.plot import gen_plot
 
 ## PARAMETERS
 # model file
@@ -114,7 +117,7 @@ def vary_loading_depth(jd, z, min_ld = None, max_ld = None, n_ld = 5):
         initialize_amplitude_sweep(jd = jd, jn = "l{0}".format(i), m = m, ld = ld[i])
 
 # generate results
-def fig_amp_res (jd, jn, show = False, save = False):
+def fig_amp_res (jd, jn, norm = False, show = False, save = False):
     """ show results from one amplitude sweep.
 
     Arguments:
@@ -129,20 +132,86 @@ def fig_amp_res (jd, jn, show = False, save = False):
     Figure
         contains data and plotting instructions.
     """
-    ## accumulate simulation data
+    ## get constants
     j = Job(jd, jn)
+    emod_val = float(j.get_key_value('E', 1))
+    ell_val = float(j.get_key_value('L', 1))
+    ld_val = float(j.get_key_value('LD', 1))
+    # oa_val = float(j.get_key_value('OA'))
+    ## accumulate simulation data
     x = []
-    y = []
+    y_hys = []
+    # TODO plot phase shift scaling
+    # TODO plot lissajou curve
     for i in range(1, j.get_sim_num() + 1):
         ## collect hysteresis and oscillation amplitude
         s = j.get_simulation(i) # returns Simulation object
-        x.append(s.get_key_value('OA') / s.get_key_value('LD')) # amplitude assigned to simulation, normalized by loading depth
-        # y.append(s.parse_hysteresis_work()[-2]) # second to last cycle
-        y.append(-s.parse_hysteresis_work()[0]) # second to last cycle
+
+        # the x-axis is the oscillation amplitude applied to the simulation
+        x.append(s.get_key_value('OA'))
+        # if norm: x[-1] *= math.pow(ell_val, -1) # the distance is normalized by the length scale factor
+        if norm: x[-1] *= math.pow(ld_val, -1) # the distance is normalized by the length scale factor
+
+        # the y-axis is the energy dissipated by the material
+        y_hys.append(-s.parse_hysteresis_work()[0]) # use the second to last cycle
+        if norm: y_hys[-1] *= math.pow(ld_val, -2) * math.pow(emod_val, -1) # reduced by elastic modulus and length scale
+
     ## show results
-    f, ax1 = plt.subplots()
-    line = ax1.plot(x, y)
-    plt.show()
+    if show:
+        f, ax1 = plt.subplots()
+        line = ax1.plot(x, y_hys)
+        if norm:
+            ax1.set_xlabel("Normalized Oscillation Amplitude ($A^{{*}} = A \\cdot \\ell^{{-1}}$)") #, fontsize = )
+        else:
+            ax1.set_xlabel("Oscillation Amplitude ($mm$)") #, fontsize = )
+        if norm:
+            ax1.set_ylabel("Normalized Dissipated Energy ($W^{{*}} = W \\cdot \\ell^{{-3}} \\cdot E^{{-1}}$)") #, fontsize = )
+        else:
+            ax1.set_ylabel("Dissipated Energy ($J$)") #, fontsize = )
+        # set logscale
+        plt.show()
+    ## return
+    return x, y_hys
+
+def fig_load_res (jd, jn, norm = False, show = True, save = False):
+    """ analyze the results from loading depth sweeps.
+
+    Arguments:
+    ----------
+    jd : str
+        path to job directory which contains the loading sweep.
+    jn : str
+        name job in job directory ('jd').
+    norm : bool
+        display results normalized by relevant model parameters.
+    show : bool
+        display results.
+    save : bool
+        save results.
+
+    Returns:
+    --------
+    None
+    """
+    # loop through loading experiments existing in job directory
+    i = 0
+    fig = Figure()
+    while True:
+        # check if the directory exists
+        ld = "{0}/{1}/l{2}/".format(jd, jn, i)
+        if not os.path.exists(ld): break
+        # if it does, parse the results append to existing data
+        j = Job("{0}/{1}/".format(jd, jn), "l{0}".format(i))
+        x, y = fig_amp_res(jd = "{0}/{1}/".format(jd, jn), jn = "l{0}".format(i), norm = norm, show = False, save = False)
+        fig.append_lists(xlist = x, ylist = y, label = "$L = {0:.3e} $".format(float(j.get_key_value(dma.key_ld, 1))))
+        i += 1 # increment and repeat
+    # set axis formatting
+    fig.set_axis_label(akey = 'x', l = "Oscillation Amplitude ($mm$)")
+    fig.set_axis_label(akey = 'y', l = "Dissipated Energy ($J$)")
+    gen_plot(fig)
+    # get the results for each loading experiment
+    # merge results and plot
+    pass
 
 
 if __name__ == "__main__":
