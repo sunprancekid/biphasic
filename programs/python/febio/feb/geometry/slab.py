@@ -181,7 +181,7 @@ def gen_3d_slab_with_hole(lx = default_slab_lx, ly = default_slab_ly, lz = defau
                 surface_nodes[name]["quads"] = quad_nodes.reshape(-1, 3)
 
             febio_model.define_surface(surface_name = name, object_name = "slab_with_hole_object", node_tags = surface_nodes[name]["quad_tags"], nodes = surface_nodes[name]["quads"])
-            break
+            # break
 
 
     ## TODO add all surfaces to febio model

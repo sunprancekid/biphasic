@@ -447,9 +447,10 @@ class ModelFile(xmlFile):
             if self.has_surface(surface_name): pass
 
         # add NODES as SURFACE
-        self.add_element_to_tree (path = 'Mesh', new_element = 'Surface', attributes = {'name': surface_name})
+        self.add_element_to_tree (path = 'Mesh', new_element = 'Surface', attributes = {'name': surface_name}, duplicate = True)
         for t, n in zip(node_tags, nodes):
-            self.add_element_to_tree(path = f"Mesh/Surface[@name='{surface_name}']", new_element = 'quad4', value = f"{n[0]},{n[1]},{n[2]},{n[3]}", attributes = {'id': f"{t}"}, duplicate = True)
+            self.add_element_to_tree(path = f"Mesh/Surface[@name='{surface_name}']", new_element = 'quad4', value = f"{n[3]},{n[2]},{n[1]},{n[0]}", attributes = {'id': f"{t}"}, duplicate = True)
+            # break
             ## TODO determine surface winding ..
 
 
