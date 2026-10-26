@@ -61,7 +61,7 @@ yax_norm_prop_label_dict = {pkey_de: "Normalized Dissipated Energy\n($W^{{*}} = 
                             pkey_lj: None}
 # scaling integers used for normalizationfile_complex_modulus
 p_scale_ell = {pkey_de: 0, pkey_lj: 0, pkey_ps: 0} # property scaling against length scale, key 'L'
-p_scale_load = {pkey_de: -2, pkey_lj: 0, pkey_ps: -0.35} # scaling of property against the loading depth, key 'LD'
+p_scale_load = {pkey_de: -2, pkey_lj: 0, pkey_ps: 0} # scaling of property against the loading depth, key 'LD'
 # p_scale_amp = {pkey_de: 0, pkey_lj: 0, pkey_ps: 0} # scaling of property against the oscillation amplitude, key 'OA'/
 p_scale_emod = {pkey_de: -1, pkey_lj: 0, pkey_ps: 0} # property scaling against the elastic modulus, key 'E'
 
@@ -93,7 +93,8 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     None
     """
     ## determine resonant timescale from poroelastic properties
-    tau_poro = 30. * pow(emod, -1) * pow(perm, -1) * pow(ell, 2)
+    crit_poro_f = 30. * pow(emod, 1) * pow(perm, 1) * pow(ell, -2)
+    crit_poro_t = 2. * math.pi / crit_poro_freq
     # initialize job, add model
     j = Job(jd, jn)
     # set constant parameters
@@ -103,7 +104,7 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     dma.set_loading_depth(j, ld)
     dma.set_relaxation_time(j, val_relaxation_time)
     # oscillation time scale is at resonant poroelastic timescale
-    dma.set_oscillation_period(j, 2. * math.pi / tau_poro, n_cycles = 10, n_steps = 60)
+    dma.set_oscillation_period(j, crit_poro_t, n_cycles = 10, n_steps = 60)
     # vary the oscillation amplitude linearly from 0.05 to the loading depth
     dma.vary_oscillation_amplitude(j, minval = 0.01 * ld, maxval = ld, nval = n)
     # generate parameters, initialize files
@@ -167,7 +168,7 @@ def fig_amp_res (jd, jn, prop, norm = False, show = False, save = False):
         if 'True', normalize results by simulation parameters according to 'scale_dict'
     show : bool
         if 'True', display results in GUI.
-    save : bool
+    save : boolcenter
         if 'True', save results to csv file.
 
     Returns:
@@ -203,7 +204,11 @@ def fig_amp_res (jd, jn, prop, norm = False, show = False, save = False):
             if norm: x[-1] *= math.pow(ld_val, -1) # the distance is normalized by the length scale factor
         elif prop == pkey_lj:
             # for the lissajou curve, force is plotted against displacement
-            pass
+            disp, force = s.show_hysteresis_work(cycle = s.get_number_oscillation_cycles() - 1, show = False, save = False, center = True)
+            if not norm: x.append(disp)
+            else:
+                disp = [d * pow(ld_val, p_scale_ell[prop]) * pow(emod_val, p_scale_emod[prop]) for d in disp]
+                x.append(disp)
 
         if prop == pkey_de:
             # the y-axis is the energy dissipated by the material
@@ -213,11 +218,8 @@ def fig_amp_res (jd, jn, prop, norm = False, show = False, save = False):
             # the y-axis is the phase shift
             y.append(s.parse_complex_modulus(overwrite = True)['delta'].to_list()[-2])
             if norm: y[-1] *= math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_ell[prop]) # reduced by elastic modulus and length scale
-
         elif prop == pkey_lj:
             pass
-
-    print(y)
 
     ## show results
     if show:
