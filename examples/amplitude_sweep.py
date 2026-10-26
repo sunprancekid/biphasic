@@ -94,7 +94,7 @@ def initialize_amplitude_sweep (jd, jn, m, emod = val_emod, perm = val_perm, ell
     """
     ## determine resonant timescale from poroelastic properties
     crit_poro_f = 30. * pow(emod, 1) * pow(perm, 1) * pow(ell, -2)
-    crit_poro_t = 2. * math.pi / crit_poro_freq
+    crit_poro_t = 2. * math.pi / crit_poro_f
     # initialize job, add model
     j = Job(jd, jn)
     # set constant parameters
