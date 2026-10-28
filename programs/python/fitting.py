@@ -107,7 +107,7 @@ gamma_y_norm = [0.178243533806054, 0.176870108157661, 0.175226061513786, 0.17337
 
 
 ## METHODS
-def update_emod (jd = None, force = False, add = False, results = False):
+def update_emod (jd = None, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
 
     Arguments:
@@ -120,16 +120,76 @@ def update_emod (jd = None, force = False, add = False, results = False):
     add : bool
         add time scales to all simulations before updating
     results : bool
-        show the results
+        show / save results
+    show : bool
+        display results to GUI ('results' must be 'True')
+    save : bool
+        save figures and data files ('results' must be 'True')
+    saveto : str
+        path to save files ('results' must be 'True', save must be 'True')
 
     Returns:
     --------
     None
     """
     # get all simulations in folder that match the pattern
-    l = glob.glob(jd + "e*")
-    print(l)
-    pass
+    i = 0 # integer for incrementation
+    vd = [] # list of valid directories
+    while True:
+        # increment, check if directory exists
+        i += 1
+        d = "{0}e{1}".format(jd, i)
+        if not os.path.exists(d): break
+        vd.append(d)
+        # add timescale
+        if add: add_fit_timescales(jd = jd, jn = "e{0}".format(i))
+        # update directory
+        update_fit(jd = jd, jn = "e{0}".format(i), force = force, overwrite = True)
+
+    if results:
+        pass
+
+def update_perm (jd = None, force = False, add = False, results = False, show = False, save = False, saveto = None):
+    """ update set of fitting experiments in which the permeability is varied.
+
+    Arguments:
+    ----------
+    jd : str
+        path to job directory which contains elastic modulus fit.
+    force : bool
+        force the elastic modulus and relaxation constant when optimizing
+        the solution.
+    add : bool
+        add time scales to all simulations before updating
+    results : bool
+        show / save results
+    show : bool
+        display results to GUI ('results' must be 'True')
+    save : bool
+        save figures and data files ('results' must be 'True')
+    saveto : str
+        path to save files ('results' must be 'True', save must be 'True')
+
+    Returns:
+    --------
+    None
+    """
+    # get all simulations in folder that match the pattern
+    i = 0 # integer for incrementation
+    vd = [] # list of valid directories
+    while True:
+        # increment, check if directory exists
+        i += 1
+        d = "{0}k{1}".format(jd, i)
+        if not os.path.exists(d): break
+        vd.append(d)
+        # add timescale
+        if add: add_fit_timescales(jd = jd, jn = "k{0}".format(i))
+        # update directory
+        update_fit(jd = jd, jn = "k{0}".format(i), force = force, overwrite = True)
+
+    if results:
+        pass
 
 # start fitting job
 def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False, pe_feb = default_feb_pe, ve_feb = default_feb_ve):
