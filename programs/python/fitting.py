@@ -610,6 +610,76 @@ def add_fit_timescales (jd = None, jn = None):
     j_pe.jn = "ve"
     j_pe.save_parameters(overwrite = True)
 
+# update poroelastic jobs in fit job
+def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int = None):
+    """ update the poroelastic portion of the fit jobs
+
+    Parameters:
+    -----------
+    jd : str
+        path to directory with contains the job
+    jn : str
+        name of job in directory 'jd'
+    i : int
+        integer corresponding to index number in parameter file
+    overwrite : bool
+        overwrite existing files if they are incomplete
+    z_int : int (optional)
+        correspond to index in 'dict_feb'
+
+    Returns:
+    --------
+    bool
+        'True' if job has been completed successfully; else 'False'.
+    """
+    ## establish job and model file
+    j_pe = Job ("{0}{1}/".format(jd, jn), 'pe')
+    m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
+
+    ## check arguments
+    # check job paths
+    if not (j_pe.has_parameters()):
+        print("ERROR :: fitting.update_poroelastic() :: job 'pe' does not exist in '{0}{1}'.".format(jd, jn))
+        return False
+    # check n
+    if not (j_pe.has_simulation(i)):
+        print("ERROR :: fitting.update_poroelastic() :: simulation integer 'i={0}' does not exist in job '{1}{2}/pe/'.".format(i, jd, jn))
+        return False
+
+    ## check the directory
+    # establish simulation directory
+    dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
+    n = j_pe.df_parm.iloc[i-1]['n']
+    jobid = "p{0}".format(n)
+    if not (z_int is None): jobid = "z{0}-p{1}".format(z_int, n)
+    else: jobid = "{0:s}-p{1}".format(jn, n)
+    # if the directory does not eixst
+    if not os.path.exists(dir_pe):
+        ## establish the simulation
+        # if it does not exist, make the directory
+        os.makedirs(dir_pe)
+        # parameterize model, save to simulation directory
+        j_pe.parameterize_model(m = m_pe, n = n).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
+        # write slurm file
+        gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
+            jobid = jobid,
+            feb_file = "{0}{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), jobid),
+            time_limit = "30:00", # twenty minute time limit
+            del_feb = True,
+            del_xplt = True)
+        return False # job not completed yet
+    else: # if the simulation directory exists
+        ## has the simulation completed?
+        if not os.path.exists(dir_pe + "febio4.job.out"): return False
+        elif not os.path.exists(dir_pe + "febio4.out.csv"):
+            # in this case, the outfile exists by the csv file does not
+            # attempt to parse the results from the logfile
+            success = j_pe.get_simulation(i).parse_logfile()
+            if not success: return False # simulation not completed yet
+            # past here, results were written and ready for optimization phase
+
+    return True
+
 # add optimization routine
 def update_optimization (jd = None, jn = None, i = None, overwrite = True, z_int = None, emod_force_val = None, emod_start_val = None, emod_max_val = None, emod_min_val = None, gamma_force_val = None, gamma_start_val = None, gamma_max_val = None, gamma_min_val = None, tau_force_val = None, tau_start_val = None, tau_max_val = None, tau_min_val = None):
     """ update optimization portion of fitting routine.
@@ -915,76 +985,6 @@ def get_optimization_bounds (j_op, i, opt_key):
         else: r_val = j_op.get_optimized_parameter_value(n = j_op.df_parm.iloc[i_r - 1]['n'], o_key = opt_key)
     return l_val, r_val
 
-# update poroelastic jobs in fit job
-def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int = None):
-    """ update the poroelastic portion of the fit jobs
-
-    Parameters:
-    -----------
-    jd : str
-        path to directory with contains the job
-    jn : str
-        name of job in directory 'jd'
-    i : int
-        integer corresponding to index number in parameter file
-    overwrite : bool
-        overwrite existing files if they are incomplete
-    z_int : int (optional)
-        correspond to index in 'dict_feb'
-
-    Returns:
-    --------
-    bool
-        'True' if job has been completed successfully; else 'False'.
-    """
-    ## establish job and model file
-    j_pe = Job ("{0}{1}/".format(jd, jn), 'pe')
-    m_pe = ModelFile ("{0}{1}/pe/pe.feb".format(jd, jn))
-
-    ## check arguments
-    # check job paths
-    if not (j_pe.has_parameters()):
-        print("ERROR :: fitting.update_poroelastic() :: job 'pe' does not exist in '{0}{1}'.".format(jd, jn))
-        return False
-    # check n
-    if not (j_pe.has_simulation(i)):
-        print("ERROR :: fitting.update_poroelastic() :: simulation integer 'i={0}' does not exist in job '{1}{2}/pe/'.".format(i, jd, jn))
-        return False
-
-    ## check the directory
-    # establish simulation directory
-    dir_pe = "{0}{1}/pe/{2}".format(jd, jn, j_pe.df_parm.iloc[i-1]['path'])
-    n = j_pe.df_parm.iloc[i-1]['n']
-    jobid = "p{0}".format(n)
-    if not (z_int is None): jobid = "z{0}-p{1}".format(z_int, n)
-    else: jobid = "{0:s}-p{1}".format(jn, n)
-    # if the directory does not eixst
-    if not os.path.exists(dir_pe):
-        ## establish the simulation
-        # if it does not exist, make the directory
-        os.makedirs(dir_pe)
-        # parameterize model, save to simulation directory
-        j_pe.parameterize_model(m = m_pe, n = n).save_model(saveto = dir_pe, saveas = "{0}.feb".format(jobid), overwrite = overwrite)
-        # write slurm file
-        gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
-            jobid = jobid,
-            feb_file = "{0}{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), jobid),
-            time_limit = "30:00", # twenty minute time limit
-            del_feb = True,
-            del_xplt = True)
-        return False # job not completed yet
-    else: # if the simulation directory exists
-        ## has the simulation completed?
-        if not os.path.exists(dir_pe + "febio4.job.out"): return False
-        elif not os.path.exists(dir_pe + "febio4.out.csv"):
-            # in this case, the outfile exists by the csv file does not
-            # attempt to parse the results from the logfile
-            success = j_pe.get_simulation(i).parse_logfile()
-            if not success: return False # simulation not completed yet
-            # past here, results were written and ready for optimization phase
-
-    return True
-
 # update viscoelastic jobs in fit job
 def update_viscoelastic (jd = None, jn = None, n = None, overwrite = True, z_int = None):
     """ update the specific viscoelastic job.
@@ -1059,7 +1059,7 @@ def update_viscoelastic (jd = None, jn = None, n = None, overwrite = True, z_int
     return True
 
 # show optimization results
-def fig_opt_res (jd = None, jn = None, opt_col = None, norm = False, threshold = None, show = False, saveto = None):
+def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold = None, show = False, saveto = None):
     """ parse optimization results, display / save them.
 
     Arguments:
