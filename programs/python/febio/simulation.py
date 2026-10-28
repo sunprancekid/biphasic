@@ -1006,6 +1006,8 @@ class Simulation (object):
             # load the file if overwrite has not been specified, and
             # and the file exists
             df = pd.read_csv("{0}/{1}".format(self.sd, file_complex_modulus))
+        elif not self.has_outfile():
+            return None
         else:
             # overwrite has been specified or the file does not exist
             ## get data

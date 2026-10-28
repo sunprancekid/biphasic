@@ -2,6 +2,7 @@
 ## MODULES
 # native, conda
 import sys, os, math, glob
+import copy
 import matplotlib.pyplot as plt
 # febio
 import mod_parm.dynamic_analysis as dma
@@ -48,22 +49,25 @@ prop_dict = [pkey_de, pkey_ps, pkey_lj]
 # dictionary used for x-axis labels
 xax_prop_label_dict = {pkey_de: "Oscillation Amplitude ($mm$)",
                        pkey_ps: "Oscillation Amplitude ($mm$)",
-                       pkey_lj: None}
+                       pkey_lj: "Displacement Amplitude ($mm$)"}
 xax_norm_prop_label_dict = {pkey_de: "Normalized Oscillation Amplitude\n($A^{{*}} = A \\cdot \\L^{{-1}}$)",
-                       pkey_ps: None,
-                       pkey_lj: None}
+                       pkey_ps: "Normalized Oscillation Amplitude\n($A^{{*}} = A \\cdot \\L^{{-1}}$)",
+                       pkey_lj: "Normalized Displacement Amplitude ($A_{{D}}^{{*}} = A_{{D}} \\cdot A_{{D}}^{{-1}}$)"}
 # dictionary used for y-axis labels
 yax_prop_label_dict = {pkey_de: "Dissipated Energy ($J$)",
                        pkey_ps: "Phase Shift ($^\\circ$)",
-                       pkey_lj: None}
-yax_norm_prop_label_dict = {pkey_de: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot L^{{-2}} \\cdot E^{{-1}}$)",
-                            pkey_ps: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta \\cdot L^{{-2}}$)",
-                            pkey_lj: None}
-# scaling integers used for normalizationfile_complex_modulus
+                       pkey_lj: "Force Amplitude ($mN$)"}
+yax_norm_prop_label_dict = {pkey_de: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot L^{{-1}} \\cdot E^{{-1}} \\cdot A_{{D}}^{{-1}}$)",
+                            pkey_ps: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta$)",
+                            pkey_lj: "Normalized Force Amplitude ($A_{{F}}^{{*}} = A_{{F}} \\cdot A_{{D}}^{{-1}}$)"}
+# scaling integers used for normalization of various properties - yaxis
 p_scale_ell = {pkey_de: 0, pkey_lj: 0, pkey_ps: 0} # property scaling against length scale, key 'L'
-p_scale_load = {pkey_de: -2, pkey_lj: 0, pkey_ps: 0} # scaling of property against the loading depth, key 'LD'
-# p_scale_amp = {pkey_de: 0, pkey_lj: 0, pkey_ps: 0} # scaling of property against the oscillation amplitude, key 'OA'/
+p_scale_load = {pkey_de: -1, pkey_lj: -1, pkey_ps: 0} # scaling of property against the loading depth, key 'LD'
 p_scale_emod = {pkey_de: -1, pkey_lj: 0, pkey_ps: 0} # property scaling against the elastic modulus, key 'E'
+# scaling amplitude - x axius
+a_scale_ell = 0
+a_scale_load = -1
+a_scale_emod = 0
 
 ## METHODS
 # initialize job
@@ -192,53 +196,55 @@ def fig_amp_res (jd, jn, prop, norm = False, show = False, save = False):
     y = []
     # TODO plot phase shift scaling
     # TODO plot lissajou curve
+    fig = Figure()
     for i in range(1, j.get_sim_num() + 1):
         ## collect hysteresis and oscillation amplitude
         s = j.get_simulation(i) # returns Simulation object
-
         # the x-axis is the oscillation amplitude applied to the simulation
-        if prop == pkey_de or pkey_ps:
-            # for hysteresis or phase shift, property is plotted
-            # against the oscillation amplitude
-            x.append(s.get_key_value('OA'))
-            if norm: x[-1] *= math.pow(ld_val, -1) # the distance is normalized by the length scale factor
-        elif prop == pkey_lj:
-            # for the lissajou curve, force is plotted against displacement
-            disp, force = s.show_hysteresis_work(cycle = s.get_number_oscillation_cycles() - 1, show = False, save = False, center = True)
-            if not norm: x.append(disp)
-            else:
-                disp = [d * pow(ld_val, p_scale_ell[prop]) * pow(emod_val, p_scale_emod[prop]) for d in disp]
-                x.append(disp)
-
         if prop == pkey_de:
-            # the y-axis is the energy dissipated by the material
-            y.append(s.parse_hysteresis_work()[-2]) # use the second to last cycle
-            if norm: y[-1] *= math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_ell[prop]) # reduced by elastic modulus and length scale
+            # for hysteresis
+            h = s.parse_hysteresis_work()
+            if h is None: continue
+            # plot against amplitude
+            x.append(s.get_key_value('OA'))
+            if norm: x[-1] *= math.pow(ld_val, a_scale_load) * math.pow(ell_val, a_scale_ell) * math.pow(emod_val, a_scale_emod) # the distance is normalized by the length scale factor
+            y.append(h[-2]) # use the second to last cycle
+            if norm: y[-1] *= math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_emod[prop]) * math.pow(ell_val, p_scale_ell[prop]) * math.pow(float(s.get_key_value('OA')), -1) # reduced by elastic modulus and length scale
         elif prop == pkey_ps:
             # the y-axis is the phase shift
-            y.append(s.parse_complex_modulus(overwrite = True)['delta'].to_list()[-2])
-            if norm: y[-1] *= math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_ell[prop]) # reduced by elastic modulus and length scale
+            c = s.parse_complex_modulus(overwrite = True)
+            if c is None: continue
+            x.append(s.get_key_value('OA'))
+            if norm: x[-1] *= math.pow(ld_val, a_scale_load) * math.pow(ell_val, a_scale_ell) * math.pow(emod_val, a_scale_emod) # the distance is normalized by the length scale factor
+            y.append(c['delta'].to_list()[-2])
+            if norm: y[-1] *= math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_ell[prop]) * math.pow(ell_val, p_scale_ell[prop]) # reduced by elastic modulus and length scale
         elif prop == pkey_lj:
-            pass
-
+            # for the lissajou curve, force is plotted against displacement
+            disp, force = s.show_hysteresis(cycle = s.get_number_oscillation_cycles() - 1, show = False, save = False, center = True)
+            # the x-axis is the displacement amplitude
+            if norm: disp = [d * math.pow(ld_val, a_scale_load) * math.pow(ell_val, a_scale_ell) * math.pow(emod_val, a_scale_emod) * math.pow(float(s.get_key_value('OA')), 0) for d in disp]
+            # the y-axis is the force amplitude
+            if norm: force = [f * math.pow(ld_val, p_scale_load[prop]) * math.pow(emod_val, p_scale_emod[prop]) * math.pow(ell_val, p_scale_ell[prop]) * math.pow(float(s.get_key_value('OA')), 0) for f in force]
+            # fig
+            fig.append_lists(xlist = disp, ylist = force, label = "$A / L = {0:.2e}$".format(float(s.get_key_value('OA')) / float(s.get_key_value('LD'))))
+    # append lists to figure
+    if (prop == pkey_de) or (prop == pkey_ps): fig.append_lists(xlist = x, ylist = y)
     ## show results
-    if show:
-        f, ax1 = plt.subplots()
-        line = ax1.plot(x, y)
-        if norm:
-            ax1.set_xlabel("Normalized Oscillation Amplitude ($A^{{*}} = A \\cdot \\ell^{{-1}}$)") #, fontsize = )
-        else:
-            ax1.set_xlabel("Oscillation Amplitude ($mm$)") #, fontsize = )
-        if norm:
-            ax1.set_ylabel("Normalized Dissipated Energy ($W^{{*}} = W \\cdot \\ell^{{-3}} \\cdot Efloat(j.get_key_value(dma.key_ld, 1))^{{-1}}$)") #, fontsize = )
-        else:
-            ax1.set_ylabel("Dissipated Energy ($J$)") #, fontsize = )
-        # set logscale
-        plt.show()
+    # add labels
+    if norm:
+        fig.set_axis_label(akey = 'x', l = xax_norm_prop_label_dict[prop], s = default_axis_label_font_size)
+    else:
+        fig.set_axis_label(akey = 'x', l = xax_prop_label_dict[prop], s = default_axis_label_font_size)
+    if norm:
+        fig.set_axis_label(akey = 'y', l = yax_norm_prop_label_dict[prop], s = default_axis_label_font_size)
+    else:
+        fig.set_axis_label(akey = 'y', l = yax_prop_label_dict[prop], s = default_axis_label_font_size)
+    # show
+    if show: gen_plot(fig, save = save, show = show)
     ## return
-    return x, y
+    return fig
 
-def fig_load_res (jd, jn, norm = False, show = True, save = False):
+def fig_load_res (jd, jn, norm = False, show = True, save = False, saveto = None):
     """ analyze the results from loading depth sweeps.
 
     Arguments:
@@ -253,36 +259,87 @@ def fig_load_res (jd, jn, norm = False, show = True, save = False):
         display results.
     save : bool
         save results.
+    saveto : str
+        path to save figures to, when 'save' is 'True'
 
     Returns:
     --------
     None
     """
+    # check method arguments
+    if saveto is None or (not isinstance(saveto, str)): saveto = "./fig/"
+    elif (not os.path.exists(saveto)): os.mkdir(saveto)
     # for all properties
     for pkey in prop_dict:
-        if pkey != pkey_de and pkey != pkey_ps: continue
         # loop through loading experiments existing in job directory
         i = 0
         fig = Figure()
+        fl_lj = [] # list of figures for lj curve
+        fl_lj_label = []
         while True:
             # check if the directory exists
             ld = "{0}/{1}/l{2}/".format(jd, jn, i)
             if not os.path.exists(ld): break
             # if it does, parse the results append to existing data
             j = Job("{0}/{1}/".format(jd, jn), "l{0}".format(i))
-            x, y = fig_amp_res(jd = "{0}/{1}/".format(jd, jn), jn = "l{0}".format(i), prop = pkey, norm = norm, show = False, save = False)
+            f_tmp = fig_amp_res(jd = "{0}/{1}/".format(jd, jn), jn = "l{0}".format(i), prop = pkey, norm = norm, show = False, save = False)
             if norm: label = "$L/\\ell = {0:.2f}$".format(float(j.get_key_value(dma.key_ld, 1))/float(j.get_key_value('L', 1)))
             else: label = "$L = {0:.3e}$".format(float(j.get_key_value(dma.key_ld, 1)))
-            fig.append_lists(xlist = x, ylist = y, label = label)
+            if pkey != pkey_lj:
+                fig.append_lists(xlist = f_tmp.get_col_val_list(col = 'x'), ylist = f_tmp.get_col_val_list(col = 'y'), label = label)
+            else:
+                fl_lj.append(copy.deepcopy(f_tmp))
+                fl_lj_label.append(copy.deepcopy(label))
+                ## save figure
+                saveas = pkey + "-l{0}".format(i)
+                if norm: saveas += "-norm"
+                f_tmp.set_saveas(savedir = saveto + "lj-l/", filename = saveas)
+                f_tmp.set_dpi(200)
+                if save: f_tmp.save_data()
+                gen_plot(f_tmp, save = save, show = False)
             i += 1 # increment and repeat
         # set axis formatting
         # set xaxis label
-        if norm: fig.set_axis_label(akey = 'x', l = xax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
-        else: fig.set_axis_label(akey = 'x', l = xax_prop_label_dict[pkey], s = default_axis_label_font_size)
-        # set yaxis label
-        if norm: fig.set_axis_label(akey = 'y', l = yax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
-        else: fig.set_axis_label(akey = 'y', l = yax_prop_label_dict[pkey], s = default_axis_label_font_size)
-        if show: gen_plot(fig, save = False)
+        subtitle = "$T = {0:.2e}, \\omega = {1:.2e}, \\ell = {2:.2e}$".format(float(j.get_key_value('OT', 1)), 2. * math.pi / float(j.get_key_value('OT', 1)), float(j.get_key_value('L', 1)))
+        if pkey != pkey_lj:
+            ## labels
+            fig.set_subtitle_label(subtitle)
+            if norm: fig.set_axis_label(akey = 'x', l = xax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
+            else: fig.set_axis_label(akey = 'x', l = xax_prop_label_dict[pkey], s = default_axis_label_font_size)
+            # set yaxis label
+            if norm: fig.set_axis_label(akey = 'y', l = yax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
+            else: fig.set_axis_label(akey = 'y', l = yax_prop_label_dict[pkey], s = default_axis_label_font_size)
+            ## file names
+            saveas = pkey
+            if norm: pkey += '-norm'
+            fig.set_saveas(savedir = saveto, filename = saveas)
+            fig.set_dpi(200)
+            if save: fig.save_data()
+            gen_plot(fig, save = save, show = show)
+        else:
+            if not norm: break
+            # loop through each key from the lissajou model, which is the normalized amplitude
+            ai = 0
+            for a in fl_lj[0].get_unique_ivals():
+                # from each loading depth, get the normalized amplitude
+                fig = Figure()
+                for i in range(len(fl_lj)):
+                    # append each lj curve
+                    fig.append_lists(xlist = fl_lj[i].get_col_val_list(col = 'x', ival = a), ylist = fl_lj[i].get_col_val_list(col = 'y', ival = a), label = fl_lj_label[i])
+                ## add labels
+                fig.set_title_label(l = a, s = default_subtitle_label_font_size + 2)
+                # fig.set_subtitle_label(l = subtitle, s = default_subtitle_label_font_size)
+                fig.set_axis_label(akey = 'x', l = xax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
+                fig.set_axis_label(akey = 'y', l = yax_norm_prop_label_dict[pkey], s = default_axis_label_font_size)
+                ## save, show
+                saveas = pkey + '-a{0}'.format(ai)
+                if norm: saveas += "-norm"
+                fig.set_dpi(200)
+                fig.set_saveas(savedir = saveto + "lj-a/", filename = saveas)
+                if save: fig.save_data()
+                gen_plot(fig, save = save, show = False)
+                ai += 1
+
         # get the results for each loading experiment
         # merge results and plot
     pass
