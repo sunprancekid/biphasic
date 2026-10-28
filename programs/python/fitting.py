@@ -1058,6 +1058,46 @@ def update_viscoelastic (jd = None, jn = None, n = None, overwrite = True, z_int
 
     return True
 
+def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = None):
+    """ parse and display optimization results from set of fitting experiments.
+
+    Arguments:
+    ----------
+    jd : list[str]
+        list of directory pathways that lead to fitting experiments
+    prop : str
+        determines the property that is displayed, must exist in 'prop_list'
+    ld : list[str]
+        list of labels to use in figure legend
+    norm : bool
+        display results normalized by relevant model parameters
+    show : bool
+        determines if figure is displayed
+    save : bool
+        determines if figure and data files are saved
+    saveto : str
+        path to save results to (default is current working directory, './')
+
+    Returns:
+    --------
+    Figure
+        contains data and figure formatting instructions
+    """
+    ## check method arguments
+    # check list of job directories
+    if not isinstance(jd, list) and not isinstance(jd, str):
+        # wrong type
+    elif isinstance(jd, str):
+        # format string as list
+        jd = [jd]
+    # loop through each item in the list, check that the paths exists
+    for l in jd:
+        # check that each item in the list is a string and is a path to a valid directory
+        # if not
+    ## get data
+    ## plot results
+    pass
+
 # show optimization results
 def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold = None, show = False, saveto = None):
     """ parse optimization results, display / save them.

@@ -17,10 +17,6 @@ from febio.feb.model_file import ModelFile
 # default slab x-axis length
 default_slab_lx = 100.
 # default slab y-axis length
-## MODULES
-# native / conda
-import gmsh
-from febio.feb.model_file import ModelFile
 
 
 ## PARAMETERS
@@ -180,11 +176,9 @@ def gen_3d_slab_with_hole(lx = default_slab_lx, ly = default_slab_ly, lz = defau
                 surface_nodes[name]["quad_tags"] = quad_tags
                 surface_nodes[name]["quads"] = quad_nodes.reshape(-1, 3)
 
-            febio_model.define_surface(surface_name = name, object_name = "slab_with_hole_object", node_tags = surface_nodes[name]["quad_tags"], nodes = surface_nodes[name]["quads"])
+            ## NOTE surface addition needs to be adjusted
+            # febio_model.define_surface(surface_name = name, object_name = "slab_with_hole_object", node_tags = surface_nodes[name]["quad_tags"], nodes = surface_nodes[name]["quads"])
             # break
-
-
-    ## TODO add all surfaces to febio model
 
     # Finalize the API to clear memory
     gmsh.finalize()
