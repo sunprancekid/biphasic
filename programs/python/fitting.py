@@ -17,6 +17,11 @@ import glob
 # conda
 import pandas as pd
 from scipy.interpolate import CubicSpline
+# plotting
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+import matplotlib.legend as mlegend
 # local - febio
 from febio.job import Job, gen_log_scale_range
 from febio.sweep import Sweep
@@ -104,6 +109,44 @@ emod_xml = "Material/material[@id='1']/elastic/E"
 ## VISCOELASTIC SOLUTION
 gamma_x_norm = [3000, 2249.68262799737, 1687.02397557105, 1265.08951028575, 948.683298050515, 711.412111698498, 533.483823011678, 400.056429648998, 300.00000000000, 224.968262799738, 168.702397557105, 126.508951028575, 94.8683298050517, 71.1412111698499, 53.3483823011679, 40.0056429648999, 30.0000000000001, 22.4968262799738, 16.8702397557105, 12.6508951028575, 9.48683298050517, 7.114121116985, 5.33483823011679, 4.00056429648999, 3.00000000000001, 2.24968262799738, 1.68702397557105, 1.26508951028575, 0.948683298050517, 0.711412111698499, 0.533483823011679, 0.400056429648999, 0.300000000000001]
 gamma_y_norm = [0.178243533806054, 0.176870108157661, 0.175226061513786, 0.173372937277569, 0.171239711707948, 0.168785108321504, 0.166001804558484, 0.162916743604243, 0.159556962180916, 0.155952510461735, 0.152145698315305, 0.148172455890445, 0.144095271888075, 0.139797687659573, 0.13513256853283, 0.129677758876466, 0.122912194585724, 0.114304480975313, 0.10368100757383, 0.0916533636146685, 0.0796069646891092, 0.0689231611469557, 0.0602241756170665, 0.0532868185199569, 0.0474592267618035, 0.0421094028228456, 0.0369749435704413, 0.032241921777961, 0.0282688756493337, 0.0252244999916803, 0.0231439805131177, 0.0217793818917523, 0.0209670933838213]
+
+## POROELASTIC RESULTS
+# key for hysterseis property
+hys_key = 'hys'
+# key for power property
+pow_key = 'hys-pow'
+# key for storage modulus property
+sm_key = 'store_mod'
+# key for loss modulus property
+lm_key = 'loss_mod'
+# key for phase shift
+ps_key = 'phase_shift'
+# list of simulation properties
+prop_list = [hys_key, pow_key, sm_key, lm_key, ps_key]
+# scaling integers for time
+f_scale_l = 2
+f_scale_k = -1
+f_scale_e = -1
+# scaling integers applicable to poroelastic properties for each model parameter
+p_scale_l = {hys_key: -3, pow_key: -1, sm_key: -1, lm_key: -1, ps_key: 0}
+p_scale_k = {hys_key:  0, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these keys emperically
+p_scale_e = {hys_key: -1, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these scaling keys emperically
+# x axis frequency label
+freq_ax_label = "Frequency ($Hz, 2 \\pi T^{{-1}}$)"
+# x axis frequency label - normalized
+freq_ax_label_norm = "Normalized Frequency ($f^{{*}} = f \\cdot (L^{{2}} \\cdot E^{{-1}} \\cdot K^{{-1}}) $)"
+# y axis property labels - normalization
+hys_ax_label = {hys_key: "Dissipated Enegy ($J$)",
+                pow_key: "Power ($Watts$)",
+                sm_key: "Storage Modulus ($MPa$)",
+                lm_key: "Loss Modulus ($MPa$)",
+                ps_key: "Phase Shift (Radians)"}
+# y-axis property labels - normalization
+hys_ax_label_norm = {hys_key: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot (L^{{-3}} \\cdot E^{{-1}})$)",
+                    pow_key: "Normalized Power ($P^{*} = P \\cdot (L^{{-1}})$)",
+                    sm_key: "Normalized Storage Modulus\n($E'^{{*}} = E' \\cdot (L^{{-1}})$)",
+                    lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (L^{{-1}}))$",
+                    ps_key: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta$)"}
 
 
 ## METHODS
@@ -1068,7 +1111,7 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
     prop : str
         determines the property that is displayed, must exist in 'prop_list'
     ld : list[str]
-        list of labels to use in figure legend
+        list of labels to use in figure legend, corresponds to each path in 'jd'
     norm : bool
         display results normalized by relevant model parameters
     show : bool
@@ -1091,12 +1134,111 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
         # format string as list
         jd = [jd]
     # loop through each item in the list, check that the paths exists
-    for l in jd:
+    for i in range(len(jd) - 1, -1, -1): # transverse list in reverse order
         # check that each item in the list is a string and is a path to a valid directory
-        # if not
+        ## TODO removing from jd must also correspond to ld
+        if not isinstance(jd[i], str):
+            # not string - remove item from list
+            Exception("ERROR :: fitting.fig_poro_res() :: item in list 'jd' ({0}) must be string type.".format(jd.pop(i)))
+        elif not os.path.exists(jd[i]):
+            # directory does not exist -remove item from list
+            Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not exist.".format(jd.pop(i)))
+        elif not os.path.exists(jd[i] + 'pe'):
+            # directory does not contain poroelastic simulations - remove from list
+            Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not contain simulation directory 'pe'.".format(jd.pop(i)))
+
+    # check the property
+    if prop not in prop_list:
+        # unable to identify property
+        Exception("ERROR :: fitting.fig_poro_res() :: method argument 'prop' ({0}) does not exist in 'prop_list'.".format(prop))
+
     ## get data
+    # loop through each directory
+    fig = Figure()
+    for d in jd:
+
+        # for each length scale
+        s = Sweep("{0}{1}/{2}/".format(jd, jn, dict_feb[l]), "pe") # poroelastic sweep at length scale l
+        n_cy = s.get_simulation(1).get_number_oscillation_cycles() - 2 # get number of cycles
+
+        # get property
+        if prop == hys_key or prop == pow_key:
+            df_res = s.get_hysteresis_work() # get energy dissipation
+        elif prop == sm_key:
+            df_res = s.get_storage_modulus()
+        elif prop == lm_key:
+            df_res = s.get_loss_modulus()
+        elif prop == ps_key:
+            df_res = s.get_phase_shift()
+
+        # drop any results that do not make sense
+        df_res = df_res.drop(df_res[df_res[n_cy] < 0.].index) # drop negative numbers
+        df_res = df_res.dropna(subset = [n_cy]) # drop nan
+
+        # for calculating power, reduce the energy by the oscillation time scale
+        if prop == pow_key: df_res[n_cy] = df_res[n_cy] / df_res['T']
+
+        ## get poroelastic parameters, used for normalization
+        e_val = s.get_simulation(1).get_key_value('E') # elastic modulus
+        k_val = s.get_simulation(1).get_key_value('K') # permiability
+        l_val = float(l) # length scale - implied
+
+        ## append scale frequency an amplitude to results data frame
+        df_res['f_scale'] = [ f * pow(l_val, f_scale_l) * pow(k_val, f_scale_k) * pow(e_val, f_scale_e) for f in df_res['f'].to_list() ]
+        df_res['A_scale'] = [ A * pow(l_val, p_scale_l[prop]) * pow(k_val, p_scale_k[prop]) * pow(e_val, p_scale_e[prop]) for A in df_res[n_cy].to_list()]
+        ## NOTE TODO label from ld
+        if norm:
+            fig.append_df(df = df_res, xcol = 'f_scale', ycol = 'A_scale', label = '$L = {0:.3f}$ mm'.format(l_val))
+        else:
+            fig.append_df(df = df_res, xcol = 'f', ycol = (n_cy ), label = '$L = {0:.3f}$ mm'.format(l_val))
+
+    # format figure, display
+    if norm:
+        fig.set_axis_label('x', l = freq_ax_label_norm, s = default_axis_label_font_size)
+        fig.set_axis_label('y', l = hys_ax_label_norm[prop], s = default_axis_label_font_size)
+    else:
+        fig.set_axis_label('x', l = freq_ax_label, s = default_axis_label_font_size)
+        fig.set_axis_label('y', l = hys_ax_label[prop], s = default_axis_label_font_size)
+    fig.set_axis_scale('x', log = True)
+    fig.set_axis_scale('y', log = True)
+    if save:
+        if norm: saveas += "-norm"
+        fig.set_saveas(savedir = saveto, filename = saveas)
+    fig.set_dpi(300)
+
     ## plot results
-    pass
+    f, ax1 = plt.subplots()
+    leg = []
+
+    l_keys = list(dict_feb.keys())
+    for i in range(len(fig.get_unique_ivals())):
+        ## NOTE TODO colors
+        # gen_color_dicts
+        l = str(l_keys[i])
+        dict_edge, dict_mark = gen_colors_dicts()
+
+        # if i >= 4: continue # drop l = 1.0
+
+        # plot
+        label = fig.get_unique_ivals()[i]
+        line = ax1.plot(fig.get_xval_list(label), fig.get_yval_list(label), linewidth = default_line_width, marker = fig.get_marker(label), markersize = default_marker_size, c = dict_edge[l], markerfacecolor = dict_mark[l], markeredgecolor = dict_edge[l])
+        leg.append(mlines.Line2D([], [], marker = fig.get_marker(label), ls = line[-1].get_ls(), label = fig.get_label(label), color = dict_edge[l], markerfacecolor = dict_mark[l], markeredgecolor = dict_edge[l]))
+
+    # add axis labels
+    ax1.set_xlabel(fig.get_xaxis_label().get_label(), fontsize = fig.get_xaxis_label().get_size())
+    ax1.set_ylabel(fig.get_yaxis_label().get_label(), fontsize = fig.get_yaxis_label().get_size())
+
+    # ax2 = ax1.twinx()
+    # format axis
+    if fig.axis_is_logscale('x'): ax1.set_xscale('log')
+    if fig.axis_is_logscale('y'): ax1.set_yscale('log')
+
+    # add legend
+    plt.legend(handles = leg) # , loc = 'upper left'
+    if save:
+        fig.save_data()
+        plt.savefig(fig.get_saveas(), dpi = fig.get_dpi(), bbox_inches='tight')
+    if show: plt.show()
 
 # show optimization results
 def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold = None, show = False, saveto = None):
