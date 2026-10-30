@@ -132,9 +132,9 @@ p_scale_l = {hys_key: -3, pow_key: -1, sm_key: -1, lm_key: -1, ps_key: 0}
 p_scale_k = {hys_key:  0, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these keys emperically
 p_scale_e = {hys_key: -1, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these scaling keys emperically
 # x axis frequency label
-freq_ax_label = "Frequency ($Hz, 2 \\pi T^{{-1}}$)"
+freq_ax_label = "Angular Frequency ($Hz, 2 \\pi T^{{-1}}$)"
 # x axis frequency label - normalized
-freq_ax_label_norm = "Normalized Frequency ($f^{{*}} = f \\cdot (L^{{2}} \\cdot E^{{-1}} \\cdot K^{{-1}}) $)"
+freq_ax_label_norm = "Normalized Angular Frequency ($\\omega^{{*}} = \\omega \\cdot (\\ell^{{2}} \\cdot E^{{-1}} \\cdot K^{{-1}}) $)"
 # y axis property labels - normalization
 hys_ax_label = {hys_key: "Dissipated Enegy ($J$)",
                 pow_key: "Power ($Watts$)",
@@ -142,21 +142,78 @@ hys_ax_label = {hys_key: "Dissipated Enegy ($J$)",
                 lm_key: "Loss Modulus ($MPa$)",
                 ps_key: "Phase Shift (Radians)"}
 # y-axis property labels - normalization
-hys_ax_label_norm = {hys_key: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot (L^{{-3}} \\cdot E^{{-1}})$)",
-                    pow_key: "Normalized Power ($P^{*} = P \\cdot (L^{{-1}})$)",
-                    sm_key: "Normalized Storage Modulus\n($E'^{{*}} = E' \\cdot (L^{{-1}})$)",
-                    lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (L^{{-1}}))$",
+hys_ax_label_norm = {hys_key: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot (\\ell^{{-3}} \\cdot E^{{-1}})$)",
+                    pow_key: "Normalized Power ($P^{*} = P \\cdot (\\ell^{{-1}})$)",
+                    sm_key: "Normalized Storage Modulus\n($E'^{{*}} = E' \\cdot (\\ell^{{-1}})$)",
+                    lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (\\ell^{{-1}}))$",
                     ps_key: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta$)"}
+
+## PLOTTING
+## defaults
+# default subtitle label font size
+default_subtitle_label_font_size = 16
+# default axis label font size
+default_axis_label_font_size = 18
+# default axis tick font size
+default_tick_font_size = 14
+# default legend font size
+default_legend_font_size = 12
+# default marker size
+default_marker_size = 5
+# default colormap
+default_cmap = "Pastel1"
+# default line width
+default_line_width = 2
+## colors
+# set2 color
+s2 = plt.cm.Set2
+# set2 - cyan
+s2_cyan = s2(0)
+# set2 - red
+s2_red = s2(1)
+# set2 - purple
+s2_purple = s2(2)
+# tab20 colors
+# tab20 color map
+t20 = plt.cm.tab20
+# tab - blue - dark
+t20_blue_dark = t20(0)
+# tab - blue - light
+t20_blue_light = t20(1)
+# tab - organge - dark
+t20_orange_dark = t20(2)
+# tab - orange - light
+t20_orange_light = t20(3)
+# tab - green - dark
+t20_green_dark = t20(4)
+# tab - green - light
+t20_green_light = t20(5)
+# tab - red - dark
+t20_red_dark = t20(6)
+# tab - red - light
+t20_red_light = t20(7)
+# tab - purple - dark
+t20_purple_dark = t20(8)
+# tab - purple - light
+t20_purple_light = t20(9)
+# tab - pink - dark
+t20_pink_dark = t20(12)
+# tab - pink - light
+t20_pink_light = t20(13)
+## MARKER AND EDGE COLOR LIST
+marker_list = [t20_red_light, t20_green_light, t20_orange_light, t20_blue_light, t20_purple_light, t20_pink_light]
+edge_list = [t20_red_dark, t20_green_dark, t20_orange_dark, t20_blue_dark, t20_purple_dark, t20_pink_dark]
 
 
 ## METHODS
-def update_emod (jd = None, force = False, add = False, results = False, show = False, save = False, saveto = None):
+def update_emod (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
 
     Arguments:
     ----------
     jd : str
         path to job directory which contains elastic modulus fit.
+    update : bool
     force : bool
         force the elastic modulus and relaxation constant when optimizing
         the solution.
@@ -178,19 +235,30 @@ def update_emod (jd = None, force = False, add = False, results = False, show = 
     # get all simulations in folder that match the pattern
     i = 0 # integer for incrementation
     vd = [] # list of valid directories
+    ld = [] # list of labels for each dictionary
     while True:
         # increment, check if directory exists
         i += 1
         d = "{0}e{1}".format(jd, i)
         if not os.path.exists(d): break
+        j = Job(d, 'pe')
         vd.append(d)
+        ld.append("$E = {0:.2e} MPa$".format(float(j.get_key_value('E', 1))))
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "e{0}".format(i))
         # update directory
-        update_fit(jd = jd, jn = "e{0}".format(i), force = force, overwrite = True)
+        if update: update_fit(jd = jd, jn = "e{0}".format(i), force = force, overwrite = True)
 
     if results:
-        pass
+        for p in prop_list: # each poroelastic property
+            for b in [True, False]: # both with and without norm
+                try:
+                    fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
+                except Exception as inst:
+                    print(type(inst))    # the exception type
+                    print(inst.args)     # arguments stored in .args
+                    print(inst)          # __str__ allows args to be printed directly,
+                exit()
 
 def update_perm (jd = None, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update set of fitting experiments in which the permeability is varied.
@@ -1101,7 +1169,7 @@ def update_viscoelastic (jd = None, jn = None, n = None, overwrite = True, z_int
 
     return True
 
-def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = None):
+def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False, saveto = None):
     """ parse and display optimization results from set of fitting experiments.
 
     Arguments:
@@ -1140,26 +1208,29 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
         ## TODO removing from jd must also correspond to ld
         if not isinstance(jd[i], str):
             # not string - remove item from list
-            Exception("ERROR :: fitting.fig_poro_res() :: item in list 'jd' ({0}) must be string type.".format(jd.pop(i)))
+            raise Exception("ERROR :: fitting.fig_poro_res() :: item in list 'jd' ({0}) must be string type.".format(jd.pop(i)))
         elif not os.path.exists(jd[i]):
             # directory does not exist -remove item from list
-            Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not exist.".format(jd.pop(i)))
-        elif not os.path.exists(jd[i] + 'pe'):
+            raise Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not exist.".format(jd.pop(i)))
+        elif not os.path.exists(jd[i] + '/pe'):
             # directory does not contain poroelastic simulations - remove from list
-            Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not contain simulation directory 'pe'.".format(jd.pop(i)))
+            raise Exception("ERROR :: fitting.fig_poro_res() :: path in list 'jd' ({0}) does not contain simulation directory 'pe'.".format(jd.pop(i)))
 
     # check the property
     if prop not in prop_list:
         # unable to identify property
-        Exception("ERROR :: fitting.fig_poro_res() :: method argument 'prop' ({0}) does not exist in 'prop_list'.".format(prop))
+        raise Exception("ERROR :: fitting.fig_poro_res() :: method argument 'prop' ({0}) does not exist in 'prop_list'.".format(prop))
 
     ## get data
+    print(len(jd))
     # loop through each directory
     fig = Figure()
-    for d in jd:
+    for i in range(len(jd)):
+
+        print(jd[i])
 
         # for each length scale
-        s = Sweep("{0}{1}/{2}/".format(jd, jn, dict_feb[l]), "pe") # poroelastic sweep at length scale l
+        s = Sweep(jd[i], "pe") # poroelastic sweep at length scale l
         n_cy = s.get_simulation(1).get_number_oscillation_cycles() - 2 # get number of cycles
 
         # get property
@@ -1187,11 +1258,11 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
         ## append scale frequency an amplitude to results data frame
         df_res['f_scale'] = [ f * pow(l_val, f_scale_l) * pow(k_val, f_scale_k) * pow(e_val, f_scale_e) for f in df_res['f'].to_list() ]
         df_res['A_scale'] = [ A * pow(l_val, p_scale_l[prop]) * pow(k_val, p_scale_k[prop]) * pow(e_val, p_scale_e[prop]) for A in df_res[n_cy].to_list()]
-        ## NOTE TODO label from ld
+        print(df_res)
         if norm:
-            fig.append_df(df = df_res, xcol = 'f_scale', ycol = 'A_scale', label = '$L = {0:.3f}$ mm'.format(l_val))
+            fig.append_df(df = df_res, xcol = 'f_scale', ycol = 'A_scale', label = ld[i])
         else:
-            fig.append_df(df = df_res, xcol = 'f', ycol = (n_cy ), label = '$L = {0:.3f}$ mm'.format(l_val))
+            fig.append_df(df = df_res, xcol = 'f', ycol = (n_cy ), label = ld[i])
 
     # format figure, display
     if norm:
@@ -1213,29 +1284,26 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
 
     l_keys = list(dict_feb.keys())
     for i in range(len(fig.get_unique_ivals())):
-        ## NOTE TODO colors
-        # gen_color_dicts
-        l = str(l_keys[i])
-        dict_edge, dict_mark = gen_colors_dicts()
-
-        # if i >= 4: continue # drop l = 1.0
+        # get colors
+        edge_color = edge_list[i%len(edge_list)]
+        mark_color = marker_list[i%len(marker_list)]
 
         # plot
         label = fig.get_unique_ivals()[i]
-        line = ax1.plot(fig.get_xval_list(label), fig.get_yval_list(label), linewidth = default_line_width, marker = fig.get_marker(label), markersize = default_marker_size, c = dict_edge[l], markerfacecolor = dict_mark[l], markeredgecolor = dict_edge[l])
-        leg.append(mlines.Line2D([], [], marker = fig.get_marker(label), ls = line[-1].get_ls(), label = fig.get_label(label), color = dict_edge[l], markerfacecolor = dict_mark[l], markeredgecolor = dict_edge[l]))
+        line = ax1.plot(fig.get_xval_list(label), fig.get_yval_list(label), linewidth = default_line_width, marker = fig.get_marker(label), markersize = default_marker_size, c = edge_color, markerfacecolor = mark_color, markeredgecolor = edge_color)
+        leg.append(mlines.Line2D([], [], marker = fig.get_marker(label), ls = line[-1].get_ls(), label = fig.get_label(label), color = edge_color, markerfacecolor = mark_color, markeredgecolor = edge_color))
 
     # add axis labels
     ax1.set_xlabel(fig.get_xaxis_label().get_label(), fontsize = fig.get_xaxis_label().get_size())
     ax1.set_ylabel(fig.get_yaxis_label().get_label(), fontsize = fig.get_yaxis_label().get_size())
 
-    # ax2 = ax1.twinx()
     # format axis
     if fig.axis_is_logscale('x'): ax1.set_xscale('log')
     if fig.axis_is_logscale('y'): ax1.set_yscale('log')
+    ax1.tick_params(axis = 'both', labelsize = default_tick_font_size)
 
     # add legend
-    plt.legend(handles = leg) # , loc = 'upper left'
+    plt.legend(handles = leg, fontsize = default_legend_font_size) # , loc = 'upper left'
     if save:
         fig.save_data()
         plt.savefig(fig.get_saveas(), dpi = fig.get_dpi(), bbox_inches='tight')
