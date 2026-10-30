@@ -1130,6 +1130,7 @@ def fig_poro_res (jd, prop, norm = False, show = False, save = False, saveto = N
     # check list of job directories
     if not isinstance(jd, list) and not isinstance(jd, str):
         # wrong type
+        pass
     elif isinstance(jd, str):
         # format string as list
         jd = [jd]
