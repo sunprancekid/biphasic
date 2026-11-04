@@ -206,6 +206,39 @@ edge_list = [t20_red_dark, t20_green_dark, t20_orange_dark, t20_blue_dark, t20_p
 
 
 ## METHODS
+def update_ell (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
+    """ update fit set where length scale is varied.
+
+    Arguments:
+    ----------
+    None
+
+    Returns:
+    --------
+    None
+    """
+    # list of possible length scales
+    l_list = list(dict_feb.keys())
+    # get all simulations in folder that match the pattern
+    i = 0 # integer for incrementation
+    vd = [] # list of valid directories
+    ld = [] # list of labels for each dictionary
+    while True:
+        # increment, check if directory exists
+        i += 1
+        d = "{0}z{1}".format(jd, i)
+        if not os.path.exists(d): break
+        j = Job(d, 'pe')
+        vd.append(d)
+        ld.append("$\\ell = {0:.2e} mm".format(float(l_list[i])))
+        # add timescale
+        if add: add_fit_timescales(jd = jd, jn = "z{0}".format(i))
+        # update directory
+        if update: update_fit(jd = jd, jn = "z{0}".format(i), force = force, overwrite = True)
+
+    if results:
+        pass
+
 def update_emod (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
 
@@ -260,13 +293,14 @@ def update_emod (jd = None, update = True, force = False, add = False, results =
                     print(inst)          # __str__ allows args to be printed directly,
                 exit()
 
-def update_perm (jd = None, force = False, add = False, results = False, show = False, save = False, saveto = None):
+def update_perm (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update set of fitting experiments in which the permeability is varied.
 
     Arguments:
     ----------
     jd : str
         path to job directory which contains elastic modulus fit.
+    update : bool
     force : bool
         force the elastic modulus and relaxation constant when optimizing
         the solution.
@@ -297,10 +331,32 @@ def update_perm (jd = None, force = False, add = False, results = False, show = 
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "k{0}".format(i))
         # update directory
-        update_fit(jd = jd, jn = "k{0}".format(i), force = force, overwrite = True)
+        if update: update_fit(jd = jd, jn = "k{0}".format(i), force = force, overwrite = True)
 
     if results:
         pass
+
+def vary_fit_ell (jd = None, perm = default_perm, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
+    """
+
+    """
+
+    ## check method arguments
+    # jd must be specified
+    if jd is None:
+        print("ERROR :: fitting.vary_fit_perm() :: job directory 'jd' must be specified.")
+        return False
+
+    # loop through each length scale directory
+    l_list = list(dict_feb.keys())
+    for i in len(l_list):
+        l = l_list[i]
+        # location of model files for corresponding length scale
+        feb_pe = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_pe.feb"
+        feb_ve = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_ve.feb"
+        # init fit
+        init_fit(jd = jd, jn = "z{0}".format(i+1), emod = emod, perm = perm, z = float(l), osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
+
 
 def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_permeability_high, k_n = default_permeability_n, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
     """ initialize a series of fitting where the permeability varies.
