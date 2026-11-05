@@ -349,7 +349,7 @@ def vary_fit_ell (jd = None, perm = default_perm, emod = default_emod, z = defau
 
     # loop through each length scale directory
     l_list = list(dict_feb.keys())
-    for i in len(l_list):
+    for i in range(len(l_list)):
         l = l_list[i]
         # location of model files for corresponding length scale
         feb_pe = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_pe.feb"
