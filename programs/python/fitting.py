@@ -352,8 +352,8 @@ def vary_fit_ell (jd = None, perm = default_perm, emod = default_emod, z = defau
     for i in range(len(l_list)):
         l = l_list[i]
         # location of model files for corresponding length scale
-        feb_pe = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_pe.feb"
-        feb_ve = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_ve.feb"
+        pe_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_pe.feb"
+        ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_ve.feb"
         # init fit
         init_fit(jd = jd, jn = "z{0}".format(i+1), emod = emod, perm = perm, z = float(l), osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
