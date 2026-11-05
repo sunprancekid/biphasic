@@ -230,7 +230,7 @@ def update_ell (jd = None, update = True, force = False, add = False, results = 
         if not os.path.exists(d): break
         j = Job(d, 'pe')
         vd.append(d)
-        ld.append("$\\ell = {0:.2e} mm".format(float(l_list[i])))
+        ld.append("$\\ell = {0:.2e} mm".format(float(l_list[i - 1])))
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "z{0}".format(i))
         # update directory
