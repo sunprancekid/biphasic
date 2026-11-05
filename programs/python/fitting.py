@@ -130,11 +130,11 @@ f_scale_e = -1
 # scaling integers applicable to poroelastic properties for each model parameter
 p_scale_l = {hys_key: -3, pow_key: -1, sm_key: -1, lm_key: -1, ps_key: 0}
 p_scale_k = {hys_key:  0, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these keys emperically
-p_scale_e = {hys_key: -1, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these scaling keys emperically
+p_scale_e = {hys_key: -1, pow_key: -2, sm_key:  -1, lm_key:  -1, ps_key: 0}
 # x axis frequency label
 freq_ax_label = "Angular Frequency ($Hz, 2 \\pi T^{{-1}}$)"
 # x axis frequency label - normalized
-freq_ax_label_norm = "Normalized Angular Frequency ($\\omega^{{*}} = \\omega \\cdot (\\ell^{{2}} \\cdot E^{{-1}} \\cdot K^{{-1}}) $)"
+freq_ax_label_norm = "Normalized Angular Frequency \n($\\omega^{{*}} = \\omega \\cdot (\\ell^{{2}} \\cdot E^{{-1}} \\cdot K^{{-1}}) $)"
 # y axis property labels - normalization
 hys_ax_label = {hys_key: "Dissipated Enegy ($J$)",
                 pow_key: "Power ($Watts$)",
@@ -143,9 +143,9 @@ hys_ax_label = {hys_key: "Dissipated Enegy ($J$)",
                 ps_key: "Phase Shift (Radians)"}
 # y-axis property labels - normalization
 hys_ax_label_norm = {hys_key: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdot (\\ell^{{-3}} \\cdot E^{{-1}})$)",
-                    pow_key: "Normalized Power ($P^{*} = P \\cdot (\\ell^{{-1}})$)",
-                    sm_key: "Normalized Storage Modulus\n($E'^{{*}} = E' \\cdot (\\ell^{{-1}})$)",
-                    lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (\\ell^{{-1}}))$",
+                    pow_key: "Normalized Power \n($P^{*} = P \\cdot (\\ell^{{-1}} \\cdot E^{{-2}})$)",
+                    sm_key: "Normalized Storage Modulus\n($E'^{{*}} = E' \\cdot (\\ell^{{-1}} \\cdot E^{{-1}})$)",
+                    lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (\\ell^{{-1}} \\cdot E^{{-1}}))$",
                     ps_key: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta$)"}
 
 ## PLOTTING
@@ -285,13 +285,8 @@ def update_emod (jd = None, update = True, force = False, add = False, results =
     if results:
         for p in prop_list: # each poroelastic property
             for b in [True, False]: # both with and without norm
-                try:
-                    fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
-                except Exception as inst:
-                    print(type(inst))    # the exception type
-                    print(inst.args)     # arguments stored in .args
-                    print(inst)          # __str__ allows args to be printed directly,
-                exit()
+                ## TODO add lj plot
+                fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
 
 def update_perm (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update set of fitting experiments in which the permeability is varied.
@@ -1278,12 +1273,9 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
         raise Exception("ERROR :: fitting.fig_poro_res() :: method argument 'prop' ({0}) does not exist in 'prop_list'.".format(prop))
 
     ## get data
-    print(len(jd))
     # loop through each directory
     fig = Figure()
     for i in range(len(jd)):
-
-        print(jd[i])
 
         # for each length scale
         s = Sweep(jd[i], "pe") # poroelastic sweep at length scale l
@@ -1309,12 +1301,12 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
         ## get poroelastic parameters, used for normalization
         e_val = s.get_simulation(1).get_key_value('E') # elastic modulus
         k_val = s.get_simulation(1).get_key_value('K') # permiability
-        l_val = float(l) # length scale - implied
+        l_val = s.get_simulation(1).get_key_value('L') # permiability
+        # l_val = float(l) # length scale - implied
 
         ## append scale frequency an amplitude to results data frame
         df_res['f_scale'] = [ f * pow(l_val, f_scale_l) * pow(k_val, f_scale_k) * pow(e_val, f_scale_e) for f in df_res['f'].to_list() ]
         df_res['A_scale'] = [ A * pow(l_val, p_scale_l[prop]) * pow(k_val, p_scale_k[prop]) * pow(e_val, p_scale_e[prop]) for A in df_res[n_cy].to_list()]
-        print(df_res)
         if norm:
             fig.append_df(df = df_res, xcol = 'f_scale', ycol = 'A_scale', label = ld[i])
         else:
@@ -1330,7 +1322,9 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
     fig.set_axis_scale('x', log = True)
     fig.set_axis_scale('y', log = True)
     if save:
+        saveas = prop
         if norm: saveas += "-norm"
+        if saveto is None: saveto = "./fig/"
         fig.set_saveas(savedir = saveto, filename = saveas)
     fig.set_dpi(300)
 

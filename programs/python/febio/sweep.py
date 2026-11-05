@@ -33,6 +33,7 @@ col_ot = 3
 ## METHODS
 # none
 
+## TODO combine complex modulus getter, plotters to reduce over all code
 
 ## CLASSES
 class Sweep (object):
@@ -423,9 +424,19 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()['store-mod'].to_list()
-                if len(hys[i]) > max_cycle:
-                    max_cycle = len(hys[i])
+                df_cm = sim.parse_complex_modulus()
+                if df_cm is not None: # if the complex modulus could be extracted
+                    # append the data to the list
+                    hys[i] = sim.parse_complex_modulus()['store-mod'].to_list()
+                    if len(hys[i]) > max_cycle:
+                        max_cycle = len(hys[i])
+                else: # the complex modulus data could not be extracted
+                    if max_cycle != 0:
+                        # if not the first simulation in the sweep, the list is
+                        # the same length as the number of cycles
+                        hys[i] = [None for i in range(max_cycle)]
+                    ## NOTE if the simulation set is the first in the sweep,
+                    ## skip and do not append anything to the simulaiton set
             # remove the simulation
             del sim
         # add to the dataframe
@@ -472,9 +483,19 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()['loss-mod'].to_list()
-                if len(hys[i]) > max_cycle:
-                    max_cycle = len(hys[i])
+                df_cm = sim.parse_complex_modulus()
+                if df_cm is not None: # if the complex modulus could be extracted
+                    # append the data to the list
+                    hys[i] = sim.parse_complex_modulus()['loss-mod'].to_list()
+                    if len(hys[i]) > max_cycle:
+                        max_cycle = len(hys[i])
+                else: # the complex modulus data could not be extracted
+                    if max_cycle != 0:
+                        # if not the first simulation in the sweep, the list is
+                        # the same length as the number of cycles
+                        hys[i] = [None for i in range(max_cycle)]
+                    ## NOTE if the simulation set is the first in the sweep,
+                    ## skip and do not append anything to the simulaiton set
             # remove the simulation
             del sim
         # add to the dataframe
@@ -522,9 +543,19 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()['delta'].to_list()
-                if len(hys[i]) > max_cycle:
-                    max_cycle = len(hys[i])
+                df_cm = sim.parse_complex_modulus()
+                if df_cm is not None: # if the complex modulus could be extracted
+                    # append the data to the list
+                    hys[i] = sim.parse_complex_modulus()['delta'].to_list()
+                    if len(hys[i]) > max_cycle:
+                        max_cycle = len(hys[i])
+                else: # the complex modulus data could not be extracted
+                    if max_cycle != 0:
+                        # if not the first simulation in the sweep, the list is
+                        # the same length as the number of cycles
+                        hys[i] = [None for i in range(max_cycle)]
+                    ## NOTE if the simulation set is the first in the sweep,
+                    ## skip and do not append anything to the simulaiton set
             # remove the simulation
             del sim
         # add to the dataframe
@@ -609,9 +640,19 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 ot.append(sim.get_key_value('OT'))
-                hys[i] = sim.parse_complex_modulus()['dynamic-mod'].to_list()
-                if len(hys[i]) > max_cycle:
-                    max_cycle = len(hys[i])
+                df_cm = sim.parse_complex_modulus()
+                if df_cm is not None: # if the complex modulus could be extracted
+                    # append the data to the list
+                    hys[i] = sim.parse_complex_modulus()['dynamic-mod'].to_list()
+                    if len(hys[i]) > max_cycle:
+                        max_cycle = len(hys[i])
+                else: # the complex modulus data could not be extracted
+                    if max_cycle != 0:
+                        # if not the first simulation in the sweep, the list is
+                        # the same length as the number of cycles
+                        hys[i] = [None for i in range(max_cycle)]
+                    ## NOTE if the simulation set is the first in the sweep,
+                    ## skip and do not append anything to the simulaiton set
             # remove the simulation
             del sim
         # add to the dataframe
