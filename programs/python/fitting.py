@@ -129,7 +129,7 @@ f_scale_k = -1
 f_scale_e = -1
 # scaling integers applicable to poroelastic properties for each model parameter
 p_scale_l = {hys_key: -3, pow_key: -1, sm_key: -1, lm_key: -1, ps_key: 0}
-p_scale_k = {hys_key:  0, pow_key: 0, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these keys emperically
+p_scale_k = {hys_key:  0, pow_key: -1, sm_key:  0, lm_key:  0, ps_key: 0} ## TODO test these keys emperically
 p_scale_e = {hys_key: -1, pow_key: -2, sm_key:  -1, lm_key:  -1, ps_key: 0}
 # x axis frequency label
 freq_ax_label = "Angular Frequency ($Hz, 2 \\pi T^{{-1}}$)"
@@ -148,8 +148,37 @@ hys_ax_label_norm = {hys_key: "Normalized Dissipated Energy\n($W^{{*}} = W \\cdo
                     lm_key: "Normalized Loss Modulus\n($E''^{{*}} = E'' \\cdot (\\ell^{{-1}} \\cdot E^{{-1}}))$",
                     ps_key: "Normalized Phase Shift\n($\\delta^{{*}} = \\delta$)"}
 
+## VISCOELASTIC FITTING RESULTS
+
+# key for viscoelastic bulk modulus parameter
+bm_key = 'E_opt'
+# key for viscoelastic relaxation constant parameter
+g_key = 'g1_opt'
+# key for viscoealstic time constant parameter
+t_key = 't1_opt'
+# key for viscoelastic fitting error
+er_key = 'obj_val'
+# list of optimization properties
+opt_list = [bm_key, g_key, t_key, er_key]
+# scaling integers applicable to optimized viscoelastic properties of each model parameters
+o_scale_l = {bm_key: 0, g_key: 0, t_key: -2, er_key: 0}
+o_scale_k = {bm_key: 0, g_key: 0, t_key: 0, er_key: 0}
+o_scale_e = {bm_key: -1, g_key: 0, t_key: 0, er_key: 0}
+# yaxis label for each viscoelastic optimization parameter
+opt_fig_yaxis_label = {bm_key: "Optimized Bulk Modulus ($\\kappa_{{opt}}$)",
+                    g_key: "Optimized Relaxation Constant ($\\gamma_{{opt}}$)",
+                    t_key: "Optimized Time Constant ($\\tau_{{opt}}$)",
+                    er_key: "Fitting Error"}
+# yaxis label for each viscoelastic optimization parameter - normalized
+opt_fig_yaxis_label_norm = {bm_key: "Normalized Optimized Bulk Modulus\n($k_{{opt}}^{{*}} = k_{{opt}} \\cdot (E^{{-1}})$)",
+                            g_key: "Normalized Optimized Relaxation\nConstant ($\\gamma_{{opt}}^{{*}} = \\gamma_{{opt}}$)",
+                            t_key: "Normalized Optimized Time Constant\n($\\tau_{{opt}}^{{*}} = \\tau_{{opt}} * (L^{{-2}})$)",
+                            er_key: "Fitting Error"}
+
 ## PLOTTING
 ## defaults
+# default figure dpi
+default_figure_dpi = 300
 # default subtitle label font size
 default_subtitle_label_font_size = 16
 # default axis label font size
@@ -276,13 +305,23 @@ def update_emod (jd = None, update = True, force = False, add = False, results =
         if not os.path.exists(d): break
         j = Job(d, 'pe')
         vd.append(d)
-        ld.append("$E = {0:.2e} MPa$".format(float(j.get_key_value('E', 1))))
+        ld.append("$E = {0:.2e} \\, MPa$".format(float(j.get_key_value('E', 1))))
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "e{0}".format(i))
         # update directory
         if update: update_fit(jd = jd, jn = "e{0}".format(i), force = force, overwrite = True)
 
+    ## check arguments
+    # check the save directory if specified
+    if save is True:
+        if saveto is None or not os.path.exists(saveto):
+            saveto = "{0}results/".format(jd)
+
     if results:
+        for o in opt_list:
+            for b in [True, False]:
+                fig_opt_res(jd = vd, opt = o, ld = ld, norm = b, show = show, save = save, saveto = saveto)
+        exit()
         for p in prop_list: # each poroelastic property
             for b in [True, False]: # both with and without norm
                 ## TODO add lj plot
@@ -317,19 +356,29 @@ def update_perm (jd = None, update = True, force = False, add = False, results =
     # get all simulations in folder that match the pattern
     i = 0 # integer for incrementation
     vd = [] # list of valid directories
+    ld = []
     while True:
         # increment, check if directory exists
         i += 1
         d = "{0}k{1}".format(jd, i)
         if not os.path.exists(d): break
+        j = Job(d, 'pe')
         vd.append(d)
+        ld.append("$K = {0:.2e} \\, mm^{{4}} / N \\cdot s$".format(float(j.get_key_value('K', 1))))
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "k{0}".format(i))
         # update directory
         if update: update_fit(jd = jd, jn = "k{0}".format(i), force = force, overwrite = True)
 
     if results:
-        pass
+        for o in opt_list:
+            for b in [True, False]:
+                fig_opt_res(jd = vd, opt = o, ld = ld, norm = b, show = show, save = save, saveto = saveto)
+        exit()
+        for p in prop_list: # each poroelastic property
+            for b in [True, False]: # both with and without norm
+                ## TODO add lj plot
+                fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
 
 def vary_fit_ell (jd = None, perm = default_perm, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
     """
@@ -681,6 +730,9 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             # if method results 'False', optimization simulation has not completed yet
             if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_min_val = e_min_bound, emod_max_val = e_max_bound)): continue
         else:
+            ## estimate elastic modulus
+            emod_force = (0.48863 / 0.5) * e_val
+            ## estimate gamma
             # use poroelastic parameters to estimate the bulk modulus
             tau_poro = (2. * math.pi / j_pe.df_parm.iloc[i-1]['OT']) * (pow(e_val, -1.) * pow(k_val, -1.) * pow(l_val, 2.))
             # use cublic spline to estimate the proper gamma value by the normalized poroelastic time scale
@@ -688,7 +740,7 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
             gamma_force = spline_gamma(tau_poro)
             ## NOTE :: for now, we assume that the viscoelastic bulk can be forced to a value which
             ## was emperically determined to correspond to a poroelastic elastic modulus of 0.5 MPa
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = 0.48863, gamma_force_val = gamma_force)): continue
+            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = emod_force, gamma_force_val = gamma_force)): continue
 
         continue
 
@@ -1301,8 +1353,7 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
         ## get poroelastic parameters, used for normalization
         e_val = s.get_simulation(1).get_key_value('E') # elastic modulus
         k_val = s.get_simulation(1).get_key_value('K') # permiability
-        l_val = s.get_simulation(1).get_key_value('L') # permiability
-        # l_val = float(l) # length scale - implied
+        l_val = s.get_simulation(1).get_key_value('L') # length scale - implied
 
         ## append scale frequency an amplitude to results data frame
         df_res['f_scale'] = [ f * pow(l_val, f_scale_l) * pow(k_val, f_scale_k) * pow(e_val, f_scale_e) for f in df_res['f'].to_list() ]
@@ -1326,13 +1377,12 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
         if norm: saveas += "-norm"
         if saveto is None: saveto = "./fig/"
         fig.set_saveas(savedir = saveto, filename = saveas)
-    fig.set_dpi(300)
+    fig.set_dpi(default_figure_dpi)
 
     ## plot results
     f, ax1 = plt.subplots()
     leg = []
 
-    l_keys = list(dict_feb.keys())
     for i in range(len(fig.get_unique_ivals())):
         # get colors
         edge_color = edge_list[i%len(edge_list)]
@@ -1360,7 +1410,7 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
     if show: plt.show()
 
 # show optimization results
-def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold = None, show = False, saveto = None):
+def fig_opt_res (jd = None, jn = None, opt = None, ld = None, norm = False, threshold = None, show = False, save = False, saveto = None):
     """ parse optimization results, display / save them.
 
     Arguments:
@@ -1368,12 +1418,12 @@ def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold 
     jd : dict[str]
         dictionary that contains list of paths to different 'fit', whose reults
         should be combined into one figures.
-    opt_col : str
+    opt : str
         opt_dict key's
+    ld : list[str]
+        list of labels to use in figure legend, corresponds to each path in 'jd'
     norm : bool
         if 'True' normalizes the timescale according to the default poroelastic model parameters
-    fit_path : str
-        path to 'fit' directory, generated according to 'fitting.py' protocol
     save : bool
         save results to local 'fig' directory.
     show : bool
@@ -1386,7 +1436,129 @@ def fig_opt_res (jd = None, jn = None, opt_prop = None, norm = False, threshold 
     Figure
         return formatted figure object
     """
-    pass
+    ## check method arguments
+    # check list of job directories
+    if not isinstance(jd, list) and not isinstance(jd, str):
+        # wrong type
+        pass
+    elif isinstance(jd, str):
+        # format string as list
+        jd = [jd]
+    # loop through each item in the list, check that the paths exists
+    for i in range(len(jd) - 1, -1, -1): # transverse list in reverse order
+        # check that each item in the list is a string and is a path to a valid directory
+        ## TODO removing from jd must also correspond to ld
+        if not isinstance(jd[i], str):
+            # not string - remove item from list
+            raise Exception("ERROR :: fitting.fig_opt_res() :: item in list 'jd' ({0}) must be string type.".format(jd.pop(i)))
+        elif not os.path.exists(jd[i]):
+            # directory does not exist -remove item from list
+            raise Exception("ERROR :: fitting.fig_opt_res() :: path in list 'jd' ({0}) does not exist.".format(jd.pop(i)))
+        elif not os.path.exists(jd[i] + '/opt'):
+            # directory does not contain poroelastic simulations - remove from list
+            raise Exception("ERROR :: fitting.fig_opt_res() :: path in list 'jd' ({0}) does not contain simulation directory 'opt'.".format(jd.pop(i)))
+
+    # check the property
+    if opt not in opt_list:
+        # unable to identify property
+        raise Exception("ERROR :: fitting.fig_opt_res() :: method argument 'opt' ({0}) does not exist in 'opt_list'.".format(opt))
+
+    ## get data
+    # loop through each directory
+    fig = Figure()
+    for i in range(len(jd)):
+
+        # get the optimization results
+        o = Opt(jd[i] + '/', 'opt')
+        df_res = o.get_optimization_results(overwrite = True)
+        # drop any results do not meet the threshold, or are empty
+        df_res = df_res[df_res['obj_val'].notna()] # empty
+        if threshold is not None: df_res = df_res.drop(df_res[df_res.obj_val > threshold].index) # thrsehold
+
+        # check that the results contain the optimized quantity
+        if opt not in list(df_res.columns.values):
+            # inform user
+            print("ERROR :: fitting.fig_opt_res() :: optimization set '{0}' does not contain specified 'opt' {1}".format(jd[i] + "opt", opt))
+            continue
+
+        # if norm, use poroelastic parameters to normalize the time scale
+        xcol_key = 'f' # default key for xaxis if normalization is not called for
+        if norm:
+            # get poroelastic parameters
+            j = Job(jd[i], 'pe')
+            ## get poroelastic parameters, used for normalization
+            e_val = j.get_simulation(1).get_key_value('E') # elastic modulus
+            k_val = j.get_simulation(1).get_key_value('K') # permiability
+            l_val = j.get_simulation(1).get_key_value('L') # length scale - implied
+            df_res['f_norm'] = [f * pow(l_val, f_scale_l) * pow(k_val, f_scale_k) * pow(e_val, f_scale_e) for f in df_res['f'].to_list()]
+            df_res[opt + '_norm'] = [n * pow(l_val, o_scale_l[opt]) * pow(k_val, o_scale_k[opt]) * pow(e_val, o_scale_e[opt]) for n in df_res[opt].to_list()]
+            xcol_key = 'f_norm'
+
+        ## appen results to figure
+        if not norm:
+            fig.append_df(df = df_res, xcol = xcol_key, ycol = opt, label = ld[i])
+        else:
+            fig.append_df(df = df_res, xcol = xcol_key, ycol = opt + '_norm', label = ld[i])
+
+    # figure formatting
+    fig.set_axis_scale('x', log = True)
+    fig.set_axis_scale('y', log = True)
+
+    # determine x and y axis labels
+    xax_label = freq_ax_label
+    if norm: xax_label = freq_ax_label_norm
+    # get figure information from opt_fig_yaxis_label
+    if (not norm) and (opt in list(opt_fig_yaxis_label.keys())):
+        yax_label = opt_fig_yaxis_label[opt]
+    elif norm and (opt in list(opt_fig_yaxis_label_norm.keys())):
+        yax_label = opt_fig_yaxis_label_norm[opt]
+    else:
+        yax_label = opt
+        if norm: yax_label += "_norm"
+
+    # retrieve the simulation from the poroelastic sweep
+    fig.set_axis_label('x', l = xax_label, s = default_axis_label_font_size)
+    fig.set_axis_label('y', l = yax_label, s = default_axis_label_font_size)
+    if save:
+        saveas = opt
+        if norm: saveas += "-norm"
+        if saveto is None: saveto = "./fig/"
+        fig.set_saveas(savedir = saveto, filename = saveas)
+        fig.set_dpi(default_figure_dpi)
+
+    ## plotting
+    f, ax1 = plt.subplots()
+    # ax2 = ax1.twinx()
+    leg = []
+    # plot data
+    l_keys = list(dict_feb.keys())
+    for i in range(len(fig.get_unique_ivals())):
+        # get colors
+        edge_color = edge_list[i%len(edge_list)]
+        mark_color = marker_list[i%len(marker_list)]
+
+        # retrive results from figure with
+        label = fig.get_unique_ivals()[i]
+        line = ax1.plot(fig.get_xval_list(label), fig.get_yval_list(label), linewidth = default_line_width, marker = fig.get_marker(label), markersize = default_marker_size, c = edge_color, markerfacecolor = mark_color, markeredgecolor = edge_color)
+        leg.append(mlines.Line2D([], [], marker = fig.get_marker(label), ls = line[-1].get_ls(),  label = label, color = edge_color, markerfacecolor = mark_color, markeredgecolor = edge_color))
+
+    # adjust major and minor ticks for x and y axis
+    # add axis labels
+    ax1.set_xlabel(fig.get_xaxis_label().get_label(), fontsize = fig.get_xaxis_label().get_size())
+    ax1.set_ylabel(fig.get_yaxis_label().get_label(), fontsize = fig.get_yaxis_label().get_size())
+
+    # format axis
+    if fig.axis_is_logscale('x'): ax1.set_xscale('log')
+    if fig.axis_is_logscale('y'): ax1.set_yscale('log')
+    ax1.tick_params(axis = 'both', labelsize = default_tick_font_size)
+
+    # add legend
+    plt.legend(handles = leg, fontsize = default_legend_font_size)
+    if save:
+        fig.save_data()
+        plt.savefig(fig.get_saveas(), dpi = fig.get_dpi(), bbox_inches='tight')
+    if show:
+        plt.show()
 
 if __name__ == "__main__":
 
