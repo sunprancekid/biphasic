@@ -508,7 +508,7 @@ def vary_fit_elastic_modulus (jd = None, e_lo = default_emod_low, e_hi = default
         ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[z_str] + "/bend_ve.feb"
         # init fit
         ## TODO add length scale as constant parameter to pe config.
-        init_fit(jd = jd, jn = "e{0}".format(i), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
+        init_fit(jd = jd, jn = "e{0}".format(i + 1), emod = e_val, perm = perm, z = z, osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
 
 # start fitting job
 def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False, pe_feb = default_feb_pe, ve_feb = default_feb_ve):
