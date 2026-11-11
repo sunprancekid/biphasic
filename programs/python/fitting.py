@@ -929,7 +929,7 @@ def update_poroelastic (jd = None, jn = None, i = None, overwrite = True, z_int 
         gen_slurm_script (filepath = "{0}{1}.slurm.sub".format(dir_pe, jobid),
             jobid = jobid,
             feb_file = "{0}{1}.feb".format(j_pe.get_simulation(i).get_simulation_path(), jobid),
-            time_limit = "30:00", # twenty minute time limit
+            time_limit = "40:00", # twenty minute time limit
             del_feb = True,
             del_xplt = True)
         return False # job not completed yet
