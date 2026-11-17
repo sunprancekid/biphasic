@@ -253,7 +253,7 @@ edge_list = [t20_red_dark, t20_green_dark, t20_orange_dark, t20_blue_dark, t20_p
 
 
 ## METHODS
-def update_ell (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
+def update_ell (jd = None, update = False, force = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit set where length scale is varied.
 
     Arguments:
@@ -286,7 +286,7 @@ def update_ell (jd = None, update = True, force = False, add = False, results = 
     if results:
         pass
 
-def update_emod (jd = None, update = True, force_emod = False, force_gamma = False, force_tau = None, add = False, results = False, show = False, save = False, saveto = None):
+def update_emod (jd = None, update = False, force_emod = False, force_gamma = False, force_tau = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
 
     Arguments:
@@ -352,7 +352,7 @@ def update_emod (jd = None, update = True, force_emod = False, force_gamma = Fal
             for i in range(j.get_sim_num()): # loop through each simulation
                 fig_lj(jd = vd, jn = ["pe" for j in range(len(vd))], n = [i for j in range(len(vd))], ld = ld, norm = b, show = False, save = save, saveto = saveto)
 
-def update_perm (jd = None, update = True, force_emod = False, force_gamma = False, force_tau = None, add = False, results = False, show = False, save = False, saveto = None):
+def update_perm (jd = None, update = False, force_emod = False, force_gamma = False, force_tau = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update set of fitting experiments in which the permeability is varied.
 
     Arguments:
