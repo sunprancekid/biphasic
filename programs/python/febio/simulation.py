@@ -1421,7 +1421,7 @@ class Simulation (object):
         fig.set_xaxis_label("Cycle Number")
         fig.set_yaxis_label("Energy Dissipated (J)")
         fig.set_cmap('Dark2')
-        gen_bar_chart(fig, show = True, save = False)
+        if show: gen_bar_chart(fig, show = True, save = False)
 
         # return data
         return hys

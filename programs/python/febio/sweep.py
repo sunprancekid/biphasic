@@ -571,7 +571,7 @@ class Sweep (object):
         # return the data frame to the user
         return df
 
-    def show_phase_shift (self, period = False, save = False):
+    def show_phase_shift (self, period = False, save = False, show = False):
         """ displays the phase shift (deg) for all simulations against frequency.
 
         Parameters:
@@ -580,11 +580,11 @@ class Sweep (object):
             if 'True', display phase shift against cycle period.
         save : bool (default 'False')
             if 'True', saves display to job directory.
+        show : bool (default is 'False')
 
         Returns:
         --------
-        None
-
+        Figure
         """
         # get work for simulations within set
         df = self.get_phase_shift()
@@ -611,7 +611,9 @@ class Sweep (object):
             fig.set_xaxis_label("Frequency (Hz, $2 \\pi T^{{-1}}$)")
         fig.set_yaxis_label("Phase lag (degrees, $^{{\\circ}}$)")
         fig.set_saveas(savedir = "{0}/{1}/results/".format(self.jd, self.jn), filename = 'phase_shift')
-        gen_plot(fig, show = True, save = save)
+        if save: fig.save_data()
+        gen_plot(fig, show = show, save = save)
+        return fig
 
     ## ANALYSIS - DYNAMIC MODULUS ##
 
