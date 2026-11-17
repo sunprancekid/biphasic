@@ -284,7 +284,16 @@ def update_ell (jd = None, update = False, force = False, add = False, results =
         if update: update_fit(jd = jd, jn = "z{0}".format(i), force = force, overwrite = True)
 
     if results:
-        pass
+        # optimization results
+        for o in opt_list:
+            for b in [True, False]:
+                fig_opt_res(jd = vd, opt = o, ld = ld, norm = b, show = show, save = save, saveto = saveto)
+        # lissajou curves
+        for b in [True, False]: # both with and without norm
+            for p in prop_list: # each poroelastic property
+                fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
+            for i in range(j.get_sim_num()): # loop through each simulation
+                fig_lj(jd = vd, jn = ["pe" for j in range(len(vd))], n = [i for j in range(len(vd))], ld = ld, norm = b, show = False, save = save, saveto = saveto)
 
 def update_emod (jd = None, update = False, force_emod = False, force_gamma = False, force_tau = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
@@ -791,7 +800,7 @@ def update_fit (jd = None, jn = None, overwrite = True, force_emod = False, forc
             tau_force_val = tau_force_val * pow(e_val, -o_scale_e[t_key]) * pow(k_val, -o_scale_k[t_key]) * pow(l_val, -o_scale_l[t_key])
 
         # attempt to update optimization
-        if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = emod_force_val, emod_min_val = emod_min_val, emod_max_val = emod_max_val, gamma_force_val = gamma_force_val, tau_force_val = tau_force_val)): continue
+        if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = emod_force_val, emod_min_val = e_min_bound, emod_max_val = e_max_bound, gamma_force_val = gamma_force_val, tau_force_val = tau_force_val)): continue
 
         continue
 
