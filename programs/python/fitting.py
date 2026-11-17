@@ -111,8 +111,8 @@ emod_xml = "Material/material[@id='1']/elastic/E"
 gamma_x_norm = [3000, 2249.68262799737, 1687.02397557105, 1265.08951028575, 948.683298050515, 711.412111698498, 533.483823011678, 400.056429648998, 300.00000000000, 224.968262799738, 168.702397557105, 126.508951028575, 94.8683298050517, 71.1412111698499, 53.3483823011679, 40.0056429648999, 30.0000000000001, 22.4968262799738, 16.8702397557105, 12.6508951028575, 9.48683298050517, 7.114121116985, 5.33483823011679, 4.00056429648999, 3.00000000000001, 2.24968262799738, 1.68702397557105, 1.26508951028575, 0.948683298050517, 0.711412111698499, 0.533483823011679, 0.400056429648999, 0.300000000000001]
 gamma_y_norm = [0.178243533806054, 0.176870108157661, 0.175226061513786, 0.173372937277569, 0.171239711707948, 0.168785108321504, 0.166001804558484, 0.162916743604243, 0.159556962180916, 0.155952510461735, 0.152145698315305, 0.148172455890445, 0.144095271888075, 0.139797687659573, 0.13513256853283, 0.129677758876466, 0.122912194585724, 0.114304480975313, 0.10368100757383, 0.0916533636146685, 0.0796069646891092, 0.0689231611469557, 0.0602241756170665, 0.0532868185199569, 0.0474592267618035, 0.0421094028228456, 0.0369749435704413, 0.032241921777961, 0.0282688756493337, 0.0252244999916803, 0.0231439805131177, 0.0217793818917523, 0.0209670933838213]
 # normalized tau values assuming emperical scaling values
-tau_x_norm = []
-tau_y_norm = []
+tau_x_norm = [3000.00000000001, 2249.68262799738, 1687.02397557105, 1265.08951028575, 948.683298050517, 711.412111698499, 533.483823011679, 400.056429648998, 300.000000000001, 224.968262799737, 168.702397557105, 126.508951028575, 94.8683298050516, 71.1412111698498, 53.3483823011678, 40.0056429648998, 30.0000000000001, 22.4968262799737, 16.8702397557105, 12.6508951028575, 9.48683298050516, 7.11412111698499, 5.33483823011678, 4.00056429648998, 3.00000000000001, 2.24968262799737, 1.68702397557105, 1.26508951028575, 0.948683298050516, 0.711412111698499, 0.533483823011678, 0.400056429648998, 0.300000000000001]
+tau_y_norm = [0.00644664629339529, 0.006446646328125, 0.00888185355758451, 0.00991230659107528, 0.0115044790784642, 0.013288227130556, 0.015049977366884, 0.0176215773604594, 0.0207027205513389, 0.0242933374385408, 0.0284719977733633, 0.0331992373656686, 0.0386358317184845, 0.0444793073881697, 0.0504847945964909, 0.0570436691652412, 0.0647982568365438, 0.0746280186345372, 0.0887970154967621, 0.111415121545953, 0.146869712100459, 0.200719952583203, 0.278780437737134, 0.386453203462037, 0.529516764328288, 0.72345243030865, 1.00443746756456, 1.44399052086906, 2.13643134394215, 3.48006841363931, 5.6682297530269, 9.52654917150592, 15.4424238058544]
 
 ## POROELASTIC RESULTS
 # key for hysterseis property
@@ -181,7 +181,7 @@ opt_list = [bm_key, g_key, t_key, er_key]
 # scaling integers applicable to optimized viscoelastic properties of each model parameters
 o_scale_l = {bm_key: 0, g_key: 0, t_key: -2, er_key: 0}
 o_scale_k = {bm_key: 0, g_key: 0, t_key: 1, er_key: 0}
-o_scale_e = {bm_key: -1, g_key: 0, t_key: 0, er_key: 0}
+o_scale_e = {bm_key: -1, g_key: 0, t_key: 1, er_key: 0}
 # yaxis label for each viscoelastic optimization parameter
 opt_fig_yaxis_label = {bm_key: "Bulk Modulus ($\\kappa$)",
                     g_key: "Relaxation Constant ($\\gamma$)",
@@ -190,7 +190,7 @@ opt_fig_yaxis_label = {bm_key: "Bulk Modulus ($\\kappa$)",
 # yaxis label for each viscoelastic optimization parameter - normalized
 opt_fig_yaxis_label_norm = {bm_key: "Normalized Bulk Modulus\n($k^{{*}} = k \\cdot (E^{{-1}})$)",
                             g_key: "Normalized Relaxation\nConstant ($\\gamma^{{*}} = \\gamma$)",
-                            t_key: "Normalized Time Constant\n($\\tau^{{*}} = \\tau * (\\ell^{{-2}} \\, \\cdot \\, K^{{1}})$)",
+                            t_key: "Normalized Time Constant\n($\\tau^{{*}} = \\tau * (\\ell^{{-2}} \\, \\cdot \\, K^{{1}} \\, \\cdot \\, E^{{1}})$)",
                             er_key: "Fitting Error"}
 
 ## PLOTTING
@@ -286,7 +286,7 @@ def update_ell (jd = None, update = True, force = False, add = False, results = 
     if results:
         pass
 
-def update_emod (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
+def update_emod (jd = None, update = True, force_emod = False, force_gamma = False, force_tau = None, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
 
     Arguments:
@@ -294,9 +294,14 @@ def update_emod (jd = None, update = True, force = False, add = False, results =
     jd : str
         path to job directory which contains elastic modulus fit.
     update : bool
-    force : bool
-        force the elastic modulus and relaxation constant when optimizing
-        the solution.
+        determines if the directory should be updated based on its current
+        iteration in the fitting routine
+    force_emod : bool
+        during optimization, force bulk modulus to take a predeterimine value.
+    force_gamma : bool
+        during optimization, force realxation constant to take a predetermined value.
+    force_tau : bool
+        during optimization, force time constant to take a predetermined value.
     add : bool
         add time scales to all simulations before updating
     results : bool
@@ -347,7 +352,7 @@ def update_emod (jd = None, update = True, force = False, add = False, results =
             for i in range(j.get_sim_num()): # loop through each simulation
                 fig_lj(jd = vd, jn = ["pe" for j in range(len(vd))], n = [i for j in range(len(vd))], ld = ld, norm = b, show = False, save = save, saveto = saveto)
 
-def update_perm (jd = None, update = True, force = False, add = False, results = False, show = False, save = False, saveto = None):
+def update_perm (jd = None, update = True, force_emod = False, force_gamma = False, force_tau = None, add = False, results = False, show = False, save = False, saveto = None):
     """ update set of fitting experiments in which the permeability is varied.
 
     Arguments:
@@ -355,6 +360,14 @@ def update_perm (jd = None, update = True, force = False, add = False, results =
     jd : str
         path to job directory which contains elastic modulus fit.
     update : bool
+        determines if the directory should be updated based on its current
+        iteration in the fitting routine
+    force_emod : bool
+        during optimization, force bulk modulus to take a predeterimine value.
+    force_gamma : bool
+        during optimization, force realxation constant to take a predetermined value.
+    force_tau : bool
+        during optimization, force time constant to take a predetermined value.
     force : bool
         force the elastic modulus and relaxation constant when optimizing
         the solution.
@@ -388,7 +401,7 @@ def update_perm (jd = None, update = True, force = False, add = False, results =
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "k{0}".format(i))
         # update directory
-        if update: update_fit(jd = jd, jn = "k{0}".format(i), force = force, overwrite = True)
+        if update: update_fit(jd = jd, jn = "k{0}".format(i), force_emod = force_emod, force_gamma = force_gamma, force_tau = force_tau, overwrite = True)
 
     if results:
         # optimization results
@@ -422,7 +435,6 @@ def vary_fit_ell (jd = None, perm = default_perm, emod = default_emod, z = defau
         ve_feb = "/home/mpikg/dorsey/Desktop/biphasic/models/bend/scale/" + dict_feb[l] + "/bend_ve.feb"
         # init fit
         init_fit(jd = jd, jn = "z{0}".format(i+1), emod = emod, perm = perm, z = float(l), osc_amp = osc_amp, relax_time = relax_time, load_depth = load_depth, min_freq = min_freq, max_freq = max_freq, norm = norm, pe_feb = pe_feb, ve_feb = ve_feb)
-
 
 def vary_fit_perm (jd = None, k_lo = default_permeability_low, k_hi = default_permeability_high, k_n = default_permeability_n, emod = default_emod, z = default_z, osc_amp = default_oscillation_amplitude, relax_time = default_relaxation_time, load_depth = default_loading_depth, min_freq = None, max_freq = None, norm = False):
     """ initialize a series of fitting where the permeability varies.
@@ -688,7 +700,7 @@ def init_fit (jd = None, jn = None, emod = default_emod, perm = default_perm, z 
     # the viscoelastic model is exactly the same as the optimization model
     m_opt.save_model(saveto = "{0}{1}/ve/".format(jd, jn), saveas = "ve.feb", overwrite = True)
 
-def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = None):
+def update_fit (jd = None, jn = None, overwrite = True, force_emod = False, force_gamma = False, force_tau = None, z_int = None):
     """ update fit job directories based on their status.
     
     Arguments:
@@ -699,8 +711,12 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
         name of simulation set
     overwrite : bool
         boolean that determines if existing files are overwritten
-    force : bool
-        during optimization, force bulk modulus and gamma to take specific values
+    force_emod : bool
+        during optimization, force bulk modulus to take a predeterimine value.
+    force_gamma : bool
+        during optimization, force realxation constant to take a predetermined value.
+    force_tau : bool
+        during optimization, force time constant to take a predetermined value.
 
     Returns:
     --------
@@ -743,26 +759,39 @@ def update_fit (jd = None, jn = None, overwrite = True, force = False, z_int = N
         if not (update_poroelastic(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int)): continue
 
         ## update optimization routine
-        if not force:
-            # used to the poroelastic elastic modulus to determine the optimization boundaries
+        # poroelastic time constant
+        tau_poro = (2. * math.pi / j_pe.df_parm.iloc[i-1]['OT']) * (pow(e_val, -1.) * pow(k_val, -1.) * pow(l_val, 2.))
+        # set elastic modulus value
+        e_min_bound, e_max_bound, emod_force_val = None, None, None
+        if not force_emod:
             e_min_bound, e_max_bound = None, None
             if j_pe.get_sim_num() <= 2:
                 e_min_bound = float(e_val) * (0.95)
                 e_max_bound = float(e_val)
-            # if method results 'False', optimization simulation has not completed yet
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_min_val = e_min_bound, emod_max_val = e_max_bound)): continue
         else:
-            ## determine the forcing values
-            # poroelastic time constant
-            tau_poro = (2. * math.pi / j_pe.df_parm.iloc[i-1]['OT']) * (pow(e_val, -1.) * pow(k_val, -1.) * pow(l_val, 2.))
-            # elastic modulus
-            emod_force = (0.48863 / 0.5) * e_val
-            # relaxation constant
+            emod_force_val = (0.48863 / 0.5) * e_val
+
+        # set the gamma value
+        gamma_force_val = None
+        if force_gamma:
             # use cublic spline to estimate the proper gamma value by the normalized poroelastic time scale
             spline_gamma = CubicSpline(list(reversed(gamma_x_norm)), list(reversed(gamma_y_norm)))
-            gamma_force = spline_gamma(tau_poro)
-            # time constant
-            if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = emod_force, gamma_force_val = gamma_force)): continue
+            gamma_force_val = spline_gamma(tau_poro)
+            # renormalize
+            gamma_force_val = gamma_force_val * pow(e_val, -o_scale_e[g_key]) * pow(k_val, -o_scale_k[g_key]) * pow(l_val, -o_scale_l[g_key])
+
+        # set the tau value
+        tau_force_val = None
+        if force_tau:
+            # use the cubic spline to estimate the correct tau value according
+            # to the normalized poroelastic time constant
+            spline_tau = CubicSpline(list(reversed(tau_x_norm)), list(reversed(tau_y_norm)))
+            tau_force_val = spline_tau(tau_poro)
+            # renormalize
+            tau_force_val = tau_force_val * pow(e_val, -o_scale_e[t_key]) * pow(k_val, -o_scale_k[t_key]) * pow(l_val, -o_scale_l[t_key])
+
+        # attempt to update optimization
+        if not (update_optimization(jd = jd, jn = jn, i = i, overwrite = overwrite, z_int = z_int, emod_force_val = emod_force_val, emod_min_val = emod_min_val, emod_max_val = emod_max_val, gamma_force_val = gamma_force_val, tau_force_val = tau_force_val)): continue
 
         continue
 
