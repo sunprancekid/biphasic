@@ -332,7 +332,7 @@ def update_emod (jd = None, update = False, force_emod = False, force_gamma = Fa
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "e{0}".format(i))
         # update directory
-        if update: update_fit(jd = jd, jn = "e{0}".format(i), force = force, overwrite = True)
+        if update: update_fit(jd = jd, jn = "e{0}".format(i), force_emod = force_emod, force_gamma = force_gamma, force_tau = force_tau, overwrite = True)
 
     ## check arguments
     # check the save directory if specified
