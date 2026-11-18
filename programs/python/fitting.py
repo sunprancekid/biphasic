@@ -277,23 +277,23 @@ def update_ell (jd = None, update = False, force = False, add = False, results =
         if not os.path.exists(d): break
         j = Job(d, 'pe')
         vd.append(d)
-        ld.append("$\\ell = {0:.2e} mm".format(float(l_list[i - 1])))
+        ld.append("$\\ell = {0:.2e} mm$".format(float(l_list[i - 1])))
         # add timescale
         if add: add_fit_timescales(jd = jd, jn = "z{0}".format(i))
         # update directory
         if update: update_fit(jd = jd, jn = "z{0}".format(i), force = force, overwrite = True)
 
     if results:
-        # optimization results
-        for o in opt_list:
-            for b in [True, False]:
-                fig_opt_res(jd = vd, opt = o, ld = ld, norm = b, show = show, save = save, saveto = saveto)
         # lissajou curves
         for b in [True, False]: # both with and without norm
             for p in prop_list: # each poroelastic property
                 fig_poro_res(jd = vd, prop = p, ld = ld, norm = b, show = show, save = save, saveto = saveto)
             for i in range(j.get_sim_num()): # loop through each simulation
                 fig_lj(jd = vd, jn = ["pe" for j in range(len(vd))], n = [i for j in range(len(vd))], ld = ld, norm = b, show = False, save = save, saveto = saveto)
+        # optimization results
+        for o in opt_list:
+            for b in [True, False]:
+                fig_opt_res(jd = vd, opt = o, ld = ld, norm = b, show = show, save = save, saveto = saveto)
 
 def update_emod (jd = None, update = False, force_emod = False, force_gamma = False, force_tau = False, add = False, results = False, show = False, save = False, saveto = None):
     """ update fit where the elastic modulus is being varied.
@@ -1392,7 +1392,7 @@ def fig_poro_res (jd, prop, ld = None, norm = False, show = False, save = False,
 
         # for each length scale
         s = Sweep(jd[i], "pe") # poroelastic sweep at length scale l
-        n_cy = s.get_simulation(1).get_number_oscillation_cycles() - 2 # get number of cycles
+        n_cy = s.get_simulation(10).get_number_oscillation_cycles() - 2 # get number of cycles
 
         # get property
         if prop == hys_key or prop == pow_key:

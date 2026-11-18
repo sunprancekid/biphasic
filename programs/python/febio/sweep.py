@@ -289,6 +289,7 @@ class Sweep (object):
         max_cycle = 0
         ot = []
         hys = []
+        k = 0
         # hys = [[] for i in range(self.get_sim_num())]
         # loop through all simulations
         for i in range(self.get_sim_num()):
@@ -299,13 +300,17 @@ class Sweep (object):
             # get the hysteresis data
             if sim.has_key('OT'):
                 val = sim.parse_hysteresis_work(recalculate = overwrite)
-                ot.append(sim.get_key_value('OT'))
                 if val is None:
-                    hys.append([np.nan for j in range(len(hys[i - 1]))])
-                    continue
-                hys.append(val)
-                if len(hys[i]) > max_cycle:
-                    max_cycle = len(hys[i])
+                    if i == 0: continue
+                    else:
+                        hys.append([np.nan for j in range(len(hys[-1]))])
+                        ot.append(sim.get_key_value('OT'))
+                        continue
+                else:
+                    ot.append(sim.get_key_value('OT'))
+                    hys.append(val)
+                    if len(hys[-1]) > max_cycle:
+                        max_cycle = len(hys[-1])
             # remove the simulation
             del sim
         # add to the dataframe
@@ -313,7 +318,7 @@ class Sweep (object):
         for i in range(max_cycle):
             col_header.append(i)
         df = pd.DataFrame(index=range(self.get_sim_num()),columns=col_header)
-        for i in range(self.get_sim_num()):
+        for i in range(len(ot)):
             df.loc[i, 'T'] = ot[i]
             df.loc[i, 'f'] = 2. * math.pi / ot[i]
             for j in range(len(hys[i])):
