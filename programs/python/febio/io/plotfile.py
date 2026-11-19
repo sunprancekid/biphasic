@@ -66,6 +66,7 @@ class XPLT (object):
         self.manager = self.post.GetDataManager()
         self.set_states()
         self.set_elements()
+        self.set_materials()
         self.set_fields()
 
     ## STATES ##
@@ -194,6 +195,94 @@ class XPLT (object):
             integer last of elements whose initial position match the coordinates
         """
         pass
+
+    ## MATERIALS ##
+
+    def set_materials(self):
+        """ sets the number of materials which are stored within the model file.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        None
+        """
+        # stores the integer number of materials
+        self.m = self.post.Materials()
+        # stores the name of each materials
+        self.mn = []
+        for i in range(self.m): self.mn.append(self.post.Material(i).name)
+
+    def has_material(self, i = None, n = None):
+        """ check if material exists within post model.
+
+        Arguments:
+        ----------
+        i : int
+            integer corresponding to material
+        n : str
+            name corresponding to material
+
+        Returns:
+        --------
+        bool
+            'True' if the material exists within the post model, else 'False'.
+        """
+        # check that either of the arguments are the right type
+        if (i is None or (not isinstance(i, int))) and (n is None or (not isinstance(n, str))): return False
+        # check that i is an integer within the bounds
+        elif (i is not None) and (i >= self.m or i < 0): return False
+        # check that n is a str in the materials list
+        elif (n is not None) and (n not in self.mn): return False
+        ## if both i and n are provided, check that they correspond to each other
+        elif (isinstance(n,str) and isinstance(i, int) and i != self.mn.index(n)): return False
+        return True
+
+    def enable_material (self, i = None, n = None):
+        """ enables material from post processing.
+
+        Arguments:
+        ----------
+        i : int
+            integer corresponding to material
+        n : str
+            name corresponding to material
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'.
+        """
+        # check arguments
+        if not self.has_material(i = i, n = n): return False
+        # if only the name was provided, convert the name to an integer
+        if isinstance(n, str) and not isinstance(i, int): i = self.mn.index(n)
+        # enable material
+        self.post.EnableMaterial(i, True)
+        return True
+
+    def disable_material (self, i = None, n = None):
+        """ disables material from post processing.
+
+        Arguments:
+        ----------
+        i : int
+        n : str
+
+        Returns:
+        --------
+        bool
+            'True' if operation was successful, else 'False'.
+        """
+        # check arguments
+        if not self.has_material(i = i, n = n): return False
+        # if only the name was provided, convert the name to an integer
+        if isinstance(n, str) and not isinstance(i, int): i = self.mn.index(n)
+        # enable material
+        self.post.EnableMaterial(i, False)
+        return True
 
     ## FIELDS ##
 
