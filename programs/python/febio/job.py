@@ -755,12 +755,13 @@ class Job (object):
         # loop through each simulation in job
         for i in range(1, self.get_sim_num() + 1):
             # generate model file
-            sm = self.parameterize_model(m = m, n = i)
+            n = self.df_parm.iloc[i-1]['n']
+            sm = self.parameterize_model(m = m, n = n)
             s = Simulation(self.jd, self.jn, i)
             # if the simulation directory does not exist already, make it
             if not os.path.exists(s.get_simulation_path()): os.makedirs(s.get_simulation_path())
             # save to simulation directory
-            sm.save_model(saveto = s.get_simulation_path(), saveas = "{0}-{1}.feb".format(self.jn, i), overwrite = overwrite)
+            sm.save_model(saveto = s.get_simulation_path(), saveas = "{0}-{1}.feb".format(self.jn, n), overwrite = overwrite)
 
         return True
 
