@@ -11,11 +11,13 @@
 ## MODULES
 # native / conda
 import sys, os, math
+import glob
 import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
 # local
 from febio.io.logfile import extract_febio_out, calculate_displacement, calculate_force, calculate_work, parse_element_data
+from febio.io.plotfile import XPLT
 from plot.figure import Figure
 from plot.plot import gen_bar_chart, gen_plot
 
@@ -271,6 +273,41 @@ class Simulation (object):
 
         # operation completed succesfully
         return True
+
+    ## XPLT FILE ##
+
+    def has_xplt (self):
+        """ check if the the xplt file exists within the simulation directory
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        bool
+            'True' if the xplt file exists, else 'False'.
+        """
+        l = glob.glob("{0}/*.xplt".format(self.get_simulation_path()))
+        if len(l) == 1: self.file_xplt = l[0]
+        return (os.path.exists(self.file_xplt))
+
+    def get_xplt (self):
+        """ return structure xplt object as XPLT object.
+
+        Arguments:
+        ----------
+        None
+
+        Returns:
+        --------
+        XPLT
+            structured object for XPLT files.
+        """
+        if self.has_xplt():
+            return XPLT(self.file_xplt)
+        else:
+            return None
 
     ## SIMULATION PROPERTY - OSCILLATION ## 
 
